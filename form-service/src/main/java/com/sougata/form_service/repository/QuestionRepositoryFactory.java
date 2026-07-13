@@ -3,7 +3,7 @@ package com.sougata.form_service.repository;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.response.QuestionRes;
 import com.sougata.form_service.exception.NoQuestionRepositoryFoundException;
-import com.sougata.form_service.model.Question;
+import com.sougata.form_service.model.questionSchema.Question;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;

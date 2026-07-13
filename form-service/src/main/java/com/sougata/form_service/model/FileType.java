@@ -1,5 +1,7 @@
 package com.sougata.form_service.model;
 
+import com.sougata.form_service.model.questionSchema.FileUpload;
+import com.sougata.form_service.model.templateSchema.FileUploadTemplate;
 import io.hypersistence.utils.hibernate.type.array.StringArrayType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -9,6 +11,7 @@ import lombok.Setter;
 import org.hibernate.annotations.Type;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -28,6 +31,8 @@ public class FileType extends Auditable {
     private String[] mimeTypes;
 
     @ManyToMany(mappedBy = "allowedFileTypes")
-    private List<FileUpload> fileUploads;
+    private List<FileUpload> fileUploads = new ArrayList<>();
 
+    @ManyToMany(mappedBy = "allowedFileTypes")
+    private List<FileUploadTemplate> fileUploadTemplates = new ArrayList<>();
 }

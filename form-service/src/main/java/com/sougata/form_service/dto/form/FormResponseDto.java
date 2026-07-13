@@ -8,6 +8,7 @@ import java.util.UUID;
 
 public record FormResponseDto(
         UUID id,
+        String name,
         String title,
         String description,
         Boolean published,
@@ -15,6 +16,7 @@ public record FormResponseDto(
         String notAcceptingResponseMessage,
         Instant stopAcceptingResponseOn,
         Long stopAcceptingResponseAfterResponse,
+        Instant lastOpenedOn,
         List<QuestionRes> questions
 ) {
 }

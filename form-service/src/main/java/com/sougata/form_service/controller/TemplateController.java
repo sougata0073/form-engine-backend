@@ -1,0 +1,38 @@
+package com.sougata.form_service.controller;
+
+import com.sougata.form_service.dto.template.TemplateSummaryResDto;
+import com.sougata.form_service.dto.template.TemplateToFormBuildResDto;
+import com.sougata.form_service.service.TemplateService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("api/v1/templates")
+@CrossOrigin
+public class TemplateController {
+
+    private final TemplateService templateService;
+
+    @Autowired
+    public TemplateController(TemplateService templateService) {
+        this.templateService = templateService;
+    }
+
+    @GetMapping
+    public List<TemplateSummaryResDto> getAllTemplateSummaries(@RequestHeader("auth-jwt") UUID userId) {
+        return templateService.getAllTemplateSummaries(userId);
+    }
+
+    @PostMapping(path = "{templateId}/build-form")
+    public ResponseEntity<TemplateToFormBuildResDto> getTemplate(@PathVariable UUID templateId, @RequestHeader("auth-jwt") UUID userId) {
+        var res = templateService.buildFormFromTemplate(templateId, userId);
+
+        return new ResponseEntity<>(res, HttpStatus.CREATED);
+    }
+
+}

@@ -9,7 +9,7 @@ import com.sougata.form_service.exception.InvalidFileSizeException;
 import com.sougata.form_service.exception.InvalidFileTypeException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.FileType;
-import com.sougata.form_service.model.FileUpload;
+import com.sougata.form_service.model.questionSchema.FileUpload;
 import com.sougata.form_service.repository.FileTypeRepository;
 import com.sougata.form_service.repository.FileUploadRepository;
 import com.sougata.form_service.service.FormService;
@@ -32,6 +32,11 @@ public class FileUploadManager extends QuestionManager<FileUploadAddUpdateReqDto
         this.fileUploadRepository = fileUploadRepository;
         this.fileTypeRepository = fileTypeRepository;
         this.formService = formService;
+    }
+
+    @Override
+    public FileUploadResDto get(UUID formId, Long questionId) {
+        return FileUploadResDto.create(fileUploadRepository.findByFormIdAndId(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
@@ -79,8 +84,8 @@ public class FileUploadManager extends QuestionManager<FileUploadAddUpdateReqDto
         FileUpload fu = fileUploadRepository.findById(validationDto.getQuestionId())
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.FILE_UPLOAD, validationDto.getQuestionId()));
 
-        if (validationDto.getFileSizeInMb() > fu.getMaxFileSizeInMB()) {
-            throw new InvalidFileSizeException(validationDto.getFileSizeInMb(), fu.getMaxFileSizeInMB());
+        if (validationDto.getFileSize() > fu.getMaxFileSize()) {
+            throw new InvalidFileSizeException(validationDto.getFileSize(), fu.getMaxFileSize());
         }
 
         if (fu.getAllowedFileTypes() != null) {
@@ -123,7 +128,7 @@ public class FileUploadManager extends QuestionManager<FileUploadAddUpdateReqDto
         target.setQuestion(source.getQuestion());
         target.setDescription(source.getDescription());
         target.setRequired(source.getRequired());
-        target.setMaxFileSizeInMB(source.getMaxFileSizeInMB());
+        target.setMaxFileSize(source.getMaxFileSize());
         target.setOrderIndex(source.getOrderIndex());
 
         List<String> categories = source.getAllowedFileCategories();

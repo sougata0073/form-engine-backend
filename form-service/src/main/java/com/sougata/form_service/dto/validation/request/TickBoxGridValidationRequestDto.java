@@ -19,6 +19,17 @@ public class TickBoxGridValidationRequestDto extends ValidationRequest {
 
     @NotNull(message = ValidationRequestValidationMessages.TICK_BOX_GRID_ROWS_NOT_NULL)
     @Size(max = 20, message = ValidationRequestValidationMessages.TICK_BOX_GRID_ROW_LIST_INVALID_SIZE)
-    private List<@Valid TickBoxGridRowValidationRequestDto> rows;
+    private List<@Valid Row> rows;
+
+    public record Row(
+            @NotNull
+            Long rowId,
+
+            @NotNull
+            @Size(max = 20)
+            List<Long> responseColumnIds
+    ) {
+
+    }
 
 }

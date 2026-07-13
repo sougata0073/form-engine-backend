@@ -19,13 +19,13 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Setter
 public class FileUpload extends QuestionResponse {
 
-    @Column(nullable = false, columnDefinition = "text")
+    private String fileName;
+
+    @Column(columnDefinition = "text")
     private String fileUrl;
 
-    @Column(nullable = false)
     private String fileMimeType;
 
-    @Column(nullable = false)
-    private Integer fileSizeInMb;
+    private Integer fileSize;
 
 }

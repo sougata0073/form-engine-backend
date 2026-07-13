@@ -1,16 +1,20 @@
 package com.sougata.form_service.service;
 
 import com.sougata.form_service.constant.QuestionType;
+import com.sougata.form_service.dto.question.QuestionSummariesResDto;
+import com.sougata.form_service.dto.question.QuestionSummaryDto;
 import com.sougata.form_service.dto.question.request.QuestionAddUpdateReq;
 import com.sougata.form_service.dto.question.response.QuestionRes;
 import com.sougata.form_service.dto.validation.request.ValidationRequest;
-import com.sougata.form_service.model.Question;
+import com.sougata.form_service.model.questionSchema.Question;
 import com.sougata.form_service.repository.QuestionRepository;
 
 import java.util.UUID;
 
 public abstract class
 QuestionManager<QAUR extends QuestionAddUpdateReq, QR extends QuestionRes, V extends ValidationRequest> {
+
+    public abstract QR get(UUID formId, Long questionId);
 
     public abstract QR create(UUID formId, QAUR crudDto);
 

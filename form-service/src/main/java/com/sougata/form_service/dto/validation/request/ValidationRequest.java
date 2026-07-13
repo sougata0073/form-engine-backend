@@ -3,7 +3,6 @@ package com.sougata.form_service.dto.validation.request;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.sougata.form_service.constant.QuestionType;
-import com.sougata.form_service.constant.ValidationId;
 import com.sougata.form_service.constant.ValidationRequestValidationMessages;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
@@ -12,7 +11,7 @@ import lombok.Setter;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
+        include = JsonTypeInfo.As.EXISTING_PROPERTY,
         property = "questionType",
         visible = true
 )
@@ -39,9 +38,6 @@ public class ValidationRequest {
 
     @NotNull(message = ValidationRequestValidationMessages.QUESTION_ID_NOT_NULL)
     private Long questionId;
-
-    @NotNull(message = ValidationRequestValidationMessages.VALIDATION_ID_NOT_NULL)
-    private ValidationId validationId;
 
     @NotNull(message = ValidationRequestValidationMessages.QUESTION_TYPE_NOT_NULL)
     private QuestionType questionType;

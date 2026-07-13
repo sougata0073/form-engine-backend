@@ -19,7 +19,7 @@ public class FileUploadValidationRequestDto extends ValidationRequest {
     @NotNull(message = ValidationRequestValidationMessages.FILE_TYPE_NOT_NULL)
     private String fileMimeType;
 
-    @NotNull(message = ValidationRequestValidationMessages.FILE_SIZE_IN_MB_NOT_NULL)
-    private Integer fileSizeInMb;
+    @NotNull(message = ValidationRequestValidationMessages.FILE_SIZE_NOT_NULL)
+    private Integer fileSize;
 
 }

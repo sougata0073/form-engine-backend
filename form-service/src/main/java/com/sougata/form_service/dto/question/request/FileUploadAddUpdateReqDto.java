@@ -20,7 +20,7 @@ public class FileUploadAddUpdateReqDto extends QuestionAddUpdateReq {
 
     @NotNull(message = ValidationMessages.MAX_FILE_SIZE_NOT_NULL)
     @Min(value = 1, message = ValidationMessages.MIN_FILE_SIZE_RANGE)
-    @Max(value = 100, message = ValidationMessages.MAX_FILE_SIZE_RANGE)
-    private Integer maxFileSizeInMB;
+    @Max(value = 1_0485_7600, message = ValidationMessages.MAX_FILE_SIZE_RANGE)
+    private Integer maxFileSize;
 
 }

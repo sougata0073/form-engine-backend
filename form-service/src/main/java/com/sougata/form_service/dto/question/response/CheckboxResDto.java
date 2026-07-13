@@ -4,14 +4,15 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.validationConfig.ValidationConfig;
 import com.sougata.form_service.exception.JsonParsingException;
-import com.sougata.form_service.model.Checkbox;
+import com.sougata.form_service.model.questionSchema.Checkbox;
 import com.sougata.form_service.util.JsonUtil;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import tools.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.databind.ser.std.ToStringSerializer;
 
-import java.util.Arrays;
 import java.util.List;
 
 @NoArgsConstructor
@@ -19,10 +20,10 @@ import java.util.List;
 @Setter
 @ToString
 public class CheckboxResDto extends QuestionRes {
-    private List<String> options;
+    private List<CheckboxOptionResDto> options;
     private ValidationConfig validationConfig;
 
-    public CheckboxResDto(Long id, String question, String description, Boolean required, List<String> options, ValidationConfig validationConfig, Integer orderIndex, QuestionType questionType) {
+    public CheckboxResDto(Long id, String question, String description, Boolean required, List<CheckboxOptionResDto> options, ValidationConfig validationConfig, Integer orderIndex, QuestionType questionType) {
         super(id, question, description, required, orderIndex, questionType);
         this.options = options;
         this.validationConfig = validationConfig;
@@ -35,7 +36,7 @@ public class CheckboxResDto extends QuestionRes {
                     cb.getQuestion(),
                     cb.getDescription(),
                     cb.getRequired(),
-                    Arrays.asList(cb.getOptions()),
+                    cb.getOptions().stream().map(o -> new CheckboxOptionResDto(o.getId(), o.getOption(), o.getOrderIndex())).toList(),
                     JsonUtil.oldJsonNodeToObject(cb.getValidationConfig(), ValidationConfig.class),
                     cb.getOrderIndex(),
                     QuestionType.CHECKBOX
@@ -43,5 +44,13 @@ public class CheckboxResDto extends QuestionRes {
         } catch (JsonProcessingException e) {
             throw new JsonParsingException(JsonUtil.oldJsonNodeToString(cb.getValidationConfig()));
         }
+    }
+
+    public record CheckboxOptionResDto(
+            @JsonSerialize(using = ToStringSerializer.class)
+            Long id,
+            String option,
+            Integer orderIndex
+    ) {
     }
 }

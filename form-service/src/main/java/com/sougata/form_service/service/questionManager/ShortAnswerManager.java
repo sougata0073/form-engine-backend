@@ -2,12 +2,13 @@ package com.sougata.form_service.service.questionManager;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sougata.form_service.constant.QuestionType;
+import com.sougata.form_service.constant.ValidationId;
 import com.sougata.form_service.dto.question.request.ShortAnswerAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.ShortAnswerResDto;
 import com.sougata.form_service.dto.validation.request.ShortAnswerValidationRequestDto;
 import com.sougata.form_service.exception.JsonParsingException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.ShortAnswer;
+import com.sougata.form_service.model.questionSchema.ShortAnswer;
 import com.sougata.form_service.repository.ShortAnswerRepository;
 import com.sougata.form_service.responseValidator.ResponseValidatorFactory;
 import com.sougata.form_service.service.FormService;
@@ -28,6 +29,11 @@ public class ShortAnswerManager extends QuestionManager<ShortAnswerAddUpdateReqD
         this.shortAnswerRepository = shortAnswerRepository;
         this.formService = formService;
         this.responseValidatorFactory = responseValidatorFactory;
+    }
+
+    @Override
+    public ShortAnswerResDto get(UUID formId, Long questionId) {
+        return ShortAnswerResDto.create(shortAnswerRepository.findByFormIdAndId(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
@@ -75,15 +81,19 @@ public class ShortAnswerManager extends QuestionManager<ShortAnswerAddUpdateReqD
 
     @Override
     public boolean validateResponse(ShortAnswerValidationRequestDto validationDto) {
-        ShortAnswer sa = shortAnswerRepository.findById(validationDto.getQuestionId())
+        var vConfig = shortAnswerRepository.getValidationConfig(validationDto.getQuestionId())
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.SHORT_ANSWER, validationDto.getQuestionId()));
 
         try {
-            var validator = responseValidatorFactory.getValidator(validationDto.getValidationId());
-            var validationConfig = JsonUtil.oldJsonNodeToObject(sa.getValidationConfig(), validator.getValidationConfigClass());
+            var validationId = ValidationId.valueOf(
+                    JsonUtil.getValueFromOldJsonNode(vConfig, "validationId")
+            );
+
+            var validator = responseValidatorFactory.getValidator(validationId);
+            var validationConfig = JsonUtil.oldJsonNodeToObject(vConfig, validator.getValidationConfigClass());
             return validator.isValid(validationDto, validationConfig);
         } catch (JsonProcessingException e) {
-            throw new JsonParsingException(JsonUtil.oldJsonNodeToString(sa.getValidationConfig()));
+            throw new JsonParsingException(JsonUtil.oldJsonNodeToString(vConfig));
         }
     }
 

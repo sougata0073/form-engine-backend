@@ -20,11 +20,13 @@ public class MultipleChoiceGridRow extends Auditable {
     @Id
     private Long id = TsidCreator.getTsid().toLong();
 
+    @Column(nullable = false)
+    private Long rowId;
+
+    private Long responseColumnId;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = false)
     private MultipleChoiceGrid multipleChoiceGrid;
-
-    @Column(nullable = false)
-    private Integer responseIndex;
 
 }

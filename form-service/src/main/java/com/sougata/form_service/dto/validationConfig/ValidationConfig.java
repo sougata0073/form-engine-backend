@@ -2,8 +2,8 @@ package com.sougata.form_service.dto.validationConfig;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.sougata.form_service.constant.ValidationMessages;
 import com.sougata.form_service.constant.ValidationId;
+import com.sougata.form_service.constant.ValidationMessages;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,7 +11,7 @@ import lombok.Setter;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
+        include = JsonTypeInfo.As.EXISTING_PROPERTY,
         property = "validationId",
         visible = true
 )
@@ -19,12 +19,12 @@ import lombok.Setter;
         @JsonSubTypes.Type(value = CheckboxValidationConfig.SelectAtLeast.class, name = "CHECKBOX_SELECT_AT_LEAST"),
         @JsonSubTypes.Type(value = CheckboxValidationConfig.SelectAtMost.class, name = "CHECKBOX_SELECT_AT_MOST"),
         @JsonSubTypes.Type(value = CheckboxValidationConfig.SelectExactly.class, name = "CHECKBOX_SELECT_EXACTLY"),
-        @JsonSubTypes.Type(value = ValidationConfig.class, name = "CHECKBOX_NONE"),
+        @JsonSubTypes.Type(value = NoneValidationConfig.class, name = "CHECKBOX_NONE"),
         @JsonSubTypes.Type(value = ParagraphValidationConfig.MaxCharacterCount.class, name = "PARAGRAPH_LENGTH_MAX_CHARACTER_COUNT"),
         @JsonSubTypes.Type(value = ParagraphValidationConfig.MinCharacterCount.class, name = "PARAGRAPH_LENGTH_MIN_CHARACTER_COUNT"),
         @JsonSubTypes.Type(value = ParagraphValidationConfig.Matches.class, name = "PARAGRAPH_REGEX_MATCHES"),
         @JsonSubTypes.Type(value = ParagraphValidationConfig.DoesNotMatch.class, name = "PARAGRAPH_REGEX_DOES_NOT_MATCHES"),
-        @JsonSubTypes.Type(value = ValidationConfig.class, name = "PARAGRAPH_NONE"),
+        @JsonSubTypes.Type(value = NoneValidationConfig.class, name = "PARAGRAPH_NONE"),
         @JsonSubTypes.Type(value = ShortAnswerValidationConfig.Between.class, name = "SHORT_ANSWER_NUMBER_BETWEEN"),
         @JsonSubTypes.Type(value = ShortAnswerValidationConfig.EqualTo.class, name = "SHORT_ANSWER_NUMBER_EQUAL_TO"),
         @JsonSubTypes.Type(value = ShortAnswerValidationConfig.GreaterThan.class, name = "SHORT_ANSWER_NUMBER_GREATER_THAN"),
@@ -43,7 +43,7 @@ import lombok.Setter;
         @JsonSubTypes.Type(value = ShortAnswerValidationConfig.Email.class, name = "SHORT_ANSWER_TEXT_EMAIL"),
         @JsonSubTypes.Type(value = ShortAnswerValidationConfig.MaxCharacterCount.class, name = "SHORT_ANSWER_LENGTH_MAX_CHARACTER_COUNT"),
         @JsonSubTypes.Type(value = ShortAnswerValidationConfig.MinCharacterCount.class, name = "SHORT_ANSWER_LENGTH_MIN_CHARACTER_COUNT"),
-        @JsonSubTypes.Type(value = ValidationConfig.class, name = "SHORT_ANSWER_NONE")
+        @JsonSubTypes.Type(value = NoneValidationConfig.class, name = "SHORT_ANSWER_NONE")
 })
 @NoArgsConstructor
 @Getter

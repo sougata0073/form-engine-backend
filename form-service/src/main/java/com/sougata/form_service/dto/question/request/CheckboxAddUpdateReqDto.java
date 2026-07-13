@@ -19,10 +19,18 @@ public class CheckboxAddUpdateReqDto extends QuestionAddUpdateReq {
 
     @NotNull(message = ValidationMessages.OPTIONS_NOT_NULL)
     @Size(min = 1, max = 20, message = ValidationMessages.OPTIONS_COUNT_RANGE)
-    private List<@Length(min = 1) String> options;
+    private List<@Valid Option> options;
 
     @Valid
     @NotNull(message = ValidationMessages.VALIDATION_CONFIG_NOT_NULL)
     private ValidationConfig validationConfig;
+
+    public record Option(
+            Long id,
+
+            @Length(min = 1)
+            String option
+    ) {
+    }
 
 }

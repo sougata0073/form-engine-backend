@@ -1,6 +1,5 @@
 package com.sougata.form_data_service.model;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Table;
@@ -21,6 +20,5 @@ import java.time.Instant;
 @Setter
 public class DateTime extends QuestionResponse {
 
-    @Column(nullable = false)
     private Instant dateTime;
 }

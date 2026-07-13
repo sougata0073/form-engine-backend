@@ -1,15 +1,15 @@
 package com.sougata.form_service.dto.form;
 
-import com.sougata.form_service.constant.ValidationMessages;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.Instant;
-import java.util.UUID;
 
 public record FormAddUpdateReqDto(
         String title,
 
         String description,
+
+        String name,
 
         @NotNull
         Boolean published,
@@ -21,9 +21,6 @@ public record FormAddUpdateReqDto(
 
         Instant stopAcceptingResponseOn,
 
-        Long stopAcceptingResponseAfterResponse,
-
-        @NotNull(message = ValidationMessages.USER_ID_NOT_NULL)
-        UUID userId
+        Long stopAcceptingResponseAfterResponse
 ) {
 }

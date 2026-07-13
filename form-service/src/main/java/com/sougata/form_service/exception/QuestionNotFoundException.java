@@ -8,4 +8,8 @@ public class QuestionNotFoundException extends RuntimeException {
         super(String.format(ExceptionMessages.QUESTION_NOT_FOUND, questionType.getDisplayName(), questionId));
     }
 
+    public QuestionNotFoundException(Long questionId) {
+        super("Question not found with ID: " + questionId);
+    }
+
 }

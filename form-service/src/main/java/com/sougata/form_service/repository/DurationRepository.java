@@ -2,7 +2,7 @@ package com.sougata.form_service.repository;
 
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.response.DurationResDto;
-import com.sougata.form_service.model.Duration;
+import com.sougata.form_service.model.questionSchema.Duration;
 import org.springframework.stereotype.Repository;
 
 @Repository("DURATION_REPOSITORY")

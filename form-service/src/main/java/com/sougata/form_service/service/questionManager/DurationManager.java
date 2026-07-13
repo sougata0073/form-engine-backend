@@ -5,7 +5,7 @@ import com.sougata.form_service.dto.question.request.DurationAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.DurationResDto;
 import com.sougata.form_service.dto.validation.request.DurationValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.Duration;
+import com.sougata.form_service.model.questionSchema.Duration;
 import com.sougata.form_service.repository.DurationRepository;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.QuestionManager;
@@ -22,6 +22,11 @@ public class DurationManager extends QuestionManager<DurationAddUpdateReqDto, Du
     public DurationManager(DurationRepository durationRepository, FormService formService) {
         this.durationRepository = durationRepository;
         this.formService = formService;
+    }
+
+    @Override
+    public DurationResDto get(UUID formId, Long questionId) {
+        return DurationResDto.create(durationRepository.findByFormIdAndId(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override

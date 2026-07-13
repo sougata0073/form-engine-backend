@@ -5,7 +5,7 @@ import com.sougata.form_service.dto.question.request.TimeAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.TimeResDto;
 import com.sougata.form_service.dto.validation.request.TimeValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.Time;
+import com.sougata.form_service.model.questionSchema.Time;
 import com.sougata.form_service.repository.TimeRepository;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.QuestionManager;
@@ -22,6 +22,11 @@ public class TimeManager extends QuestionManager<TimeAddUpdateReqDto, TimeResDto
     public TimeManager(TimeRepository timeRepository, FormService formService) {
         this.timeRepository = timeRepository;
         this.formService = formService;
+    }
+
+    @Override
+    public TimeResDto get(UUID formId, Long questionId) {
+        return TimeResDto.create(timeRepository.findByFormIdAndId(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override

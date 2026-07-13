@@ -1,6 +1,7 @@
 package com.sougata.auth_service.service;
 
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -18,15 +19,21 @@ public class JwtService {
     @Value("${jwt.expiration-millis}")
     private Long jwtExpirationMillis;
 
-    public String generateJwtToken(String id, String role) {
-        Map<String, Object> claims = Map.of("role", role);
+    public String generateJwtToken(String id, String name, String email, String avatarUrl) {
+
+        Map<String, Object> claims = Map.of(
+                "name", name == null ? "" : name,
+                "email", email == null ? "" : email,
+                "avatarUrl", avatarUrl == null ? "" : avatarUrl
+        );
+
         return Jwts
                 .builder()
                 .setSubject(id)
                 .addClaims(claims)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + jwtExpirationMillis))
-                .signWith(getJwtSecretKey())
+                .signWith(getJwtSecretKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 

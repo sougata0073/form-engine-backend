@@ -22,15 +22,29 @@ public class SecurityConfiguration {
 
     private final PasswordEncoder passwordEncoder;
     private final UserDetailsService userDetailsService;
+    private final OAuth2SuccessHandler oAuth2SuccessHandler;
 
     private final String[] publicUrls = {
-            "/api/v1/auth/**", "/actuator/**"
+            "/api/v1/auth/**",
+            "/actuator/**",
+            "/login",
+            "/login/oauth2/code/**",
+            "/oauth2/**",
+            "/error",
+            "/favicon.ico",
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+            "/v3/api-docs/**",
+            "/v3/api-docs.yaml",
+            "/swagger-resources/**",
+            "/webjars/**"
     };
 
     @Autowired
-    public SecurityConfiguration(PasswordEncoder passwordEncoder, UserDetailsService userDetailsService) {
+    public SecurityConfiguration(PasswordEncoder passwordEncoder, UserDetailsService userDetailsService, OAuth2SuccessHandler oAuth2SuccessHandler) {
         this.passwordEncoder = passwordEncoder;
         this.userDetailsService = userDetailsService;
+        this.oAuth2SuccessHandler = oAuth2SuccessHandler;
     }
 
     @Bean
@@ -43,7 +57,10 @@ public class SecurityConfiguration {
                 )
                 .authorizeHttpRequests(cus ->
                         cus.requestMatchers(publicUrls).permitAll()
-                                .anyRequest().permitAll()
+                                .anyRequest().authenticated()
+                )
+                .oauth2Login(auth ->
+                        auth.successHandler(this.oAuth2SuccessHandler)
                 )
                 .build();
     }

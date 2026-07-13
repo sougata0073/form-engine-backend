@@ -1,6 +1,7 @@
 package com.sougata.form_service.dto.question.request;
 
 import com.sougata.form_service.constant.ValidationMessages;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
@@ -17,5 +18,13 @@ public class DropdownAddUpdateReqDto extends QuestionAddUpdateReq {
 
     @NotNull(message = ValidationMessages.OPTIONS_NOT_NULL)
     @Size(min = 1, max = 20, message = ValidationMessages.OPTIONS_COUNT_RANGE)
-    private List<@Length(min = 1) String> options;
+    private List<@Valid Option> options;
+
+    public record Option(
+            Long id,
+
+            @Length(min = 1)
+            String option
+    ) {
+    }
 }

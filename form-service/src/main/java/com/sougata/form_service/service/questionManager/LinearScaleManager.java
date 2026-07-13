@@ -7,7 +7,7 @@ import com.sougata.form_service.dto.question.response.LinearScaleResDto;
 import com.sougata.form_service.dto.validation.request.LinearScaleValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.exception.ResponseValidationException;
-import com.sougata.form_service.model.LinearScale;
+import com.sougata.form_service.model.questionSchema.LinearScale;
 import com.sougata.form_service.repository.LinearScaleRepository;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.QuestionManager;
@@ -24,6 +24,11 @@ public class LinearScaleManager extends QuestionManager<LinearScaleAddUpdateReqD
     public LinearScaleManager(LinearScaleRepository linearScaleRepository, FormService formService) {
         this.linearScaleRepository = linearScaleRepository;
         this.formService = formService;
+    }
+
+    @Override
+    public LinearScaleResDto get(UUID formId, Long questionId) {
+        return LinearScaleResDto.create(linearScaleRepository.findByFormIdAndId(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
@@ -71,13 +76,13 @@ public class LinearScaleManager extends QuestionManager<LinearScaleAddUpdateReqD
 
     @Override
     public boolean validateResponse(LinearScaleValidationRequestDto validationDto) {
-        LinearScale ls = linearScaleRepository.findById(validationDto.getQuestionId())
+        Integer toNumber = linearScaleRepository.getToNumber(validationDto.getQuestionId())
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.LINEAR_SCALE, validationDto.getQuestionId()));
 
-        if(validationDto.getScale() > ls.getToNumber()) {
+        if(validationDto.getScale() > toNumber) {
             throw new ResponseValidationException(
                     String.format(
-                            ExceptionMessages.INVALID_SCALE, ls.getToNumber(), validationDto.getScale()
+                            ExceptionMessages.INVALID_SCALE, toNumber, validationDto.getScale()
                     )
             );
         }

@@ -59,7 +59,7 @@ public class ValidationMessages {
     public static final String SHORT_ANSWER_NOT_CONTAINS_VALUE_REQUIRED = "Does not contains value is required if validation ID is not NONE";
     public static final String SHORT_ANSWER_MAX_CHARACTER_COUNT_REQUIRED = "Max character count is required if validation ID is not NONE";
     public static final String SHORT_ANSWER_MIN_CHARACTER_COUNT_REQUIRED = "Min character count is required if validation ID is not NONE";
-    public static final String INVALID_RESPONSE = "Response is invalid. Question type: %s. Validation ID: %s";
+    public static final String INVALID_RESPONSE = "Response is invalid. Question type: %s";
     public static final String QUESTION_ID_NOT_NULL = "Question ID can not be empty";
     public static final String USER_ID_NOT_NULL = "User ID can not be empty";
     public static final String INVALID_UUID = "Invalid UUID format";

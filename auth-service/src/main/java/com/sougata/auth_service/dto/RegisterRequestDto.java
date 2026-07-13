@@ -11,8 +11,6 @@ public record RegisterRequestDto(
         @Email(message = ValidationMessages.WRONG_EMAIL_FORMAT)
         String email,
 
-        String phoneNumber,
-
         @NotBlank(message = ValidationMessages.EMPTY_PASSWORD)
         String password,
 

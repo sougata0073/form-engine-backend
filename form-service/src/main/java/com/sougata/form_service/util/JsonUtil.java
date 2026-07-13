@@ -25,4 +25,12 @@ public class JsonUtil {
         return oldMapper.treeToValue(jsonNode, returnType);
     }
 
+    public static String getValueFromOldJsonNode(com.fasterxml.jackson.databind.JsonNode jsonNode, String fieldName) throws JsonProcessingException {
+        return jsonNode.get(fieldName).asText();
+    }
+
+    public static String getValueFromNewJsonNode(tools.jackson.databind.JsonNode jsonNode, String fieldName) throws JsonProcessingException {
+        return jsonNode.get(fieldName).asString();
+    }
+
 }

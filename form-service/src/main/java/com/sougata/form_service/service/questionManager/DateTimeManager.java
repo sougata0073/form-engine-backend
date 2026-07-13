@@ -5,7 +5,7 @@ import com.sougata.form_service.dto.question.request.DateTimeAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.DateTimeResDto;
 import com.sougata.form_service.dto.validation.request.DateTimeValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.DateTime;
+import com.sougata.form_service.model.questionSchema.DateTime;
 import com.sougata.form_service.repository.DateTimeRepository;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.QuestionManager;
@@ -22,6 +22,11 @@ public class DateTimeManager extends QuestionManager<DateTimeAddUpdateReqDto, Da
     public DateTimeManager(DateTimeRepository dateTimeRepository, FormService formService) {
         this.dateTimeRepository = dateTimeRepository;
         this.formService = formService;
+    }
+
+    @Override
+    public DateTimeResDto get(UUID formId, Long questionId) {
+        return DateTimeResDto.create(dateTimeRepository.findByFormIdAndId(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override

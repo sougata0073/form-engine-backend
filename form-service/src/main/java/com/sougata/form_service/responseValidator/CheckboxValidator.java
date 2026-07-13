@@ -13,12 +13,12 @@ public class CheckboxValidator {
 
         @Override
         public boolean isValid(CheckboxValidationRequestDto validationRequestDto, CheckboxValidationConfig.SelectAtLeast validationConfig) {
-            if (validationRequestDto.getResponseIndexes().size() < validationConfig.getNumber()) {
+            if (validationRequestDto.getResponseOptionIds().size() < validationConfig.getNumber()) {
                 throw new ResponseValidationException(
                         String.format(
                                 ExceptionMessages.INVALID_SELECT_AT_LEAST,
                                 validationConfig.getNumber(),
-                                validationRequestDto.getResponseIndexes().size()
+                                validationRequestDto.getResponseOptionIds().size()
                         )
                 );
             }
@@ -42,12 +42,12 @@ public class CheckboxValidator {
 
         @Override
         public boolean isValid(CheckboxValidationRequestDto validationRequestDto, CheckboxValidationConfig.SelectAtMost validationConfig) {
-            if (validationRequestDto.getResponseIndexes().size() > validationConfig.getNumber()) {
+            if (validationRequestDto.getResponseOptionIds().size() > validationConfig.getNumber()) {
                 throw new ResponseValidationException(
                         String.format(
                                 ExceptionMessages.INVALID_SELECT_AT_MOST,
                                 validationConfig.getNumber(),
-                                validationRequestDto.getResponseIndexes().size()
+                                validationRequestDto.getResponseOptionIds().size()
                         )
                 );
             }
@@ -71,12 +71,12 @@ public class CheckboxValidator {
 
         @Override
         public boolean isValid(CheckboxValidationRequestDto validationRequestDto, CheckboxValidationConfig.SelectExactly validationConfig) {
-            if (validationRequestDto.getResponseIndexes().size() != validationConfig.getNumber()) {
+            if (validationRequestDto.getResponseOptionIds().size() != validationConfig.getNumber()) {
                 throw new ResponseValidationException(
                         String.format(
                                 ExceptionMessages.INVALID_SELECT_EXACTLY,
                                 validationConfig.getNumber(),
-                                validationRequestDto.getResponseIndexes().size()
+                                validationRequestDto.getResponseOptionIds().size()
                         )
                 );
             }

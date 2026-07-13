@@ -16,6 +16,16 @@ spring:
       enabled: true
       poll-interval: 200ms
       quiet-period: 100ms
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${OAUTH2_GOOGLE_CLIENT_ID}
+            client-secret: ${OAUTH2_GOOGLE_CLIENT_SECRET}
+          github:
+            client-id: ${OAUTH2_GITHUB_CLIENT_ID}
+            client-secret: ${OAUTH2_GITHUB_CLIENT_SECRET}
 
 eureka:
   instance:
@@ -46,3 +56,5 @@ info:
 jwt:
   secret-string: ${JWT_SECRET_STRING}
   expiration-millis: ${JWT_EXPIRATION_MILLIS}
+
+frontend-url: ${FRONTEND_URL}

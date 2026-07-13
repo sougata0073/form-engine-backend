@@ -23,7 +23,7 @@ public class UserController {
     public SingleValueResponseDto<Boolean> existsByUsername(
             @PathVariable("username") String username
     ) {
-        var exists = userService.existsByUsername(username);
+        var exists = userService.existsByEmail(username);
         return SingleValueResponseDto.of(exists);
     }
 }

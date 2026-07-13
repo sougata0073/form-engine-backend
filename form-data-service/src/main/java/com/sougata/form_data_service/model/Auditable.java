@@ -24,6 +24,6 @@ public class Auditable {
 
     @LastModifiedDate
     @Column(insertable = false)
-    private Instant lastModifiesAt;
+    private Instant lastModifiedAt;
 
 }

@@ -19,6 +19,14 @@ public class MultipleChoiceGridValidationRequestDto extends ValidationRequest {
 
     @NotNull(message = ValidationRequestValidationMessages.MULTIPLE_CHOICE_GRID_ROWS_NOT_NULL)
     @Size(max = 20, message = ValidationRequestValidationMessages.MULTIPLE_CHOICE_GRID_ROW_LIST_INVALID_SIZE)
-    private List<@Valid MultipleChoiceGridRowValidationRequestDto> rows;
+    private List<@Valid Row> rows;
+
+    public record Row(
+            @NotNull
+            Long rowId,
+
+            Long responseColumnId
+    ) {
+    }
 
 }

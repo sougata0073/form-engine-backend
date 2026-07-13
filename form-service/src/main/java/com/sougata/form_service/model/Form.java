@@ -1,5 +1,6 @@
 package com.sougata.form_service.model;
 
+import com.sougata.form_service.model.questionSchema.*;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -8,6 +9,7 @@ import lombok.Setter;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -28,6 +30,9 @@ public class Form extends Auditable {
     private UUID userId;
 
     @Column(columnDefinition = "text")
+    private String name;
+
+    @Column(columnDefinition = "text")
     private String title;
 
     @Column(columnDefinition = "text")
@@ -46,46 +51,49 @@ public class Form extends Auditable {
 
     private Long stopAcceptingResponseAfterResponse;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "form")
-    private List<Checkbox> checkboxes;
+    @Column(nullable = false)
+    private Instant lastOpenedOn;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "form")
-    private List<Dropdown> dropdowns;
+    private List<Checkbox> checkboxes = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "form")
-    private List<FileUpload> fileUploads;
+    private List<Dropdown> dropdowns = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "form")
-    private List<LinearScale> linearScales;
+    private List<FileUpload> fileUploads = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "form")
-    private List<MultipleChoice> multipleChoices;
+    private List<LinearScale> linearScales = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "form")
-    private List<MultipleChoiceGrid> multipleChoiceGrids;
+    private List<MultipleChoice> multipleChoices = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "form")
-    private List<Paragraph> paragraphs;
+    private List<MultipleChoiceGrid> multipleChoiceGrids = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "form")
-    private List<Rating> ratings;
+    private List<Paragraph> paragraphs = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "form")
-    private List<ShortAnswer> shortAnswers;
+    private List<Rating> ratings = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "form")
-    private List<TickBoxGrid> tickBoxGrids;
+    private List<ShortAnswer> shortAnswers = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "form")
-    private List<Date> dates;
+    private List<TickBoxGrid> tickBoxGrids = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "form")
-    private List<Time> times;
+    private List<Date> dates = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "form")
-    private List<DateTime> dateTimes;
+    private List<Time> times = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "form")
-    private List<Duration> durations;
+    private List<DateTime> dateTimes = new ArrayList<>();
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "form")
+    private List<Duration> durations = new ArrayList<>();
 
 }

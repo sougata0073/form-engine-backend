@@ -7,7 +7,7 @@ import com.sougata.form_service.dto.question.response.RatingResDto;
 import com.sougata.form_service.dto.validation.request.RatingValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.exception.ResponseValidationException;
-import com.sougata.form_service.model.Rating;
+import com.sougata.form_service.model.questionSchema.Rating;
 import com.sougata.form_service.repository.RatingRepository;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.QuestionManager;
@@ -24,6 +24,11 @@ public class RatingManager extends QuestionManager<RatingAddUpdateReqDto, Rating
     public RatingManager(RatingRepository ratingRepository, FormService formService) {
         this.ratingRepository = ratingRepository;
         this.formService = formService;
+    }
+
+    @Override
+    public RatingResDto get(UUID formId, Long questionId) {
+        return RatingResDto.create(ratingRepository.findByFormIdAndId(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
@@ -71,11 +76,11 @@ public class RatingManager extends QuestionManager<RatingAddUpdateReqDto, Rating
 
     @Override
     public boolean validateResponse(RatingValidationRequestDto validationDto) {
-        Rating rating = ratingRepository.findById(validationDto.getQuestionId())
+        var maxRatingNumber = ratingRepository.getMaxRatingNumber(validationDto.getQuestionId())
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.RATING, validationDto.getQuestionId()));
 
-        if (validationDto.getRating() > rating.getMaxRatingNumber()) {
-            throw new ResponseValidationException(String.format(ValidationMessages.INVALID_RATING_NUMBER, rating.getMaxRatingNumber()));
+        if (validationDto.getRating() > maxRatingNumber) {
+            throw new ResponseValidationException(String.format(ValidationMessages.INVALID_RATING_NUMBER, maxRatingNumber));
         }
 
         return true;

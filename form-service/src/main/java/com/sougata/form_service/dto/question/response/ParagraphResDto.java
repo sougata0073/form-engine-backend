@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.validationConfig.ValidationConfig;
 import com.sougata.form_service.exception.JsonParsingException;
-import com.sougata.form_service.model.Paragraph;
+import com.sougata.form_service.model.questionSchema.Paragraph;
 import com.sougata.form_service.util.JsonUtil;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

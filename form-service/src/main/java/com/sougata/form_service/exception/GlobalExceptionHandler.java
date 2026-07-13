@@ -15,4 +15,10 @@ public class GlobalExceptionHandler {
         return e.getDto();
     }
 
+    @ExceptionHandler(FormResponseAlreadySubmittedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ViewFormErrorResDto handleFormResponseAlreadySubmittedException(FormResponseAlreadySubmittedException e) {
+        return e.getDto();
+    }
+
 }

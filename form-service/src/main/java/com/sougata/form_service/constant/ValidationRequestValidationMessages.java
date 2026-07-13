@@ -18,7 +18,7 @@ public class ValidationRequestValidationMessages {
     public static final String QUESTION_TYPE_NOT_NULL = "Question type can not be empty";
     public static final String FILE_URL_NOT_NULL = "File URL can not be empty";
     public static final String FILE_TYPE_NOT_NULL = "File type can not be empty";
-    public static final String FILE_SIZE_IN_MB_NOT_NULL = "File size in MB can not be empty";
+    public static final String FILE_SIZE_NOT_NULL = "File size in MB can not be empty";
     public static final String SCALE_NOT_NULL = "Scale can not be empty";
     public static final String MULTIPLE_CHOICE_GRID_ROWS_NOT_NULL = "Multiple choice grid rows can not be empty";
     public static final String MULTIPLE_CHOICE_GRID_ROW_LIST_INVALID_SIZE = "Multiple choice grid row list size must be between 1 and 20";

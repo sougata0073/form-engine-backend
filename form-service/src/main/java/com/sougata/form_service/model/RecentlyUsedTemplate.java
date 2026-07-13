@@ -1,0 +1,39 @@
+package com.sougata.form_service.model;
+
+import com.github.f4b6a3.tsid.TsidCreator;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.util.UUID;
+
+@Entity
+@Table(
+        name = "recently_used_templates",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "unique_user_id_template_id",
+                        columnNames = {"user_id", "template_id"}
+                )
+        })
+@EntityListeners(AuditingEntityListener.class)
+@AllArgsConstructor
+@NoArgsConstructor
+@Getter
+@Setter
+public class RecentlyUsedTemplate extends Auditable {
+
+    @Id
+    private Long id = TsidCreator.getTsid().toLong();
+
+    @Column(nullable = false)
+    private UUID userId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(nullable = false)
+    private Template template;
+
+}
