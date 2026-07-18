@@ -83,10 +83,6 @@ public class ParagraphManager extends ResponseManager<ParagraphResponseAddReqDto
     public ParagraphResponseQuestionDto getResponseByQuestion(UUID formId, ParagraphResDto questionRes) {
         var grouped = paragraphRepository.groupedByText(formId, questionRes.getId());
 
-        var totalResponseCount = grouped.stream()
-                .mapToLong(g -> g.get("responseCount", Long.class).intValue())
-                .sum();
-
         var p = new ParagraphResponseQuestionDto();
 
         var responses = grouped.stream().map(g -> new ParagraphResponseQuestionDto.Response(
@@ -99,7 +95,6 @@ public class ParagraphManager extends ResponseManager<ParagraphResponseAddReqDto
         p.setQuestion(questionRes.getQuestion());
         p.setQuestionType(questionRes.getQuestionType());
         p.setResponses(responses);
-        p.setTotalResponseCount(totalResponseCount);
 
         return p;
     }

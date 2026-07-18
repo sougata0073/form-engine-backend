@@ -22,4 +22,19 @@ public interface DurationRepository extends QuestionResponseRepository<Duration,
             """)
     List<Tuple> getResponseDurations(UUID formId);
 
+    @Query(value = """
+            select
+            d.hours hours,
+            d.minutes minutes,
+            d.seconds seconds,
+            count(d.id) responseCount,
+            array_agg(fr.id order by fr.created_at) responseIds
+            from durations d
+            join form_responses fr
+            on d.form_response_id = fr.id
+            where fr.form_id = :formId and d.question_id = :questionId
+            group by d.hours, d.minutes, d.seconds
+            """, nativeQuery = true)
+    List<Tuple> groupedByDuration(UUID formId, Long questionId);
+
 }

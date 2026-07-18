@@ -19,7 +19,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Setter
 public class Paragraph extends QuestionResponse {
 
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "text", nullable = false)
     private String text;
 
 }

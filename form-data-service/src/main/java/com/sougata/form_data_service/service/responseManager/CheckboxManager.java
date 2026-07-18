@@ -108,10 +108,6 @@ public class CheckboxManager extends ResponseManager<CheckboxResponseAddReqDto, 
     public CheckboxResponseQuestionDto getResponseByQuestion(UUID formId, CheckboxResDto questionRes) {
         var grouped = checkboxRepository.groupedByResponseOptions(formId, questionRes.getId());
 
-        var totalResponseCount = grouped.stream()
-                .mapToLong(g -> g.get("responseCount", Long.class).intValue())
-                .sum();
-
         var cb = new CheckboxResponseQuestionDto();
 
         var responses = grouped.stream().map(g -> new CheckboxResponseQuestionDto.Response(
@@ -125,7 +121,6 @@ public class CheckboxManager extends ResponseManager<CheckboxResponseAddReqDto, 
         cb.setQuestion(questionRes.getQuestion());
         cb.setQuestionType(questionRes.getQuestionType());
         cb.setResponses(responses);
-        cb.setTotalResponseCount(totalResponseCount);
 
         return cb;
     }

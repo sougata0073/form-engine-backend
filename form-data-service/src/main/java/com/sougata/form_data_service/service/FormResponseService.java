@@ -4,6 +4,7 @@ import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.form.FormResponseAddReqDto;
 import com.sougata.form_data_service.dto.form.FormResponseAddResDto;
 import com.sougata.form_data_service.dto.form.FormResponseSummaryResDto;
+import com.sougata.form_data_service.dto.response.question.AllResponseCountAndIdsResDto;
 import com.sougata.form_data_service.dto.response.question.ResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.ResponseSummaryResDto;
 
@@ -21,4 +22,6 @@ public interface FormResponseService {
     boolean getIsResponseAlreadySubmitted(UUID formId, UUID userId);
 
     void deleteResponses(UUID formId, Long questionId, QuestionType questionType);
+
+    AllResponseCountAndIdsResDto getAllResponseCountAndIds(UUID formId);
 }

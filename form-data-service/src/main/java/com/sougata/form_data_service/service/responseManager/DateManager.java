@@ -85,10 +85,6 @@ public class DateManager extends ResponseManager<DateResponseAddReqDto, DateResp
     public DateResponseQuestionDto getResponseByQuestion(UUID formId, DateResDto questionRes) {
         var grouped = dateRepository.groupedByDate(formId, questionRes.getId());
 
-        var totalResponseCount = grouped.stream()
-                .mapToLong(g -> g.get("responseCount", Long.class).intValue())
-                .sum();
-
         var d = new DateResponseQuestionDto();
 
         var responses = grouped.stream().map(g -> {
@@ -106,7 +102,6 @@ public class DateManager extends ResponseManager<DateResponseAddReqDto, DateResp
         d.setQuestion(questionRes.getQuestion());
         d.setQuestionType(questionRes.getQuestionType());
         d.setResponses(responses);
-        d.setTotalResponseCount(totalResponseCount);
 
         return d;
     }

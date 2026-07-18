@@ -3,10 +3,12 @@ package com.sougata.form_data_service.dto.question.response;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 @NoArgsConstructor
 @Getter
 @Setter
+@ToString
 public class LinearScaleResDto extends QuestionRes {
     private Integer fromNumber;
     private Integer toNumber;

@@ -21,11 +21,13 @@ public class FileUpload extends QuestionResponse {
 
     private String fileName;
 
-    @Column(columnDefinition = "text")
+    @Column(columnDefinition = "text", nullable = false)
     private String fileUrl;
 
+    @Column(nullable = false)
     private String fileMimeType;
 
+    @Column(nullable = false)
     private Integer fileSize;
 
 }

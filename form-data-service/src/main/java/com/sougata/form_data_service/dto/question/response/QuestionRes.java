@@ -3,10 +3,7 @@ package com.sougata.form_data_service.dto.question.response;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.sougata.form_data_service.constant.QuestionType;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import tools.jackson.databind.annotation.JsonSerialize;
 import tools.jackson.databind.ser.std.ToStringSerializer;
 
@@ -36,6 +33,7 @@ import tools.jackson.databind.ser.std.ToStringSerializer;
 @AllArgsConstructor
 @Getter
 @Setter
+@ToString
 public abstract class QuestionRes {
     @JsonSerialize(using = ToStringSerializer.class)
     private Long id;

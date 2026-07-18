@@ -136,7 +136,37 @@ public class TickBoxGridManager extends ResponseManager<TickBoxGridResponseAddRe
 
     @Override
     public TickBoxGridResponseQuestionDto getResponseByQuestion(UUID formId, TickBoxGridResDto questionRes) {
-        return null;
+
+        var grouped = tickBoxGridRepository.groupedByResponseRowColumn(formId, questionRes.getId());
+
+        var tb = new TickBoxGridResponseQuestionDto();
+
+        var rowMap = grouped.stream()
+                .collect(Collectors.groupingBy(g -> g.get("rowId", Long.class)));
+
+        var responses = grouped.stream()
+                .map(g -> {
+                    var rowId = g.get("rowId", Long.class);
+                    return new TickBoxGridResponseQuestionDto.RowRes(
+                            rowId,
+                            rowMap.get(rowId).stream()
+                                    .map(r -> new TickBoxGridResponseQuestionDto.ColumnRes(
+                                            Arrays.stream(r.get("columnIds", Long[].class)).map(Object::toString).toList(),
+                                            r.get("responseCount", Long.class).intValue(),
+                                            Arrays.stream(r.get("responseIds", Long[].class)).map(Object::toString).toList()
+                                    )).toList()
+                    );
+                })
+                .toList();
+
+        tb.setRows(questionRes.getRows());
+        tb.setColumns(questionRes.getColumns());
+        tb.setQuestionId(questionRes.getId());
+        tb.setQuestion(questionRes.getQuestion());
+        tb.setQuestionType(questionRes.getQuestionType());
+        tb.setResponses(responses);
+
+        return tb;
     }
 
     @Override

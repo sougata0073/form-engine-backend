@@ -4,6 +4,7 @@ import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.DropdownResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.DropdownResDto;
 import com.sougata.form_data_service.dto.response.question.DropdownResponseQuestionDto;
+import com.sougata.form_data_service.dto.response.question.MultipleChoiceResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.DropdownResponseSummaryDto;
 import com.sougata.form_data_service.model.Dropdown;
 import com.sougata.form_data_service.model.FormResponse;
@@ -94,7 +95,23 @@ public class DropdownManager extends ResponseManager<DropdownResponseAddReqDto, 
 
     @Override
     public DropdownResponseQuestionDto getResponseByQuestion(UUID formId, DropdownResDto questionRes) {
-        return null;
+        var grouped = dropdownRepository.groupedByResponseOption(formId, questionRes.getId());
+
+        var d = new DropdownResponseQuestionDto();
+
+        var responses = grouped.stream().map(g -> new DropdownResponseQuestionDto.Response(
+                g.get("optionId", Long.class),
+                g.get("responseCount", Long.class).intValue(),
+                Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList()
+        )).toList();
+
+        d.setOptions(questionRes.getOptions());
+        d.setQuestionId(questionRes.getId());
+        d.setQuestion(questionRes.getQuestion());
+        d.setQuestionType(questionRes.getQuestionType());
+        d.setResponses(responses);
+
+        return d;
     }
 
     @Override

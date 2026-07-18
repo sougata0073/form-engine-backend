@@ -3,6 +3,7 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.DurationResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.DurationResDto;
+import com.sougata.form_data_service.dto.response.question.DateResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.question.DurationResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.DurationResponseSummaryDto;
 import com.sougata.form_data_service.model.Duration;
@@ -11,10 +12,8 @@ import com.sougata.form_data_service.repository.DurationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.time.Instant;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("DURATION_RESPONSE_MANAGER")
@@ -92,7 +91,31 @@ public class DurationManager extends ResponseManager<DurationResponseAddReqDto, 
 
     @Override
     public DurationResponseQuestionDto getResponseByQuestion(UUID formId, DurationResDto questionRes) {
-        return null;
+        var grouped = durationRepository.groupedByDuration(formId, questionRes.getId());
+
+        var d = new DurationResponseQuestionDto();
+
+        var responses = grouped.stream().map(g -> {
+            Integer hours = g.get("hours", Integer.class);
+            Integer minutes = g.get("minutes", Integer.class);
+            Integer seconds = g.get("seconds", Integer.class);
+
+            return new DurationResponseQuestionDto.Response(
+                    hours,
+                    minutes,
+                    seconds,
+                    g.get("responseCount", Long.class).intValue(),
+                    Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList()
+            );
+
+        }).toList();
+
+        d.setQuestionId(questionRes.getId());
+        d.setQuestion(questionRes.getQuestion());
+        d.setQuestionType(questionRes.getQuestionType());
+        d.setResponses(responses);
+
+        return d;
     }
 
     @Override

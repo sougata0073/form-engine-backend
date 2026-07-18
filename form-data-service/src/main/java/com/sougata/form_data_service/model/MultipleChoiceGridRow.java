@@ -23,6 +23,7 @@ public class MultipleChoiceGridRow extends Auditable {
     @Column(nullable = false)
     private Long rowId;
 
+    @Column(nullable = false)
     private Long responseColumnId;
 
     @ManyToOne(fetch = FetchType.LAZY)

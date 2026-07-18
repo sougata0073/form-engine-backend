@@ -26,27 +26,25 @@ public interface CheckboxRepository extends QuestionResponseRepository<Checkbox,
 
     @Query(value = """
             select
-            optionIds,
-            count(*) responseCount,
-            array_agg(responseId order by createdAt) as responseIds
+                optionIds,
+                count(*) as responseCount,
+                array_agg(responseId order by createdAt) as responseIds
             from (
                 select
-                fr.id responseId,
-                fr.created_at createdAt,
-                coalesce(
-                    array_agg(co.response_option_id order by co.response_option_id) filter (where co.response_option_id is not null),
-                    '{}'
-                ) optionIds
+                    fr.id as responseId,
+                    fr.created_at as createdAt,
+                    array_agg(co.response_option_id order by co.response_option_id) as optionIds
                 from checkboxes c
                 left join checkbox_options co
-                on co.checkbox_id = c.id
+                    on co.checkbox_id = c.id
                 join form_responses fr
-                on fr.id = c.form_response_id
+                    on fr.id = c.form_response_id
                 where c.question_id = :questionId
-                and fr.form_id = :formId
-                group by c.id, fr.id
+                  and fr.form_id = :formId
+                group by c.id, fr.id, fr.created_at
             ) responses
             group by optionIds
+            order by responseCount desc
             """, nativeQuery = true)
     List<Tuple> groupedByResponseOptions(UUID formId, Long questionId);
 

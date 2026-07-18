@@ -18,6 +18,7 @@ public interface RatingRepository extends QuestionResponseRepository<Rating, Lon
             count(r.rating) responseCount
             from Rating r
             where r.formResponse.formId = :formId
+            and r.rating is not null
             group by r.rating, r.questionId
             """)
     List<Tuple> getResponseRatingCount(UUID formId);

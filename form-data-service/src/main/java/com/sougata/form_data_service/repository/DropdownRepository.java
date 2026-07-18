@@ -22,4 +22,18 @@ public interface DropdownRepository extends QuestionResponseRepository<Dropdown,
             """)
     List<Tuple> getResponseOptionCount(UUID formId);
 
+    @Query(value = """
+            select
+                d.response_option_id as optionId,
+                count(*) as responseCount,
+                array_agg(fr.id order by fr.created_at) as responseIds
+            from dropdowns d
+            join form_responses fr
+                on fr.id = d.form_response_id
+            where d.question_id = :questionId
+              and fr.form_id = :formId
+            group by d.response_option_id
+            order by responseCount desc
+            """, nativeQuery = true)
+    List<Tuple> groupedByResponseOption(UUID formId, Long questionId);
 }

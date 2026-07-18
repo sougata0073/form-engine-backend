@@ -22,4 +22,18 @@ public interface MultipleChoiceRepository extends QuestionResponseRepository<Mul
             """)
     List<Tuple> getResponseOptionCount(UUID formId);
 
+    @Query(value = """
+            select
+                mc.response_option_id as optionId,
+                count(*) as responseCount,
+                array_agg(fr.id order by fr.created_at) as responseIds
+            from multiple_choices mc
+            join form_responses fr
+                on fr.id = mc.form_response_id
+            where mc.question_id = :questionId
+              and fr.form_id = :formId
+            group by mc.response_option_id
+            order by responseCount desc
+            """, nativeQuery = true)
+    List<Tuple> groupedByResponseOption(UUID formId, Long questionId);
 }

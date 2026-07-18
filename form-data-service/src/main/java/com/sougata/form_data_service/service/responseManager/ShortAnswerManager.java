@@ -84,10 +84,6 @@ public class ShortAnswerManager
     public ShortAnswerResponseQuestionDto getResponseByQuestion(UUID formId, ShortAnswerResDto questionRes) {
         var grouped = shortAnswerRepository.groupedByText(formId, questionRes.getId());
 
-        var totalResponseCount = grouped.stream()
-                .mapToLong(g -> g.get("responseCount", Long.class).intValue())
-                .sum();
-
         var sa = new ShortAnswerResponseQuestionDto();
 
         var responses = grouped.stream().map(g -> new ShortAnswerResponseQuestionDto.Response(
@@ -100,7 +96,6 @@ public class ShortAnswerManager
         sa.setQuestion(questionRes.getQuestion());
         sa.setQuestionType(questionRes.getQuestionType());
         sa.setResponses(responses);
-        sa.setTotalResponseCount(totalResponseCount);
 
         return sa;
     }

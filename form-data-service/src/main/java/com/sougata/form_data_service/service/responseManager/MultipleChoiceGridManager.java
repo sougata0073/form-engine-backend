@@ -126,7 +126,33 @@ public class MultipleChoiceGridManager extends ResponseManager<MultipleChoiceGri
 
     @Override
     public MultipleChoiceGridResponseQuestionDto getResponseByQuestion(UUID formId, MultipleChoiceGridResDto questionRes) {
-        return null;
+        var grouped = multipleChoiceGridRepository.groupedByResponseRowColumn(formId, questionRes.getId());
+
+        var mc = new MultipleChoiceGridResponseQuestionDto();
+        var rowMap = grouped.stream().collect(Collectors.groupingBy(g -> g.get("rowId", Long.class)));
+
+        var responses = grouped.stream().map(g -> {
+            var rowId = g.get("rowId", Long.class);
+            return new MultipleChoiceGridResponseQuestionDto.RowRes(
+                    rowId,
+                    rowMap.get(rowId).stream()
+                            .map(r -> new MultipleChoiceGridResponseQuestionDto.ColumnRes(
+                                            r.get("columnId", Long.class),
+                                            r.get("responseCount", Long.class).intValue(),
+                                            Arrays.stream(r.get("responseIds", Long[].class)).map(Object::toString).toList()
+                                    )
+                            ).toList()
+            );
+        }).toList();
+
+        mc.setRows(questionRes.getRows());
+        mc.setColumns(questionRes.getColumns());
+        mc.setQuestionId(questionRes.getId());
+        mc.setQuestion(questionRes.getQuestion());
+        mc.setQuestionType(questionRes.getQuestionType());
+        mc.setResponses(responses);
+
+        return mc;
     }
 
     @Override

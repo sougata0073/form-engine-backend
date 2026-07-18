@@ -1,10 +1,13 @@
 package com.sougata.auth_service.repository;
 
 import com.sougata.auth_service.constant.AuthProvider;
+import com.sougata.auth_service.dto.UserSummaryDto;
 import com.sougata.auth_service.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -21,4 +24,17 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     boolean existsBySocialAuthIdAndAuthProvider(String socialAuthId, AuthProvider authProvider);
 
     Optional<User> findBySocialAuthIdAndAuthProvider(String socialAuthId, AuthProvider authProvider);
+
+    @Query("""
+    select
+    new com.sougata.auth_service.dto.UserSummaryDto(
+        u.id,
+        u.username,
+        u.email,
+        u.avatarUrl
+    )
+    from User u
+    where u.id in :userIds
+    """)
+    List<UserSummaryDto> getUserSummaries(List<UUID> userIds);
 }

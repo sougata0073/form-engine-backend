@@ -3,6 +3,7 @@ package com.sougata.form_data_service.dto.question.response;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import tools.jackson.databind.annotation.JsonSerialize;
 import tools.jackson.databind.ser.std.ToStringSerializer;
 
@@ -11,6 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
+@ToString
 public class MultipleChoiceGridResDto extends QuestionRes {
     private List<MultipleChoiceGridRowResDto> rows;
     private List<MultipleChoiceGridColumnResDto> columns;

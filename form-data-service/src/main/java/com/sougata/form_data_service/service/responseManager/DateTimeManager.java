@@ -85,10 +85,6 @@ public class DateTimeManager extends ResponseManager<DateTimeResponseAddReqDto, 
     public DateTimeResponseQuestionDto getResponseByQuestion(UUID formId, DateTimeResDto questionRes) {
         var grouped = dateTimeRepository.groupedByDateTimes(formId, questionRes.getId());
 
-        var totalResponseCount = grouped.stream()
-                .mapToLong(g -> g.get("responseCount", Long.class).intValue())
-                .sum();
-
         var dt = new DateTimeResponseQuestionDto();
 
         var responses = grouped.stream().map(g -> {
@@ -106,7 +102,6 @@ public class DateTimeManager extends ResponseManager<DateTimeResponseAddReqDto, 
         dt.setQuestion(questionRes.getQuestion());
         dt.setQuestionType(questionRes.getQuestionType());
         dt.setResponses(responses);
-        dt.setTotalResponseCount(totalResponseCount);
 
         return dt;
     }

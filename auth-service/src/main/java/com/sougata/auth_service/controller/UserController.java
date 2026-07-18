@@ -1,15 +1,17 @@
 package com.sougata.auth_service.controller;
 
 import com.sougata.auth_service.dto.SingleValueResponseDto;
+import com.sougata.auth_service.dto.UserSummariesResDto;
 import com.sougata.auth_service.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping(path = "api/v1/users")
+@CrossOrigin
 public class UserController {
 
     private final UserService userService;
@@ -25,5 +27,13 @@ public class UserController {
     ) {
         var exists = userService.existsByEmail(username);
         return SingleValueResponseDto.of(exists);
+    }
+
+    @PostMapping(path = "summaries")
+    public UserSummariesResDto userSummaries(
+            @RequestBody List<UUID> userIds
+    ) {
+        System.out.println("Controller reached");
+        return userService.getUserSummaries(userIds);
     }
 }

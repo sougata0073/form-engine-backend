@@ -20,6 +20,7 @@ public class CheckboxOption extends Auditable {
     @Id
     private Long id = TsidCreator.getTsid().toLong();
 
+    @Column(nullable = false)
     private Long responseOptionId;
 
     @ManyToOne(fetch = FetchType.LAZY)

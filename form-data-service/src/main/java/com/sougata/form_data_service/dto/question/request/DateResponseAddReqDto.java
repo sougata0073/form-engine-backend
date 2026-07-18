@@ -1,6 +1,7 @@
 package com.sougata.form_data_service.dto.question.request;
 
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,6 +15,7 @@ import java.time.Instant;
 @Setter
 public class DateResponseAddReqDto extends QuestionResponseAddReq {
 
+    @NotNull
     private Instant date;
 
 }

@@ -4,6 +4,7 @@ import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.form.FormResponseAddReqDto;
 import com.sougata.form_data_service.dto.form.FormResponseAddResDto;
 import com.sougata.form_data_service.dto.form.FormResponseSummaryResDto;
+import com.sougata.form_data_service.dto.response.question.AllResponseCountAndIdsResDto;
 import com.sougata.form_data_service.dto.response.question.ResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.ResponseSummaryResDto;
 import com.sougata.form_data_service.service.FormResponseService;
@@ -51,10 +52,10 @@ public class FormResponseController {
         return formResponseService.getResponseSummaries(formId);
     }
 
-    @GetMapping(path = "{formId}/response-by-question", params = {"questionId"})
-    public ResponseQuestionDto getResponsesByQuestion(
+    @GetMapping(path = "{formId}/questions/{questionId}/response")
+    public ResponseQuestionDto getResponseByQuestion(
             @PathVariable("formId") UUID formId,
-            @RequestParam("questionId") Long questionId
+            @PathVariable("questionId") Long questionId
     ) {
         return formResponseService.getResponseByQuestion(formId, questionId);
     }
@@ -74,6 +75,13 @@ public class FormResponseController {
             @RequestParam("questionType") QuestionType questionType
     ) {
         formResponseService.deleteResponses(formId, questionId, questionType);
+    }
+
+    @GetMapping(path = "{formId}/all-response-count-and-ids")
+    public AllResponseCountAndIdsResDto allResponseCountAndIds(
+            @PathVariable("formId") UUID formId
+    ) {
+        return formResponseService.getAllResponseCountAndIds(formId);
     }
 
 }

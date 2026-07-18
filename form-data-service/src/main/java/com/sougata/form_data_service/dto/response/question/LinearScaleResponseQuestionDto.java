@@ -11,6 +11,8 @@ import java.util.List;
 @Setter
 public class LinearScaleResponseQuestionDto extends ResponseQuestionDto {
 
+    private Integer fromNumber;
+    private Integer toNumber;
     private List<Response> responses;
 
     public record Response(

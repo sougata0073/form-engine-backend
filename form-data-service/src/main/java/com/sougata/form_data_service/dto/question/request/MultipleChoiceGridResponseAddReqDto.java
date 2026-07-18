@@ -24,6 +24,7 @@ public class MultipleChoiceGridResponseAddReqDto extends QuestionResponseAddReq 
             @NotNull
             Long rowId,
 
+            @NotNull
             Long responseColumnId
     ) {
     }

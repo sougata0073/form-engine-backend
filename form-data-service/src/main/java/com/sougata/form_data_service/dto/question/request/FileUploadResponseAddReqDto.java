@@ -2,6 +2,7 @@ package com.sougata.form_data_service.dto.question.request;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,10 +16,13 @@ public class FileUploadResponseAddReqDto extends QuestionResponseAddReq {
 
     private String fileName;
 
+    @NotNull
     private String fileUrl;
 
+    @NotNull
     private String fileMimeType;
 
+    @NotNull
     @Min(value = 1)
     @Max(value = 1_0485_7600)
     private Integer fileSize;

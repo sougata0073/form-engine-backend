@@ -96,11 +96,7 @@ public class LinearScaleManager extends ResponseManager<LinearScaleResponseAddRe
 
     @Override
     public LinearScaleResponseQuestionDto getResponseByQuestion(UUID formId, LinearScaleResDto questionRes) {
-        var grouped = linearScaleRepository.groupedByLinearScale(formId, questionRes.getId());
-
-        var totalResponseCount = grouped.stream()
-                .mapToLong(g -> g.get("responseCount", Long.class).intValue())
-                .sum();
+        var grouped = linearScaleRepository.groupedByResponseScale(formId, questionRes.getId());
 
         var ls = new LinearScaleResponseQuestionDto();
 
@@ -110,11 +106,12 @@ public class LinearScaleManager extends ResponseManager<LinearScaleResponseAddRe
                 Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList()
         )).toList();
 
+        ls.setFromNumber(questionRes.getFromNumber());
+        ls.setToNumber(questionRes.getToNumber());
         ls.setQuestionId(questionRes.getId());
         ls.setQuestion(questionRes.getQuestion());
         ls.setQuestionType(questionRes.getQuestionType());
         ls.setResponses(responses);
-        ls.setTotalResponseCount(totalResponseCount);
 
         return ls;
     }

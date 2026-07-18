@@ -3,6 +3,7 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.MultipleChoiceResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.MultipleChoiceResDto;
+import com.sougata.form_data_service.dto.response.question.CheckboxResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.question.MultipleChoiceResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.MultipleChoiceResponseSummaryDto;
 import com.sougata.form_data_service.model.FormResponse;
@@ -94,7 +95,23 @@ public class MultipleChoiceManager extends ResponseManager<MultipleChoiceRespons
 
     @Override
     public MultipleChoiceResponseQuestionDto getResponseByQuestion(UUID formId, MultipleChoiceResDto questionRes) {
-        return null;
+        var grouped = multipleChoiceRepository.groupedByResponseOption(formId, questionRes.getId());
+
+        var mc = new MultipleChoiceResponseQuestionDto();
+
+        var responses = grouped.stream().map(g -> new MultipleChoiceResponseQuestionDto.Response(
+                g.get("optionId", Long.class),
+                g.get("responseCount", Long.class).intValue(),
+                Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList()
+        )).toList();
+
+        mc.setOptions(questionRes.getOptions());
+        mc.setQuestionId(questionRes.getId());
+        mc.setQuestion(questionRes.getQuestion());
+        mc.setQuestionType(questionRes.getQuestionType());
+        mc.setResponses(responses);
+
+        return mc;
     }
 
     @Override

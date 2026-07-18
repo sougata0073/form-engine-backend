@@ -32,7 +32,8 @@ public interface LinearScaleRepository extends QuestionResponseRepository<Linear
             on ls.form_response_id = fr.id
             where fr.form_id = :formId and ls.question_id = :questionId
             group by ls.scale
+            order by responseCOunt desc
             """, nativeQuery = true)
-    List<Tuple> groupedByLinearScale(UUID formId, Long questionId);
+    List<Tuple> groupedByResponseScale(UUID formId, Long questionId);
 
 }

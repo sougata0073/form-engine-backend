@@ -1,9 +1,6 @@
 package com.sougata.form_data_service.dto.response.summary;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import tools.jackson.databind.annotation.JsonSerialize;
 import tools.jackson.databind.ser.std.ToStringSerializer;
 
@@ -13,6 +10,7 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 @Setter
+@ToString
 public class CheckboxResponseSummaryDto extends ResponseSummaryDto {
 
     private List<Response> responses;

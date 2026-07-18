@@ -108,10 +108,6 @@ public class RatingManager extends ResponseManager<RatingResponseAddReqDto, Rati
     public RatingResponseQuestionDto getResponseByQuestion(UUID formId, RatingResDto questionRes) {
         var grouped = ratingRepository.groupedByRating(formId, questionRes.getId());
 
-        var totalResponseCount = grouped.stream()
-                .mapToLong(g -> g.get("responseCount", Long.class).intValue())
-                .sum();
-
         var r = new RatingResponseQuestionDto();
 
         var responses = grouped.stream().map(g -> new RatingResponseQuestionDto.Response(
@@ -120,11 +116,12 @@ public class RatingManager extends ResponseManager<RatingResponseAddReqDto, Rati
                 Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList()
         )).toList();
 
+        r.setRatingIcon(questionRes.getRatingIcon());
+        r.setMaxRatingNumber(questionRes.getMaxRatingNumber());
         r.setQuestionId(questionRes.getId());
         r.setQuestion(questionRes.getQuestion());
         r.setQuestionType(questionRes.getQuestionType());
         r.setResponses(responses);
-        r.setTotalResponseCount(totalResponseCount);
 
         return r;
     }

@@ -1,5 +1,6 @@
 package com.sougata.form_data_service.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.Table;
@@ -18,9 +19,12 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Setter
 public class Duration extends QuestionResponse {
 
+    @Column(nullable = false)
     private Integer hours;
 
+    @Column(nullable = false)
     private Integer minutes;
 
+    @Column(nullable = false)
     private Integer seconds;
 }

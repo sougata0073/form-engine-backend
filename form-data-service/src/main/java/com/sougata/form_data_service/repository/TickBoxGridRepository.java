@@ -31,4 +31,30 @@ public interface TickBoxGridRepository extends QuestionResponseRepository<TickBo
             """)
     List<Tuple> getResponseOptionCount(UUID formId);
 
+    @Query(value = """
+            select
+                columnIds,
+                rowId,
+                count(*) as responseCount,
+                array_agg(responseId order by createdAt) as responseIds
+            from (
+                select
+                    fr.id as responseId,
+                    fr.created_at as createdAt,
+                    tbgr.row_id as rowId,
+                    array_agg(tbgc.response_option_id order by tbgc.response_option_id) as columnIds
+                from tick_box_grids tbg
+                join tick_box_grid_rows tbgr
+                    on tbgr.tick_box_grid_id = tbg.id
+                join tick_box_grid_columns tbgc
+                    on tbgc.tick_box_grid_row_id = tbgr.id
+                join form_responses fr
+                    on fr.id = tbg.form_response_id
+                where tbg.question_id = :questionId and fr.form_id = :formId
+                group by fr.id, fr.created_at, tbgr.row_id
+            ) x
+            group by rowId, columnIds
+            order by responseCount desc
+            """, nativeQuery = true)
+    List<Tuple> groupedByResponseRowColumn(UUID formId, Long questionId);
 }

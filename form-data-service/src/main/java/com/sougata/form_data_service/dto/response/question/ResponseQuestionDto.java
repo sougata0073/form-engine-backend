@@ -43,6 +43,6 @@ public class ResponseQuestionDto {
 
     private QuestionType questionType;
 
-    @JsonSerialize(using = ToStringSerializer.class)
-    private Long totalResponseCount;
+//    @JsonSerialize(using = ToStringSerializer.class)
+//    private Long totalResponseCount;
 }

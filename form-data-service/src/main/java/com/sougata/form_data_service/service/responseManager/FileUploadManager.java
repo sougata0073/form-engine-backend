@@ -92,10 +92,6 @@ public class FileUploadManager extends ResponseManager<FileUploadResponseAddReqD
     public FileUploadResponseQuestionDto getResponseByQuestion(UUID formId, FileUploadResDto questionRes) {
         var grouped = fileUploadRepository.groupedByFile(formId, questionRes.getId());
 
-        var totalResponseCount = grouped.stream()
-                .mapToLong(g -> g.get("responseCount", Long.class).intValue())
-                .sum();
-
         var sa = new FileUploadResponseQuestionDto();
 
         var responses = grouped.stream().map(g -> new FileUploadResponseQuestionDto.Response(
@@ -110,7 +106,6 @@ public class FileUploadManager extends ResponseManager<FileUploadResponseAddReqD
         sa.setQuestion(questionRes.getQuestion());
         sa.setQuestionType(questionRes.getQuestionType());
         sa.setResponses(responses);
-        sa.setTotalResponseCount(totalResponseCount);
 
         return sa;
     }

@@ -85,10 +85,6 @@ public class TimeManager extends ResponseManager<TimeResponseAddReqDto, TimeResp
     public TimeResponseQuestionDto getResponseByQuestion(UUID formId, TimeResDto questionRes) {
         var grouped = timeRepository.groupedByTime(formId, questionRes.getId());
 
-        var totalResponseCount = grouped.stream()
-                .mapToLong(g -> g.get("responseCount", Long.class).intValue())
-                .sum();
-
         var t = new TimeResponseQuestionDto();
 
         var responses = grouped.stream().map(g -> {
@@ -106,7 +102,6 @@ public class TimeManager extends ResponseManager<TimeResponseAddReqDto, TimeResp
         t.setQuestion(questionRes.getQuestion());
         t.setQuestionType(questionRes.getQuestionType());
         t.setResponses(responses);
-        t.setTotalResponseCount(totalResponseCount);
 
         return t;
     }
