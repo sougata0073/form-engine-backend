@@ -15,7 +15,7 @@ public record FormResponseDto(
         Boolean acceptingResponse,
         String notAcceptingResponseMessage,
         Instant stopAcceptingResponseOn,
-        Long stopAcceptingResponseAfterResponse,
+        Integer stopAcceptingResponseAfterResponse,
         Instant lastOpenedOn,
         List<QuestionRes> questions
 ) {

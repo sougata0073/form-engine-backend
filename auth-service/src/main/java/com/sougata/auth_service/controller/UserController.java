@@ -33,7 +33,6 @@ public class UserController {
     public UserSummariesResDto userSummaries(
             @RequestBody List<UUID> userIds
     ) {
-        System.out.println("Controller reached");
         return userService.getUserSummaries(userIds);
     }
 }

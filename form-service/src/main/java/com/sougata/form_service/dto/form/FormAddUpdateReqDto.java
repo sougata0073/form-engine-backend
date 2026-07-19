@@ -1,5 +1,6 @@
 package com.sougata.form_service.dto.form;
 
+import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.Instant;
@@ -21,6 +22,7 @@ public record FormAddUpdateReqDto(
 
         Instant stopAcceptingResponseOn,
 
-        Long stopAcceptingResponseAfterResponse
+        @Max(value = 1000)
+        Integer stopAcceptingResponseAfterResponse
 ) {
 }

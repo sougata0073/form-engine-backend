@@ -1,7 +1,6 @@
 package com.sougata.form_data_service.repository;
 
 import com.sougata.form_data_service.dto.form.FormResponseSummaryResDto;
-import com.sougata.form_data_service.dto.response.question.AllResponseCountAndIdsResDto;
 import com.sougata.form_data_service.model.FormResponse;
 import jakarta.persistence.Tuple;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,6 +1,7 @@
 package com.sougata.form_service.feignClient;
 
 import com.sougata.form_service.constant.QuestionType;
+import com.sougata.form_service.dto.form.FormResponseSummaryResDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,5 +25,8 @@ public interface FormDataServiceFeignClient {
             @RequestParam("questionId") Long questionId,
             @RequestParam("questionType") QuestionType questionType
     );
+
+    @GetMapping(path = "api/v1/forms/{formId}/response-summary")
+    FormResponseSummaryResDto getFormResponseSummary(@PathVariable("formId") UUID formId);
 
 }

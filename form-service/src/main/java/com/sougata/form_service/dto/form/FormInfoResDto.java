@@ -14,7 +14,7 @@ public record FormInfoResDto(
         Boolean acceptingResponse,
         String notAcceptingResponseMessage,
         Instant stopAcceptingResponseOn,
-        Long stopAcceptingResponseAfterResponse,
+        Integer stopAcceptingResponseAfterResponse,
         Instant lastOpenedOn
 ) {
 
@@ -33,5 +33,3 @@ public record FormInfoResDto(
         );
     }
 }
-
-

@@ -1,7 +1,7 @@
 package com.sougata.form_data_service.repository;
 
 import com.sougata.form_data_service.model.QuestionResponse;
-import com.sougata.form_data_service.projection.responseSummary.CommonResponseSummaryProjection;
+import com.sougata.form_data_service.projection.CommonResponseSummaryProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.NoRepositoryBean;
@@ -14,7 +14,7 @@ public interface QuestionResponseRepository<Q extends QuestionResponse, ID> exte
 
     @Query("""
             select
-            new com.sougata.form_data_service.projection.responseSummary.CommonResponseSummaryProjection(
+            new com.sougata.form_data_service.projection.CommonResponseSummaryProjection(
                         qr.questionId, count(qr.id)
             )
             from #{#entityName} qr

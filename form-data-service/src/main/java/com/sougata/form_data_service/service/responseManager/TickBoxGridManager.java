@@ -2,14 +2,14 @@ package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.TickBoxGridResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.TickBoxGridResDto;
 import com.sougata.form_data_service.dto.response.question.TickBoxGridResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.TickBoxGridResponseSummaryDto;
+import com.sougata.form_data_service.form_schema.dto.questionSchema.response.TickBoxGridResDto;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.TickBoxGrid;
 import com.sougata.form_data_service.model.TickBoxGridColumn;
 import com.sougata.form_data_service.model.TickBoxGridRow;
-import com.sougata.form_data_service.projection.responseSummary.CommonResponseSummaryProjection;
+import com.sougata.form_data_service.projection.CommonResponseSummaryProjection;
 import com.sougata.form_data_service.repository.TickBoxGridRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

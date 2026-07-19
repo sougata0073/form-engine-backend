@@ -2,17 +2,15 @@ package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.DurationResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.DurationResDto;
-import com.sougata.form_data_service.dto.response.question.DateResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.question.DurationResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.DurationResponseSummaryDto;
+import com.sougata.form_data_service.form_schema.dto.questionSchema.response.DurationResDto;
 import com.sougata.form_data_service.model.Duration;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.repository.DurationRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 

@@ -1,6 +1,6 @@
 package com.sougata.form_data_service.dto.form;
 
-import com.sougata.form_data_service.dto.question.response.QuestionRes;
+import com.sougata.form_data_service.form_schema.dto.questionSchema.response.QuestionRes;
 
 import java.time.Instant;
 import java.util.List;
@@ -15,7 +15,7 @@ public record FormResponseDto(
         Boolean acceptingResponse,
         String notAcceptingResponseMessage,
         Instant stopAcceptingResponseOn,
-        Long stopAcceptingResponseAfterResponse,
+        Integer stopAcceptingResponseAfterResponse,
         Instant lastOpenedOn,
         List<QuestionRes> questions
 ) {

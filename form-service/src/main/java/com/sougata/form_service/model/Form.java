@@ -49,7 +49,7 @@ public class Form extends Auditable {
 
     private Instant stopAcceptingResponseOn;
 
-    private Long stopAcceptingResponseAfterResponse;
+    private Integer stopAcceptingResponseAfterResponse;
 
     @Column(nullable = false)
     private Instant lastOpenedOn;

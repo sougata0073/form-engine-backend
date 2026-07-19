@@ -2,9 +2,9 @@ package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.RatingResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.RatingResDto;
 import com.sougata.form_data_service.dto.response.question.RatingResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.RatingResponseSummaryDto;
+import com.sougata.form_data_service.form_schema.dto.questionSchema.response.RatingResDto;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.Rating;
 import com.sougata.form_data_service.repository.RatingRepository;
@@ -58,24 +58,23 @@ public class RatingManager extends ResponseManager<RatingResponseAddReqDto, Rati
                                     r.setRatingIcon(qr.getRatingIcon());
                                     r.setMaxRatingNumber(qr.getMaxRatingNumber());
 
-                                    var ratingSum = 0L;
+                                    var ratingSum = 0d;
                                     var countMap = new HashMap<Integer, Long>();
 
                                     for (var cm : responseOptionCountMap.get(qr.getId())) {
                                         var rating = cm.get("rating", Integer.class);
-                                        ratingSum += rating;
+                                        ratingSum += cm.get("ratingSum", Long.class);
                                         countMap.put(rating, cm.get("responseCount", Long.class));
                                     }
 
-                                    r.setAverageRating((double) (ratingSum / rs.numberOfResponses()));
+                                    r.setAverageRating(ratingSum / rs.numberOfResponses());
 
-                                    var scales = IntStream.rangeClosed(1, qr.getMaxRatingNumber()).boxed();
+                                    var ratings = IntStream.rangeClosed(1, qr.getMaxRatingNumber()).boxed();
 
-                                    var responses = scales.map(sc ->
+                                    var responses = ratings.map(rt ->
                                             new RatingResponseSummaryDto.Response(
-                                                    sc,
-                                                    countMap.getOrDefault(sc, 0L)
-
+                                                    rt,
+                                                    countMap.getOrDefault(rt, 0L)
                                             )).toList();
 
                                     r.setResponses(responses);

@@ -2,9 +2,9 @@ package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.FileUploadResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.FileUploadResDto;
 import com.sougata.form_data_service.dto.response.question.FileUploadResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.FileUploadResponseSummaryDto;
+import com.sougata.form_data_service.form_schema.dto.questionSchema.response.FileUploadResDto;
 import com.sougata.form_data_service.model.FileUpload;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.repository.FileUploadRepository;

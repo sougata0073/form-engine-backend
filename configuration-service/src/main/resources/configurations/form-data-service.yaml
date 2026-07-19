@@ -3,10 +3,16 @@ server:
 
 spring:
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-    driver-class-name: org.postgresql.Driver
+    form-data-service:
+      jdbcUrl: ${FORM_DATA_SERVICE_DB_URL}
+      username: ${FORM_DATA_SERVICE_DB_USERNAME}
+      password: ${FORM_DATA_SERVICE_DB_PASSWORD}
+      driver-class-name: org.postgresql.Driver
+    form-schema:
+      jdbcUrl: ${FORM_SCHEMA_DB_URL}
+      username: ${FORM_SCHEMA_DB_USERNAME}
+      password: ${FORM_SCHEMA_DB_PASSWORD}
+      driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update

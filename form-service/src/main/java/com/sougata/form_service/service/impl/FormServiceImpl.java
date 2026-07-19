@@ -1,20 +1,16 @@
 package com.sougata.form_service.service.impl;
 
 import com.sougata.form_service.constant.CommonMessages;
-import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.constant.ValidationMessages;
 import com.sougata.form_service.constant.ViewFormErrorReason;
 import com.sougata.form_service.dto.common.SuccessMessageDto;
 import com.sougata.form_service.dto.form.*;
-import com.sougata.form_service.dto.question.QuestionSummariesResDto;
-import com.sougata.form_service.dto.question.QuestionSummaryDto;
 import com.sougata.form_service.dto.question.response.QuestionRes;
 import com.sougata.form_service.dto.validation.request.ResponseValidationRequestDto;
 import com.sougata.form_service.exception.*;
 import com.sougata.form_service.feignClient.FormDataServiceFeignClient;
 import com.sougata.form_service.model.Form;
 import com.sougata.form_service.projection.QuestionIdProjection;
-import com.sougata.form_service.projection.QuestionSummaryProjection;
 import com.sougata.form_service.repository.FormRepository;
 import com.sougata.form_service.repository.QuestionRepositoryFactory;
 import com.sougata.form_service.service.FormService;
@@ -126,10 +122,6 @@ public class FormServiceImpl implements FormService {
     public FormResponseDto viewForm(UUID id, UUID userId) {
         Form f = getFormById(id);
 
-        boolean isAcceptingDateExceeded =
-                f.getStopAcceptingResponseOn() != null &&
-                        Instant.now().isAfter(f.getStopAcceptingResponseOn());
-
         if (!f.getPublished()) {
             throw new FormNotAcceptingResponseException(
                     new ViewFormErrorResDto(
@@ -140,7 +132,14 @@ public class FormServiceImpl implements FormService {
             );
         }
 
-        if (!f.getAcceptingResponse() || isAcceptingDateExceeded) {
+        boolean isAcceptingDateExceeded =
+                f.getStopAcceptingResponseOn() != null &&
+                        Instant.now().isAfter(f.getStopAcceptingResponseOn());
+
+        boolean isNumberOfResponseExceeded = f.getStopAcceptingResponseAfterResponse() != null &&
+                formDataServiceFeignClient.getFormResponseSummary(f.getId()).responseCount() >= f.getStopAcceptingResponseAfterResponse();
+
+        if (!f.getAcceptingResponse() || isAcceptingDateExceeded || isNumberOfResponseExceeded) {
             throw new FormNotAcceptingResponseException(
                     new ViewFormErrorResDto(
                             f.getTitle(),

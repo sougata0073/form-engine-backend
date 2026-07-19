@@ -2,8 +2,6 @@ package com.sougata.form_service.service;
 
 import com.sougata.form_service.dto.common.SuccessMessageDto;
 import com.sougata.form_service.dto.form.*;
-import com.sougata.form_service.dto.question.QuestionSummariesResDto;
-import com.sougata.form_service.dto.question.QuestionSummaryDto;
 import com.sougata.form_service.dto.validation.request.ResponseValidationRequestDto;
 import com.sougata.form_service.model.Form;
 

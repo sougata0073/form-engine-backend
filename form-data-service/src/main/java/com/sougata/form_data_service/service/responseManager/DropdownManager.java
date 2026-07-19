@@ -2,10 +2,9 @@ package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.DropdownResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.DropdownResDto;
 import com.sougata.form_data_service.dto.response.question.DropdownResponseQuestionDto;
-import com.sougata.form_data_service.dto.response.question.MultipleChoiceResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.DropdownResponseSummaryDto;
+import com.sougata.form_data_service.form_schema.dto.questionSchema.response.DropdownResDto;
 import com.sougata.form_data_service.model.Dropdown;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.repository.DropdownRepository;

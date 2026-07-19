@@ -1,6 +1,6 @@
 package com.sougata.form_data_service.dto.response.question;
 
-import com.sougata.form_data_service.dto.question.response.MultipleChoiceResDto;
+import com.sougata.form_data_service.form_schema.dto.questionSchema.response.MultipleChoiceResDto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

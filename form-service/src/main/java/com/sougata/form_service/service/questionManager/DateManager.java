@@ -2,7 +2,6 @@ package com.sougata.form_service.service.questionManager;
 
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.DateAddUpdateReqDto;
-import com.sougata.form_service.dto.question.response.CheckboxResDto;
 import com.sougata.form_service.dto.question.response.DateResDto;
 import com.sougata.form_service.dto.validation.request.DateValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;

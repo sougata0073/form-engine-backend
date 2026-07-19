@@ -2,9 +2,9 @@ package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.ParagraphResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.ParagraphResDto;
 import com.sougata.form_data_service.dto.response.question.ParagraphResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.ParagraphResponseSummaryDto;
+import com.sougata.form_data_service.form_schema.dto.questionSchema.response.ParagraphResDto;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.Paragraph;
 import com.sougata.form_data_service.repository.ParagraphRepository;

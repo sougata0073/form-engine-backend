@@ -2,13 +2,13 @@ package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.MultipleChoiceGridResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.MultipleChoiceGridResDto;
 import com.sougata.form_data_service.dto.response.question.MultipleChoiceGridResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.MultipleChoiceGridResponseSummaryDto;
+import com.sougata.form_data_service.form_schema.dto.questionSchema.response.MultipleChoiceGridResDto;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.MultipleChoiceGrid;
 import com.sougata.form_data_service.model.MultipleChoiceGridRow;
-import com.sougata.form_data_service.projection.responseSummary.CommonResponseSummaryProjection;
+import com.sougata.form_data_service.projection.CommonResponseSummaryProjection;
 import com.sougata.form_data_service.repository.MultipleChoiceGridRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

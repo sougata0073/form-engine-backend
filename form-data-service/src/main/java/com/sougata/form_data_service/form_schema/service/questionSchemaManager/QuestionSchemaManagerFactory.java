@@ -1,0 +1,55 @@
+package com.sougata.form_data_service.form_schema.service.questionSchemaManager;
+
+import com.sougata.form_data_service.constant.QuestionType;
+import com.sougata.form_data_service.dto.question.request.QuestionResponseAddReq;
+import com.sougata.form_data_service.form_schema.dto.questionSchema.response.QuestionRes;
+import com.sougata.form_data_service.form_schema.model.QuestionSchema;
+import com.sougata.form_data_service.form_schema.service.QuestionSchemaManager;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Component
+public class QuestionSchemaManagerFactory {
+
+    private final ApplicationContext applicationContext;
+
+    public QuestionSchemaManagerFactory(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <Q extends QuestionSchema, QR extends QuestionRes, V extends QuestionResponseAddReq>
+    QuestionSchemaManager<Q, QR, V> get(QuestionType questionType) {
+        try {
+            return applicationContext.getBean(
+                    String.format("%s_QUESTION_SCHEMA_MANAGER", questionType.name()),
+                    QuestionSchemaManager.class
+            );
+        } catch (BeansException e) {
+            throw new IllegalArgumentException("No question schema manager found for question type: " + questionType);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public <Q extends QuestionSchema, QR extends QuestionRes, V extends QuestionResponseAddReq>
+    List<QuestionSchemaManager<Q, QR, V>> getAll() {
+
+        List<QuestionSchemaManager<Q, QR, V>> repos = new ArrayList<>();
+
+        for (QuestionType questionType : QuestionType.values()) {
+            var repo = applicationContext.getBean(
+                    String.format("%s_QUESTION_SCHEMA_MANAGER", questionType.name()),
+                    QuestionSchemaManager.class
+            );
+
+            repos.add(repo);
+        }
+
+        return repos;
+    }
+
+}

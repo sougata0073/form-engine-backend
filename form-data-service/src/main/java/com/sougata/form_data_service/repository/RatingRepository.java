@@ -15,6 +15,7 @@ public interface RatingRepository extends QuestionResponseRepository<Rating, Lon
             select
             r.questionId questionId,
             r.rating rating,
+            sum(r.rating) ratingSum,
             count(r.rating) responseCount
             from Rating r
             where r.formResponse.formId = :formId
