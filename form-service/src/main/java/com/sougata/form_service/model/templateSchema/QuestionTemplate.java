@@ -3,6 +3,7 @@ package com.sougata.form_service.model.templateSchema;
 import com.github.f4b6a3.tsid.TsidCreator;
 import com.sougata.form_service.model.Form;
 import com.sougata.form_service.model.Template;
+import com.sougata.form_service.model.questionSchema.AnyTypeQuestion;
 import com.sougata.form_service.model.questionSchema.Question;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -36,6 +37,6 @@ public abstract class QuestionTemplate<Temp extends QuestionTemplate<Temp>> {
     @JoinColumn(nullable = false)
     private Template template;
 
-    public abstract Question fromTemplate(Form f, Temp t);
+    public abstract AnyTypeQuestion fromTemplate(Form f, Temp t);
 
 }

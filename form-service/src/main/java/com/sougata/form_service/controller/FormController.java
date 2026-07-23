@@ -12,6 +12,8 @@ import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.QuestionService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -42,7 +44,14 @@ public class FormController {
         return new ResponseEntity<>(res, HttpStatus.CREATED);
     }
 
+    @DeleteMapping(path = "{formId}")
+    @CacheEvict(cacheNames = {"formDetails", "formInfo"}, key = "#formId")
+    public SuccessMessageDto deleteForm(@PathVariable("formId") UUID formId) {
+        return formService.deleteForm(formId);
+    }
+
     @PutMapping(path = "{formId}")
+    @CacheEvict(cacheNames = {"formDetails", "formInfo"}, key = "#formId")
     public FormInfoResDto updateForm(
             @PathVariable("formId") UUID formId,
             @Valid @RequestBody FormAddUpdateReqDto dto,
@@ -67,6 +76,7 @@ public class FormController {
     }
 
     @PatchMapping(path = "{formId}/rename")
+    @CacheEvict(cacheNames = {"formDetails", "formInfo"}, key = "#formId")
     public SuccessMessageDto renameForm(@PathVariable("formId") UUID formId, @RequestBody FormRenameReqDto body) {
         return formService.renameForm(formId, body);
     }
@@ -101,6 +111,7 @@ public class FormController {
     }
 
     @PostMapping(path = "{formId}/questions")
+    @CacheEvict(cacheNames = {"formDetails"}, key = "#formId")
     public ResponseEntity<QuestionRes> addQuestion(
             @PathVariable("formId") UUID formId,
             @Valid @RequestBody QuestionAddUpdateReq body
@@ -110,6 +121,7 @@ public class FormController {
     }
 
     @PutMapping(path = "{formId}/questions/{questionId}")
+    @CacheEvict(cacheNames = {"formDetails"}, key = "#formId")
     public QuestionRes updateQuestion(
             @PathVariable("formId") UUID formId,
             @PathVariable("questionId") Long questionId,
@@ -118,13 +130,13 @@ public class FormController {
         return questionService.updateQuestion(formId, questionId, body);
     }
 
-    @DeleteMapping(path = "{formId}/questions/{questionId}", params = "questionType")
+    @DeleteMapping(path = "{formId}/questions/{questionId}")
+    @CacheEvict(cacheNames = {"formDetails"}, key = "#formId")
     public SuccessMessageDto deleteQuestion(
             @PathVariable("formId") UUID formId,
-            @PathVariable("questionId") Long questionId,
-            @RequestParam("questionType") QuestionType questionType
+            @PathVariable("questionId") Long questionId
     ) {
-        return questionService.deleteQuestion(formId, questionId, questionType);
+        return questionService.deleteQuestion(formId, questionId);
     }
 
     @PostMapping(path = "{formId}/validate-response")

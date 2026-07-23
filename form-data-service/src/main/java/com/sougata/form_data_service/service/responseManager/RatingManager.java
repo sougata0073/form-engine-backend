@@ -2,9 +2,9 @@ package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.RatingResponseAddReqDto;
+import com.sougata.form_data_service.dto.question.response.RatingResDto;
 import com.sougata.form_data_service.dto.response.question.RatingResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.RatingResponseSummaryDto;
-import com.sougata.form_data_service.form_schema.dto.questionSchema.response.RatingResDto;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.Rating;
 import com.sougata.form_data_service.repository.RatingRepository;

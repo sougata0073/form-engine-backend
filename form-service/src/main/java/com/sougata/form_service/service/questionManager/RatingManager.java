@@ -7,71 +7,85 @@ import com.sougata.form_service.dto.question.response.RatingResDto;
 import com.sougata.form_service.dto.validation.request.RatingValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.exception.ResponseValidationException;
+import com.sougata.form_service.model.questionSchema.Checkbox;
+import com.sougata.form_service.model.questionSchema.Question;
 import com.sougata.form_service.model.questionSchema.Rating;
+import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.repository.RatingRepository;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.QuestionManager;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @Service("RATING_QUESTION_MANAGER")
-public class RatingManager extends QuestionManager<RatingAddUpdateReqDto, RatingResDto, RatingValidationRequestDto> {
+public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto, RatingResDto, RatingValidationRequestDto> {
 
     private final RatingRepository ratingRepository;
-    private final FormService formService;
 
-    public RatingManager(RatingRepository ratingRepository, FormService formService) {
+    public RatingManager(RatingRepository ratingRepository, FormService formService, QuestionRepository questionRepository) {
+        super(questionRepository, formService);
         this.ratingRepository = ratingRepository;
-        this.formService = formService;
     }
 
     @Override
     public RatingResDto get(UUID formId, Long questionId) {
-        return RatingResDto.create(ratingRepository.findByFormIdAndId(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
+        return toQuestionResDto(ratingRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
+    @Transactional
     public RatingResDto create(UUID formId, RatingAddUpdateReqDto crudDto) {
-        Rating newR = new Rating();
+        var newR = new Rating();
 
-        setProperties(crudDto, formId, newR);
+        var question = createQuestion(crudDto, formId);
 
-        Rating saved = ratingRepository.save(newR);
+        setPropertiesForNew(crudDto, newR, question);
 
-        return RatingResDto.create(saved);
+        var saved = ratingRepository.save(newR);
+
+        return toQuestionResDto(saved);
     }
 
     @Override
     public RatingResDto create(UUID formId, Long questionId, RatingAddUpdateReqDto crudDto) {
-        Rating newR = new Rating();
+        var newR = new Rating();
 
-        newR.setId(questionId);
-        setProperties(crudDto, formId, newR);
+        var question = updateQuestion(questionId, crudDto);
 
-        Rating saved = ratingRepository.save(newR);
+        setPropertiesForNew(crudDto, newR, question);
 
-        return RatingResDto.create(saved);
+        var saved = ratingRepository.save(newR);
+
+        return toQuestionResDto(saved);
     }
 
     @Override
+    @Transactional
     public RatingResDto update(Long questionId, RatingAddUpdateReqDto crudDto) {
         Rating r = ratingRepository.findById(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.RATING, questionId));
-        setProperties(crudDto, r);
+        updateQuestion(questionId, crudDto);
+
+        r.setMaxRatingNumber(crudDto.getMaxRatingNumber());
+        r.setRatingIcon(crudDto.getRatingIcon());
+
         ratingRepository.save(r);
 
-        return RatingResDto.create(r);
+        return toQuestionResDto(r);
     }
 
     @Override
-    public boolean exists(Long questionId) {
-        return ratingRepository.existsById(questionId);
-    }
+    public RatingResDto toQuestionResDto(Rating question) {
+        var r = new RatingResDto();
 
-    @Override
-    public void delete(Long questionId) {
-        ratingRepository.deleteById(questionId);
+        populateCommonFields(question, r);
+
+        r.setRatingIcon(question.getRatingIcon());
+        r.setMaxRatingNumber(question.getMaxRatingNumber());
+
+        return r;
     }
 
     @Override
@@ -87,39 +101,18 @@ public class RatingManager extends QuestionManager<RatingAddUpdateReqDto, Rating
     }
 
     @Override
-    public Class<RatingAddUpdateReqDto> getCrudDtoClass() {
-        return RatingAddUpdateReqDto.class;
-    }
-
-    @Override
-    public Class<RatingValidationRequestDto> getValidationDtoClass() {
-        return RatingValidationRequestDto.class;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public RatingRepository getQuestionRepository() {
-        return ratingRepository;
-    }
-
-    @Override
     public QuestionType getQuestionType() {
         return QuestionType.RATING;
     }
 
-    private void setProperties(RatingAddUpdateReqDto source, UUID formId, Rating target) {
-        target.setQuestion(source.getQuestion());
-        target.setDescription(source.getDescription());
-        target.setRequired(source.getRequired());
-        target.setMaxRatingNumber(source.getMaxRatingNumber());
-        target.setRatingIcon(source.getRatingIcon());
-        target.setOrderIndex(source.getOrderIndex());
-        if (formId != null) {
-            target.setForm(formService.getFormById(formId));
-        }
+    @Override
+    public void delete(Long questionId) {
+        ratingRepository.deleteById(questionId);
     }
 
-    private void setProperties(RatingAddUpdateReqDto source, Rating target) {
-        setProperties(source, null, target);
+    private void setPropertiesForNew(RatingAddUpdateReqDto source, Rating target, Question question) {
+        target.setQuestion(question);
+        target.setMaxRatingNumber(source.getMaxRatingNumber());
+        target.setRatingIcon(source.getRatingIcon());
     }
 }

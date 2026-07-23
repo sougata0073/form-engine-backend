@@ -28,4 +28,6 @@ public interface FormService {
     SuccessMessageDto renameForm(UUID formId, FormRenameReqDto dto);
 
     FormInfoResDto getFormInfo(UUID formId);
+
+    SuccessMessageDto deleteForm(UUID formId);
 }

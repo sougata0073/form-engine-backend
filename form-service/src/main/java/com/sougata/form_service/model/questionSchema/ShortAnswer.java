@@ -1,11 +1,10 @@
 package com.sougata.form_service.model.questionSchema;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.github.f4b6a3.tsid.TsidCreator;
+import com.sougata.form_service.model.Auditable;
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,7 +19,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @Getter
 @Setter
-public class ShortAnswer extends Question {
+public class ShortAnswer extends AnyTypeQuestion {
 
     @Type(JsonBinaryType.class)
     @Column(columnDefinition = "jsonb")

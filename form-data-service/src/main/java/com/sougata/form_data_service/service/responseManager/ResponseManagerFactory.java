@@ -2,10 +2,10 @@ package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.QuestionResponseAddReq;
+import com.sougata.form_data_service.dto.question.response.QuestionRes;
 import com.sougata.form_data_service.dto.response.question.ResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.ResponseSummaryDto;
 import com.sougata.form_data_service.exception.NoResponseManagerFoundException;
-import com.sougata.form_data_service.form_schema.dto.questionSchema.response.QuestionRes;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;

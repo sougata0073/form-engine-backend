@@ -9,9 +9,9 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository("RATING_REPOSITORY")
-public interface RatingRepository extends QuestionRepository<Rating, Long, RatingResDto> {
+public interface RatingRepository extends AnyTypeQuestionRepository<Rating, Long, RatingResDto> {
 
-    @Query("select r.maxRatingNumber from Rating r where r.id = :id")
+    @Query("select r.maxRatingNumber from Rating r where r.questionId = :id")
     Optional<Integer> getMaxRatingNumber(Long id);
 
     @Override
@@ -19,9 +19,5 @@ public interface RatingRepository extends QuestionRepository<Rating, Long, Ratin
         return QuestionType.RATING;
     }
 
-    @Override
-    default RatingResDto toQuestionResDto(Rating rating) {
-        return RatingResDto.create(rating);
-    }
 }
 

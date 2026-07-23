@@ -32,13 +32,13 @@ public class LinearScaleTemplate extends QuestionTemplate<LinearScaleTemplate> {
     public LinearScale fromTemplate(Form f, LinearScaleTemplate t) {
         var linearScale = new LinearScale();
 
-        linearScale.setQuestion(t.getQuestion());
-        linearScale.setDescription(t.getDescription());
-        linearScale.setRequired(t.getRequired());
-        linearScale.setForm(f);
-        linearScale.setOrderIndex(t.getOrderIndex());
-        linearScale.setFromNumber(t.getFromNumber());
-        linearScale.setToNumber(t.getToNumber());
+//        linearScale.setQuestion(t.getQuestion());
+//        linearScale.setDescription(t.getDescription());
+//        linearScale.setRequired(t.getRequired());
+//        linearScale.setForm(f);
+//        linearScale.setOrderIndex(t.getOrderIndex());
+//        linearScale.setFromNumber(t.getFromNumber());
+//        linearScale.setToNumber(t.getToNumber());
 
         return linearScale;
     }

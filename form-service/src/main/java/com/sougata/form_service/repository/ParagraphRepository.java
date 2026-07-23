@@ -10,9 +10,9 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository("PARAGRAPH_REPOSITORY")
-public interface ParagraphRepository extends QuestionRepository<Paragraph, Long, ParagraphResDto> {
+public interface ParagraphRepository extends AnyTypeQuestionRepository<Paragraph, Long, ParagraphResDto> {
 
-    @Query("select p.validationConfig from Paragraph p where p.id = :id")
+    @Query("select p.validationConfig from Paragraph p where p.questionId = :id")
     Optional<JsonNode> getValidationConfig(Long id);
 
     @Override
@@ -20,9 +20,5 @@ public interface ParagraphRepository extends QuestionRepository<Paragraph, Long,
         return QuestionType.PARAGRAPH;
     }
 
-    @Override
-    default ParagraphResDto toQuestionResDto(Paragraph paragraph) {
-        return ParagraphResDto.create(paragraph);
-    }
 }
 

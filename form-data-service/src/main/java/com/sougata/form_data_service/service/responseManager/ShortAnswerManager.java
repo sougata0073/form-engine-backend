@@ -2,9 +2,9 @@ package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.ShortAnswerResponseAddReqDto;
+import com.sougata.form_data_service.dto.question.response.ShortAnswerResDto;
 import com.sougata.form_data_service.dto.response.question.ShortAnswerResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.ShortAnswerResponseSummaryDto;
-import com.sougata.form_data_service.form_schema.dto.questionSchema.response.ShortAnswerResDto;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.ShortAnswer;
 import com.sougata.form_data_service.repository.ShortAnswerRepository;

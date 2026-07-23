@@ -6,77 +6,94 @@ import com.sougata.form_service.constant.ValidationId;
 import com.sougata.form_service.dto.question.request.ShortAnswerAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.ShortAnswerResDto;
 import com.sougata.form_service.dto.validation.request.ShortAnswerValidationRequestDto;
+import com.sougata.form_service.dto.validationConfig.ValidationConfig;
 import com.sougata.form_service.exception.JsonParsingException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
+import com.sougata.form_service.model.questionSchema.Paragraph;
+import com.sougata.form_service.model.questionSchema.Question;
 import com.sougata.form_service.model.questionSchema.ShortAnswer;
+import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.repository.ShortAnswerRepository;
 import com.sougata.form_service.responseValidator.ResponseValidatorFactory;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.QuestionManager;
 import com.sougata.form_service.util.JsonUtil;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @Service("SHORT_ANSWER_QUESTION_MANAGER")
-public class ShortAnswerManager extends QuestionManager<ShortAnswerAddUpdateReqDto, ShortAnswerResDto, ShortAnswerValidationRequestDto> {
+public class ShortAnswerManager extends QuestionManager<ShortAnswer, ShortAnswerAddUpdateReqDto, ShortAnswerResDto, ShortAnswerValidationRequestDto> {
 
     private final ShortAnswerRepository shortAnswerRepository;
-    private final FormService formService;
     private final ResponseValidatorFactory responseValidatorFactory;
 
-    public ShortAnswerManager(ShortAnswerRepository shortAnswerRepository, FormService formService, ResponseValidatorFactory responseValidatorFactory) {
+    public ShortAnswerManager(ShortAnswerRepository shortAnswerRepository, FormService formService, ResponseValidatorFactory responseValidatorFactory, QuestionRepository questionRepository) {
+        super(questionRepository, formService);
         this.shortAnswerRepository = shortAnswerRepository;
-        this.formService = formService;
         this.responseValidatorFactory = responseValidatorFactory;
     }
 
     @Override
     public ShortAnswerResDto get(UUID formId, Long questionId) {
-        return ShortAnswerResDto.create(shortAnswerRepository.findByFormIdAndId(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
+        return toQuestionResDto(shortAnswerRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
+    @Transactional
     public ShortAnswerResDto create(UUID formId, ShortAnswerAddUpdateReqDto crudDto) {
-        ShortAnswer newSa = new ShortAnswer();
+        var newS = new ShortAnswer();
 
-        setProperties(crudDto, formId, newSa);
+        var question = createQuestion(crudDto, formId);
 
-        ShortAnswer saved = shortAnswerRepository.save(newSa);
+        setPropertiesForNew(crudDto, newS, question);
 
-        return ShortAnswerResDto.create(saved);
+        var saved = shortAnswerRepository.save(newS);
+
+        return toQuestionResDto(saved);
     }
 
     @Override
     public ShortAnswerResDto create(UUID formId, Long questionId, ShortAnswerAddUpdateReqDto crudDto) {
-        ShortAnswer newSa = new ShortAnswer();
+        var newS = new ShortAnswer();
 
-        newSa.setId(questionId);
-        setProperties(crudDto, formId, newSa);
+        var question = updateQuestion(questionId, crudDto);
 
-        ShortAnswer saved = shortAnswerRepository.save(newSa);
+        setPropertiesForNew(crudDto, newS, question);
 
-        return ShortAnswerResDto.create(saved);
+        var saved = shortAnswerRepository.save(newS);
+
+        return toQuestionResDto(saved);
     }
 
     @Override
+    @Transactional
     public ShortAnswerResDto update(Long questionId, ShortAnswerAddUpdateReqDto crudDto) {
         ShortAnswer sa = shortAnswerRepository.findById(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.SHORT_ANSWER, questionId));
-        setProperties(crudDto, sa);
+
+        updateQuestion(questionId, crudDto);
+        sa.setValidationConfig(JsonUtil.objectToOldJsonNode(crudDto.getValidationConfig()));
+
         shortAnswerRepository.save(sa);
 
-        return ShortAnswerResDto.create(sa);
+        return toQuestionResDto(sa);
     }
 
     @Override
-    public boolean exists(Long questionId) {
-        return shortAnswerRepository.existsById(questionId);
-    }
+    public ShortAnswerResDto toQuestionResDto(ShortAnswer question) {
+        var s = new ShortAnswerResDto();
 
-    @Override
-    public void delete(Long questionId) {
-        shortAnswerRepository.deleteById(questionId);
+        populateCommonFields(question, s);
+
+        try {
+            s.setValidationConfig(JsonUtil.oldJsonNodeToObject(question.getValidationConfig(), ValidationConfig.class));
+        } catch (JsonProcessingException e) {
+            throw new JsonParsingException(JsonUtil.oldJsonNodeToString(question.getValidationConfig()));
+        }
+
+        return s;
     }
 
     @Override
@@ -98,38 +115,17 @@ public class ShortAnswerManager extends QuestionManager<ShortAnswerAddUpdateReqD
     }
 
     @Override
-    public Class<ShortAnswerAddUpdateReqDto> getCrudDtoClass() {
-        return ShortAnswerAddUpdateReqDto.class;
-    }
-
-    @Override
-    public Class<ShortAnswerValidationRequestDto> getValidationDtoClass() {
-        return ShortAnswerValidationRequestDto.class;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public ShortAnswerRepository getQuestionRepository() {
-        return shortAnswerRepository;
-    }
-
-    @Override
     public QuestionType getQuestionType() {
         return QuestionType.SHORT_ANSWER;
     }
 
-    private void setProperties(ShortAnswerAddUpdateReqDto source, UUID formId, ShortAnswer target) {
-        target.setQuestion(source.getQuestion());
-        target.setDescription(source.getDescription());
-        target.setRequired(source.getRequired());
-        target.setValidationConfig(JsonUtil.objectToOldJsonNode(source.getValidationConfig()));
-        target.setOrderIndex(source.getOrderIndex());
-        if (formId != null) {
-            target.setForm(formService.getFormById(formId));
-        }
+    @Override
+    public void delete(Long questionId) {
+        shortAnswerRepository.deleteById(questionId);
     }
 
-    private void setProperties(ShortAnswerAddUpdateReqDto source, ShortAnswer target) {
-        setProperties(source, null, target);
+    private void setPropertiesForNew(ShortAnswerAddUpdateReqDto source, ShortAnswer target, Question question) {
+        target.setQuestion(question);
+        target.setValidationConfig(JsonUtil.objectToOldJsonNode(source.getValidationConfig()));
     }
 }

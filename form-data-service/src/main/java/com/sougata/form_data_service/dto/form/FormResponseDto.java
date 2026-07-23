@@ -1,6 +1,6 @@
 package com.sougata.form_data_service.dto.form;
 
-import com.sougata.form_data_service.form_schema.dto.questionSchema.response.QuestionRes;
+import com.sougata.form_data_service.dto.question.response.QuestionRes;
 
 import java.time.Instant;
 import java.util.List;

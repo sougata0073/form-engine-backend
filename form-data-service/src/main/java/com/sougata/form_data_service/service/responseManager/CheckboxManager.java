@@ -2,9 +2,9 @@ package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.CheckboxResponseAddReqDto;
+import com.sougata.form_data_service.dto.question.response.CheckboxResDto;
 import com.sougata.form_data_service.dto.response.question.CheckboxResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.CheckboxResponseSummaryDto;
-import com.sougata.form_data_service.form_schema.dto.questionSchema.response.CheckboxResDto;
 import com.sougata.form_data_service.model.Checkbox;
 import com.sougata.form_data_service.model.CheckboxOption;
 import com.sougata.form_data_service.model.FormResponse;

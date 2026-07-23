@@ -16,11 +16,11 @@ public class DurationTemplate extends QuestionTemplate<DurationTemplate> {
     public Duration fromTemplate(Form f, DurationTemplate t) {
         var duration = new Duration();
 
-        duration.setQuestion(t.getQuestion());
-        duration.setDescription(t.getDescription());
-        duration.setRequired(t.getRequired());
-        duration.setForm(f);
-        duration.setOrderIndex(t.getOrderIndex());
+//        duration.setQuestion(t.getQuestion());
+//        duration.setDescription(t.getDescription());
+//        duration.setRequired(t.getRequired());
+//        duration.setForm(f);
+//        duration.setOrderIndex(t.getOrderIndex());
 
         return duration;
     }

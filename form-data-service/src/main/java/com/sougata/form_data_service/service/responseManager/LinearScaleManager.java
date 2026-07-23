@@ -2,9 +2,9 @@ package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.LinearScaleResponseAddReqDto;
+import com.sougata.form_data_service.dto.question.response.LinearScaleResDto;
 import com.sougata.form_data_service.dto.response.question.LinearScaleResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.LinearScaleResponseSummaryDto;
-import com.sougata.form_data_service.form_schema.dto.questionSchema.response.LinearScaleResDto;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.LinearScale;
 import com.sougata.form_data_service.repository.LinearScaleRepository;

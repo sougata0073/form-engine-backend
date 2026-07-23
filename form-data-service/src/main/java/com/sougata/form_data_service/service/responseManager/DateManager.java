@@ -2,9 +2,9 @@ package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.DateResponseAddReqDto;
+import com.sougata.form_data_service.dto.question.response.DateResDto;
 import com.sougata.form_data_service.dto.response.question.DateResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.DateResponseSummaryDto;
-import com.sougata.form_data_service.form_schema.dto.questionSchema.response.DateResDto;
 import com.sougata.form_data_service.model.Date;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.repository.DateRepository;

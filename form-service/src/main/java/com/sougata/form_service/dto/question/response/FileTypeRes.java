@@ -10,11 +10,4 @@ public record FileTypeRes(
         List<String> mimeTypes
 ) {
 
-    public static FileTypeRes create(FileType fileType) {
-        return new FileTypeRes(
-                fileType.getCategory(),
-                Arrays.asList(fileType.getMimeTypes())
-        );
-    }
-
 }

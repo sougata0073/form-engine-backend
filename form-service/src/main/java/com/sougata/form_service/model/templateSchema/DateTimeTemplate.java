@@ -16,11 +16,11 @@ public class DateTimeTemplate extends QuestionTemplate<DateTimeTemplate> {
     public DateTime fromTemplate(Form f, DateTimeTemplate t) {
         var dateTime = new DateTime();
 
-        dateTime.setQuestion(t.getQuestion());
-        dateTime.setDescription(t.getDescription());
-        dateTime.setRequired(t.getRequired());
-        dateTime.setForm(f);
-        dateTime.setOrderIndex(t.getOrderIndex());
+//        dateTime.setQuestion(t.getQuestion());
+//        dateTime.setDescription(t.getDescription());
+//        dateTime.setRequired(t.getRequired());
+//        dateTime.setForm(f);
+//        dateTime.setOrderIndex(t.getOrderIndex());
 
         return dateTime;
     }

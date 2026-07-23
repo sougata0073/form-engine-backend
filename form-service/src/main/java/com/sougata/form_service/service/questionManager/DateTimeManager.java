@@ -7,69 +7,67 @@ import com.sougata.form_service.dto.validation.request.DateTimeValidationRequest
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.questionSchema.DateTime;
 import com.sougata.form_service.repository.DateTimeRepository;
+import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.QuestionManager;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @Service("DATE_TIME_QUESTION_MANAGER")
-public class DateTimeManager extends QuestionManager<DateTimeAddUpdateReqDto, DateTimeResDto, DateTimeValidationRequestDto> {
+public class DateTimeManager extends QuestionManager<DateTime, DateTimeAddUpdateReqDto, DateTimeResDto, DateTimeValidationRequestDto> {
 
     private final DateTimeRepository dateTimeRepository;
-    private final FormService formService;
 
-    public DateTimeManager(DateTimeRepository dateTimeRepository, FormService formService) {
+    public DateTimeManager(DateTimeRepository dateTimeRepository, FormService formService, QuestionRepository questionRepository) {
+        super(questionRepository, formService);
         this.dateTimeRepository = dateTimeRepository;
-        this.formService = formService;
     }
 
     @Override
     public DateTimeResDto get(UUID formId, Long questionId) {
-        return DateTimeResDto.create(dateTimeRepository.findByFormIdAndId(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
+        return toQuestionResDto(dateTimeRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
+    @Transactional
     public DateTimeResDto create(UUID formId, DateTimeAddUpdateReqDto crudDto) {
-        DateTime newDt = new DateTime();
+        var newDt = new DateTime();
 
-        setProperties(crudDto, formId, newDt);
+        var question = createQuestion(crudDto, formId);
 
-        DateTime saved = dateTimeRepository.save(newDt);
+        newDt.setQuestion(question);
 
-        return DateTimeResDto.create(saved);
+        var saved = dateTimeRepository.save(newDt);
+
+        return toQuestionResDto(saved);
     }
 
     @Override
     public DateTimeResDto create(UUID formId, Long questionId, DateTimeAddUpdateReqDto crudDto) {
-        DateTime newDt = new DateTime();
+        var newDt = new DateTime();
 
-        newDt.setId(questionId);
-        setProperties(crudDto, formId, newDt);
+        var question = updateQuestion(questionId, crudDto);
 
-        DateTime saved = dateTimeRepository.save(newDt);
+        newDt.setQuestion(question);
 
-        return DateTimeResDto.create(saved);
+        var saved = dateTimeRepository.save(newDt);
+
+        return toQuestionResDto(saved);
     }
 
     @Override
+    @Transactional
     public DateTimeResDto update(Long questionId, DateTimeAddUpdateReqDto crudDto) {
-        DateTime dt = dateTimeRepository.findById(questionId)
+        var dt = dateTimeRepository.findById(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.DATE_TIME, questionId));
-        setProperties(crudDto, dt);
+
+        updateQuestion(questionId, crudDto);
+
         dateTimeRepository.save(dt);
 
-        return DateTimeResDto.create(dt);
-    }
-
-    @Override
-    public boolean exists(Long questionId) {
-        return dateTimeRepository.existsById(questionId);
-    }
-
-    @Override
-    public void delete(Long questionId) {
-        dateTimeRepository.deleteById(questionId);
+        return toQuestionResDto(dt);
     }
 
     @Override
@@ -78,37 +76,21 @@ public class DateTimeManager extends QuestionManager<DateTimeAddUpdateReqDto, Da
     }
 
     @Override
-    public Class<DateTimeAddUpdateReqDto> getCrudDtoClass() {
-        return DateTimeAddUpdateReqDto.class;
-    }
-
-    @Override
-    public Class<DateTimeValidationRequestDto> getValidationDtoClass() {
-        return DateTimeValidationRequestDto.class;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public DateTimeRepository getQuestionRepository() {
-        return dateTimeRepository;
-    }
-
-    @Override
     public QuestionType getQuestionType() {
         return QuestionType.DATE_TIME;
     }
 
-    private void setProperties(DateTimeAddUpdateReqDto source, UUID formId, DateTime target) {
-        target.setQuestion(source.getQuestion());
-        target.setDescription(source.getDescription());
-        target.setRequired(source.getRequired());
-        target.setOrderIndex(source.getOrderIndex());
-        if (formId != null) {
-            target.setForm(formService.getFormById(formId));
-        }
+    @Override
+    public void delete(Long questionId) {
+        dateTimeRepository.deleteById(questionId);
     }
 
-    private void setProperties(DateTimeAddUpdateReqDto source, DateTime target) {
-        setProperties(source, null, target);
+    @Override
+    public DateTimeResDto toQuestionResDto(DateTime question) {
+        var dt = new DateTimeResDto();
+
+        populateCommonFields(question, dt);
+
+        return dt;
     }
 }

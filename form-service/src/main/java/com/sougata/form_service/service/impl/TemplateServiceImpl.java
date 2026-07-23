@@ -81,20 +81,20 @@ public class TemplateServiceImpl implements TemplateService {
         f.setAcceptingResponse(true);
         f.setLastOpenedOn(Instant.now());
 
-        f.setCheckboxes(t.getCheckboxTemplates().stream().map(checkboxTemplate -> checkboxTemplate.fromTemplate(f, checkboxTemplate)).toList());
-        f.setDates(t.getDateTemplates().stream().map(dateTemplate -> dateTemplate.fromTemplate(f, dateTemplate)).toList());
-        f.setDateTimes(t.getDateTimeTemplates().stream().map(dateTimeTemplate -> dateTimeTemplate.fromTemplate(f, dateTimeTemplate)).toList());
-        f.setDropdowns(t.getDropdownTemplates().stream().map(dropdownTemplate -> dropdownTemplate.fromTemplate(f, dropdownTemplate)).toList());
-        f.setDurations(t.getDurationTemplates().stream().map(durationTemplate -> durationTemplate.fromTemplate(f, durationTemplate)).toList());
-        f.setFileUploads(t.getFileUploadTemplates().stream().map(fileUploadTemplate -> fileUploadTemplate.fromTemplate(f, fileUploadTemplate)).toList());
-        f.setLinearScales(t.getLinearScaleTemplates().stream().map(linearScaleTemplate -> linearScaleTemplate.fromTemplate(f, linearScaleTemplate)).toList());
-        f.setMultipleChoiceGrids(t.getMultipleChoiceGridTemplates().stream().map(multipleChoiceGridTemplate -> multipleChoiceGridTemplate.fromTemplate(f, multipleChoiceGridTemplate)).toList());
-        f.setMultipleChoices(t.getMultipleChoiceTemplates().stream().map(multipleChoiceTemplate -> multipleChoiceTemplate.fromTemplate(f, multipleChoiceTemplate)).toList());
-        f.setParagraphs(t.getParagraphTemplates().stream().map(paragraphTemplate -> paragraphTemplate.fromTemplate(f, paragraphTemplate)).toList());
-        f.setRatings(t.getRatingTemplates().stream().map(ratingTemplate -> ratingTemplate.fromTemplate(f, ratingTemplate)).toList());
-        f.setShortAnswers(t.getShortAnswerTemplates().stream().map(shortAnswerTemplate -> shortAnswerTemplate.fromTemplate(f, shortAnswerTemplate)).toList());
-        f.setTickBoxGrids(t.getTickBoxGridTemplates().stream().map(tickBoxGridTemplate -> tickBoxGridTemplate.fromTemplate(f, tickBoxGridTemplate)).toList());
-        f.setTimes(t.getTimeTemplates().stream().map(timeTemplate -> timeTemplate.fromTemplate(f, timeTemplate)).toList());
+//        f.setCheckboxes(t.getCheckboxTemplates().stream().map(checkboxTemplate -> checkboxTemplate.fromTemplate(f, checkboxTemplate)).toList());
+//        f.setDates(t.getDateTemplates().stream().map(dateTemplate -> dateTemplate.fromTemplate(f, dateTemplate)).toList());
+//        f.setDateTimes(t.getDateTimeTemplates().stream().map(dateTimeTemplate -> dateTimeTemplate.fromTemplate(f, dateTimeTemplate)).toList());
+//        f.setDropdowns(t.getDropdownTemplates().stream().map(dropdownTemplate -> dropdownTemplate.fromTemplate(f, dropdownTemplate)).toList());
+//        f.setDurations(t.getDurationTemplates().stream().map(durationTemplate -> durationTemplate.fromTemplate(f, durationTemplate)).toList());
+//        f.setFileUploads(t.getFileUploadTemplates().stream().map(fileUploadTemplate -> fileUploadTemplate.fromTemplate(f, fileUploadTemplate)).toList());
+//        f.setLinearScales(t.getLinearScaleTemplates().stream().map(linearScaleTemplate -> linearScaleTemplate.fromTemplate(f, linearScaleTemplate)).toList());
+//        f.setMultipleChoiceGrids(t.getMultipleChoiceGridTemplates().stream().map(multipleChoiceGridTemplate -> multipleChoiceGridTemplate.fromTemplate(f, multipleChoiceGridTemplate)).toList());
+//        f.setMultipleChoices(t.getMultipleChoiceTemplates().stream().map(multipleChoiceTemplate -> multipleChoiceTemplate.fromTemplate(f, multipleChoiceTemplate)).toList());
+//        f.setParagraphs(t.getParagraphTemplates().stream().map(paragraphTemplate -> paragraphTemplate.fromTemplate(f, paragraphTemplate)).toList());
+//        f.setRatings(t.getRatingTemplates().stream().map(ratingTemplate -> ratingTemplate.fromTemplate(f, ratingTemplate)).toList());
+//        f.setShortAnswers(t.getShortAnswerTemplates().stream().map(shortAnswerTemplate -> shortAnswerTemplate.fromTemplate(f, shortAnswerTemplate)).toList());
+//        f.setTickBoxGrids(t.getTickBoxGridTemplates().stream().map(tickBoxGridTemplate -> tickBoxGridTemplate.fromTemplate(f, tickBoxGridTemplate)).toList());
+//        f.setTimes(t.getTimeTemplates().stream().map(timeTemplate -> timeTemplate.fromTemplate(f, timeTemplate)).toList());
 
         rt.setUserId(userId);
         rt.setTemplate(t);

@@ -14,7 +14,7 @@ public interface QuestionService {
 
     QuestionRes updateQuestion(UUID formId, Long questionId, QuestionAddUpdateReq dto);
 
-    SuccessMessageDto deleteQuestion(UUID formId, Long questionId, QuestionType questionType);
+    SuccessMessageDto deleteQuestion(UUID formId, Long questionId);
 
     QuestionRes getQuestion(UUID formId, Long questionId);
 

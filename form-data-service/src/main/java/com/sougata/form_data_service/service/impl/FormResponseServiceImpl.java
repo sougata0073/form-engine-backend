@@ -13,15 +13,12 @@ import com.sougata.form_data_service.dto.user.UserSummaryDto;
 import com.sougata.form_data_service.dto.validation.ResponseValidationRequestDto;
 import com.sougata.form_data_service.exception.FormSubmitException;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
-import com.sougata.form_data_service.form_schema.service.FormSchemaService;
-import com.sougata.form_data_service.form_schema.service.QuestionSchemaService;
+import com.sougata.form_data_service.feignClient.FormServiceFeignClient;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.repository.FormResponseRepository;
 import com.sougata.form_data_service.service.FormResponseService;
 import com.sougata.form_data_service.service.responseManager.ResponseManagerFactory;
-import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,31 +31,29 @@ public class FormResponseServiceImpl implements FormResponseService {
     private final FormResponseRepository formResponseRepository;
     private final ResponseManagerFactory responseManagerFactory;
     private final AuthServiceFeignClient authServiceFeignClient;
-    private final FormSchemaService formSchemaService;
-    private final QuestionSchemaService questionSchemaService;
+    private final FormServiceFeignClient formServiceFeignClient;
 
     @Autowired
     public FormResponseServiceImpl(
             FormResponseRepository formResponseRepository,
             ResponseManagerFactory responseManagerFactory,
-            AuthServiceFeignClient authServiceFeignClient,
-            FormSchemaService formSchemaService, QuestionSchemaService questionSchemaService) {
+            AuthServiceFeignClient authServiceFeignClient, FormServiceFeignClient formServiceFeignClient
+    ) {
         this.formResponseRepository = formResponseRepository;
         this.responseManagerFactory = responseManagerFactory;
         this.authServiceFeignClient = authServiceFeignClient;
-        this.formSchemaService = formSchemaService;
-        this.questionSchemaService = questionSchemaService;
+        this.formServiceFeignClient = formServiceFeignClient;
     }
 
     @Override
-    @Transactional(transactionManager = "formDataServiceTransactionManager")
+    @Transactional
     public FormResponseAddResDto saveResponse(UUID formId, FormResponseAddReqDto req, UUID userId) {
 
         if (formResponseRepository.existsByFormIdAndUserId(formId, userId)) {
             throw new FormSubmitException("Form Response already submitted for User ID: " + userId);
         }
 
-        var formInfo = formSchemaService.getFormInfo(formId);
+        var formInfo = formServiceFeignClient.getFormInfo(formId);
 
         if (!formInfo.published()) {
             throw new FormSubmitException("This form is not published yet. FOrm ID: " + formId);
@@ -77,7 +72,7 @@ public class FormResponseServiceImpl implements FormResponseService {
 
         var validationBody = new ResponseValidationRequestDto(req.responses());
 
-        var validationResponse = formSchemaService.validateResponse(formId, validationBody);
+        var validationResponse = formServiceFeignClient.validateResponse(formId, validationBody);
 
         FormResponse formResponse = new FormResponse();
 
@@ -104,7 +99,7 @@ public class FormResponseServiceImpl implements FormResponseService {
     @Override
     public ResponseSummaryResDto getResponseSummaries(UUID formId) {
 
-        var questions = formSchemaService.getFormDetails(formId).questions();
+        var questions = formServiceFeignClient.getFormDetails(formId).questions();
 
         var result = new ArrayList<ResponseSummaryDto>();
 
@@ -125,7 +120,7 @@ public class FormResponseServiceImpl implements FormResponseService {
 
     @Override
     public ResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId) {
-        var qRes = questionSchemaService.getQuestion(formId, questionId);
+        var qRes = formServiceFeignClient.getQuestion(formId, questionId);
         var manager = responseManagerFactory.get(qRes.getQuestionType());
 
         return manager.getResponseByQuestion(formId, qRes);

@@ -6,16 +6,12 @@ import com.sougata.form_service.model.questionSchema.Time;
 import org.springframework.stereotype.Repository;
 
 @Repository("TIME_REPOSITORY")
-public interface TimeRepository extends QuestionRepository<Time, Long, TimeResDto> {
+public interface TimeRepository extends AnyTypeQuestionRepository<Time, Long, TimeResDto> {
 
     @Override
     default QuestionType getQuestionType() {
         return QuestionType.TIME;
     }
 
-    @Override
-    default TimeResDto toQuestionResDto(Time time) {
-        return TimeResDto.create(time);
-    }
 
 }

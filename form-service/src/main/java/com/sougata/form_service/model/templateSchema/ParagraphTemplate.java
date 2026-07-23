@@ -32,12 +32,12 @@ public class ParagraphTemplate extends QuestionTemplate<ParagraphTemplate> {
     public Paragraph fromTemplate(Form f, ParagraphTemplate t) {
         var paragraph = new Paragraph();
 
-        paragraph.setQuestion(t.getQuestion());
-        paragraph.setDescription(t.getDescription());
-        paragraph.setRequired(t.getRequired());
-        paragraph.setForm(f);
-        paragraph.setOrderIndex(t.getOrderIndex());
-        paragraph.setValidationConfig(t.getValidationConfig());
+//        paragraph.setQuestion(t.getQuestion());
+//        paragraph.setDescription(t.getDescription());
+//        paragraph.setRequired(t.getRequired());
+//        paragraph.setForm(f);
+//        paragraph.setOrderIndex(t.getOrderIndex());
+//        paragraph.setValidationConfig(t.getValidationConfig());
 
         return paragraph;
     }

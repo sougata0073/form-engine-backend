@@ -16,11 +16,11 @@ public class DateTemplate extends QuestionTemplate<DateTemplate> {
     public Date fromTemplate(Form f, DateTemplate t) {
         var date = new Date();
 
-        date.setQuestion(t.getQuestion());
-        date.setDescription(t.getDescription());
-        date.setRequired(t.getRequired());
-        date.setForm(f);
-        date.setOrderIndex(t.getOrderIndex());
+//        date.setQuestion(t.getQuestion());
+//        date.setDescription(t.getDescription());
+//        date.setRequired(t.getRequired());
+//        date.setForm(f);
+//        date.setOrderIndex(t.getOrderIndex());
 
         return date;
     }

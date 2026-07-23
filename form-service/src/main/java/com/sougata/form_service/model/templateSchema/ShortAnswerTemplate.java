@@ -32,12 +32,12 @@ public class ShortAnswerTemplate extends QuestionTemplate<ShortAnswerTemplate> {
     public ShortAnswer fromTemplate(Form f, ShortAnswerTemplate t) {
         var shortAnswer = new ShortAnswer();
 
-        shortAnswer.setQuestion(t.getQuestion());
-        shortAnswer.setDescription(t.getDescription());
-        shortAnswer.setRequired(t.getRequired());
-        shortAnswer.setForm(f);
-        shortAnswer.setOrderIndex(t.getOrderIndex());
-        shortAnswer.setValidationConfig(t.getValidationConfig());
+//        shortAnswer.setQuestion(t.getQuestion());
+//        shortAnswer.setDescription(t.getDescription());
+//        shortAnswer.setRequired(t.getRequired());
+//        shortAnswer.setForm(f);
+//        shortAnswer.setOrderIndex(t.getOrderIndex());
+//        shortAnswer.setValidationConfig(t.getValidationConfig());
 
         return shortAnswer;
     }

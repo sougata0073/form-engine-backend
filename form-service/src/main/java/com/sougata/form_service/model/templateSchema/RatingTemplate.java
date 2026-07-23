@@ -30,13 +30,13 @@ public class RatingTemplate extends QuestionTemplate<RatingTemplate> {
     public Rating fromTemplate(Form f, RatingTemplate t) {
         var rating = new Rating();
 
-        rating.setQuestion(t.getQuestion());
-        rating.setDescription(t.getDescription());
-        rating.setRequired(t.getRequired());
-        rating.setForm(f);
-        rating.setOrderIndex(t.getOrderIndex());
-        rating.setMaxRatingNumber(t.getMaxRatingNumber());
-        rating.setRatingIcon(t.getRatingIcon());
+//        rating.setQuestion(t.getQuestion());
+//        rating.setDescription(t.getDescription());
+//        rating.setRequired(t.getRequired());
+//        rating.setForm(f);
+//        rating.setOrderIndex(t.getOrderIndex());
+//        rating.setMaxRatingNumber(t.getMaxRatingNumber());
+//        rating.setRatingIcon(t.getRatingIcon());
 
         return rating;
     }

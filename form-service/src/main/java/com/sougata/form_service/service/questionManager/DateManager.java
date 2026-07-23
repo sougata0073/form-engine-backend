@@ -7,59 +7,68 @@ import com.sougata.form_service.dto.validation.request.DateValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.questionSchema.Date;
 import com.sougata.form_service.repository.DateRepository;
+import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.QuestionManager;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @Service("DATE_QUESTION_MANAGER")
-public class DateManager extends QuestionManager<DateAddUpdateReqDto, DateResDto, DateValidationRequestDto> {
+public class DateManager extends QuestionManager<Date, DateAddUpdateReqDto, DateResDto, DateValidationRequestDto> {
 
     private final DateRepository dateRepository;
-    private final FormService formService;
 
-    public DateManager(DateRepository dateRepository, FormService formService) {
+    public DateManager(DateRepository dateRepository, FormService formService, QuestionRepository questionRepository, QuestionRepository questionRepository1) {
+        super(questionRepository, formService);
         this.dateRepository = dateRepository;
-        this.formService = formService;
     }
 
     @Override
     public DateResDto get(UUID formId, Long questionId) {
-        return DateResDto.create(dateRepository.findByFormIdAndId(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
+        return toQuestionResDto(dateRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
+                .orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
+    @Transactional
     public DateResDto create(UUID formId, DateAddUpdateReqDto crudDto) {
-        Date newDate = new Date();
+        var newDate = new Date();
 
-        setProperties(crudDto, formId, newDate);
+        var question = createQuestion(crudDto, formId);
 
-        Date saved = dateRepository.save(newDate);
+        newDate.setQuestion(question);
 
-        return DateResDto.create(saved);
+        var saved = dateRepository.save(newDate);
+
+        return toQuestionResDto(saved);
     }
 
     @Override
     public DateResDto create(UUID formId, Long questionId, DateAddUpdateReqDto crudDto) {
-        Date newDate = new Date();
+        var newDate = new Date();
 
-        newDate.setId(questionId);
-        setProperties(crudDto, formId, newDate);
+        var question = updateQuestion(questionId, crudDto);
 
-        Date saved = dateRepository.save(newDate);
+        newDate.setQuestion(question);
 
-        return DateResDto.create(saved);
+        var saved = dateRepository.save(newDate);
+
+        return toQuestionResDto(saved);
     }
 
     @Override
+    @Transactional
     public DateResDto update(Long questionId, DateAddUpdateReqDto crudDto) {
         Date date = dateRepository.findById(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.DATE, questionId));
-        setProperties(crudDto, date);
+
+        updateQuestion(questionId, crudDto);
+
         dateRepository.save(date);
 
-        return DateResDto.create(date);
+        return toQuestionResDto(date);
     }
 
     @Override
@@ -68,37 +77,22 @@ public class DateManager extends QuestionManager<DateAddUpdateReqDto, DateResDto
     }
 
     @Override
-    public Class<DateAddUpdateReqDto> getCrudDtoClass() {
-        return DateAddUpdateReqDto.class;
-    }
-
-    @Override
-    public Class<DateValidationRequestDto> getValidationDtoClass() {
-        return DateValidationRequestDto.class;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public DateRepository getQuestionRepository() {
-        return dateRepository;
-    }
-
-    @Override
     public QuestionType getQuestionType() {
         return QuestionType.DATE;
     }
 
-    private void setProperties(DateAddUpdateReqDto source, UUID formId, Date target) {
-        target.setQuestion(source.getQuestion());
-        target.setDescription(source.getDescription());
-        target.setRequired(source.getRequired());
-        target.setOrderIndex(source.getOrderIndex());
-        if (formId != null) {
-            target.setForm(formService.getFormById(formId));
-        }
+    @Override
+    public void delete(Long questionId) {
+        dateRepository.deleteById(questionId);
     }
 
-    private void setProperties(DateAddUpdateReqDto source, Date target) {
-        setProperties(source, null, target);
+    @Override
+    public DateResDto toQuestionResDto(Date question) {
+        var d = new DateResDto();
+
+        populateCommonFields(question, d);
+
+        return d;
     }
+
 }

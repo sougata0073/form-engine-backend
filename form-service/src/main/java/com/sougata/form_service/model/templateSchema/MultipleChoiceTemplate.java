@@ -29,26 +29,26 @@ public class MultipleChoiceTemplate extends QuestionTemplate<MultipleChoiceTempl
     public MultipleChoice fromTemplate(Form f, MultipleChoiceTemplate t) {
         var multipleChoice = new MultipleChoice();
 
-        multipleChoice.setQuestion(t.getQuestion());
-        multipleChoice.setDescription(t.getDescription());
-        multipleChoice.setRequired(t.getRequired());
-        multipleChoice.setForm(f);
-        multipleChoice.setOrderIndex(t.getOrderIndex());
-
-        var options = t.getOptions()
-                .stream()
-                .map(op -> {
-                    var option = new MultipleChoiceOption();
-
-                    option.setOption(op.getOption());
-                    option.setOrderIndex(op.getOrderIndex());
-                    option.setMultipleChoice(multipleChoice);
-
-                    return option;
-                })
-                .toList();
-
-        multipleChoice.setOptions(options);
+//        multipleChoice.setQuestion(t.getQuestion());
+//        multipleChoice.setDescription(t.getDescription());
+//        multipleChoice.setRequired(t.getRequired());
+//        multipleChoice.setForm(f);
+//        multipleChoice.setOrderIndex(t.getOrderIndex());
+//
+//        var options = t.getOptions()
+//                .stream()
+//                .map(op -> {
+//                    var option = new MultipleChoiceOption();
+//
+//                    option.setOption(op.getOption());
+//                    option.setOrderIndex(op.getOrderIndex());
+//                    option.setMultipleChoice(multipleChoice);
+//
+//                    return option;
+//                })
+//                .toList();
+//
+//        multipleChoice.setOptions(options);
 
         return multipleChoice;
     }

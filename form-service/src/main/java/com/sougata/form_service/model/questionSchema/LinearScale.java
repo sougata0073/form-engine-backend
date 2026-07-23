@@ -1,9 +1,8 @@
 package com.sougata.form_service.model.questionSchema;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.Table;
+import com.github.f4b6a3.tsid.TsidCreator;
+import com.sougata.form_service.model.Auditable;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,7 +16,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @Getter
 @Setter
-public class LinearScale extends Question {
+public class LinearScale extends AnyTypeQuestion {
 
     @Column(nullable = false)
     private Integer fromNumber;

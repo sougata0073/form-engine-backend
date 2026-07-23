@@ -6,77 +6,94 @@ import com.sougata.form_service.constant.ValidationId;
 import com.sougata.form_service.dto.question.request.ParagraphAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.ParagraphResDto;
 import com.sougata.form_service.dto.validation.request.ParagraphValidationRequestDto;
+import com.sougata.form_service.dto.validationConfig.ValidationConfig;
 import com.sougata.form_service.exception.JsonParsingException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
+import com.sougata.form_service.model.questionSchema.Checkbox;
 import com.sougata.form_service.model.questionSchema.Paragraph;
+import com.sougata.form_service.model.questionSchema.Question;
 import com.sougata.form_service.repository.ParagraphRepository;
+import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.responseValidator.ResponseValidatorFactory;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.QuestionManager;
 import com.sougata.form_service.util.JsonUtil;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
 @Service("PARAGRAPH_QUESTION_MANAGER")
-public class ParagraphManager extends QuestionManager<ParagraphAddUpdateReqDto, ParagraphResDto, ParagraphValidationRequestDto> {
+public class ParagraphManager extends QuestionManager<Paragraph, ParagraphAddUpdateReqDto, ParagraphResDto, ParagraphValidationRequestDto> {
 
     private final ParagraphRepository paragraphRepository;
-    private final FormService formService;
     private final ResponseValidatorFactory responseValidatorFactory;
 
-    public ParagraphManager(ParagraphRepository paragraphRepository, FormService formService, ResponseValidatorFactory responseValidatorFactory) {
+    public ParagraphManager(ParagraphRepository paragraphRepository, FormService formService, ResponseValidatorFactory responseValidatorFactory, QuestionRepository questionRepository) {
+        super(questionRepository, formService);
         this.paragraphRepository = paragraphRepository;
-        this.formService = formService;
         this.responseValidatorFactory = responseValidatorFactory;
     }
 
     @Override
     public ParagraphResDto get(UUID formId, Long questionId) {
-        return ParagraphResDto.create(paragraphRepository.findByFormIdAndId(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
+        return toQuestionResDto(paragraphRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
+    @Transactional
     public ParagraphResDto create(UUID formId, ParagraphAddUpdateReqDto crudDto) {
-        Paragraph newP = new Paragraph();
+        var newP = new Paragraph();
 
-        setProperties(crudDto, formId, newP);
+        var question = createQuestion(crudDto, formId);
 
-        Paragraph saved = paragraphRepository.save(newP);
+        setPropertiesForNew(crudDto, newP, question);
 
-        return ParagraphResDto.create(saved);
+        var saved = paragraphRepository.save(newP);
+
+        return toQuestionResDto(saved);
     }
 
     @Override
     public ParagraphResDto create(UUID formId, Long questionId, ParagraphAddUpdateReqDto crudDto) {
-        Paragraph newP = new Paragraph();
+        var newP = new Paragraph();
 
-        newP.setId(questionId);
-        setProperties(crudDto, formId, newP);
+        var question = updateQuestion(questionId, crudDto);
 
-        Paragraph saved = paragraphRepository.save(newP);
+        setPropertiesForNew(crudDto, newP, question);
 
-        return ParagraphResDto.create(saved);
+        var saved = paragraphRepository.save(newP);
+
+        return toQuestionResDto(saved);
     }
 
     @Override
+    @Transactional
     public ParagraphResDto update(Long questionId, ParagraphAddUpdateReqDto crudDto) {
         Paragraph p = paragraphRepository.findById(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.PARAGRAPH, questionId));
-        setProperties(crudDto, p);
+
+        updateQuestion(questionId, crudDto);
+        p.setValidationConfig(JsonUtil.objectToOldJsonNode(crudDto.getValidationConfig()));
+
         paragraphRepository.save(p);
 
-        return ParagraphResDto.create(p);
+        return toQuestionResDto(p);
     }
 
     @Override
-    public boolean exists(Long questionId) {
-        return paragraphRepository.existsById(questionId);
-    }
+    public ParagraphResDto toQuestionResDto(Paragraph question) {
+        var p = new ParagraphResDto();
 
-    @Override
-    public void delete(Long questionId) {
-        paragraphRepository.deleteById(questionId);
+        populateCommonFields(question, p);
+
+        try {
+            p.setValidationConfig(JsonUtil.oldJsonNodeToObject(question.getValidationConfig(), ValidationConfig.class));
+        } catch (JsonProcessingException e) {
+            throw new JsonParsingException(JsonUtil.oldJsonNodeToString(question.getValidationConfig()));
+        }
+
+        return p;
     }
 
     @Override
@@ -97,38 +114,17 @@ public class ParagraphManager extends QuestionManager<ParagraphAddUpdateReqDto, 
     }
 
     @Override
-    public Class<ParagraphAddUpdateReqDto> getCrudDtoClass() {
-        return ParagraphAddUpdateReqDto.class;
-    }
-
-    @Override
-    public Class<ParagraphValidationRequestDto> getValidationDtoClass() {
-        return ParagraphValidationRequestDto.class;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public ParagraphRepository getQuestionRepository() {
-        return paragraphRepository;
-    }
-
-    @Override
     public QuestionType getQuestionType() {
         return QuestionType.PARAGRAPH;
     }
 
-    private void setProperties(ParagraphAddUpdateReqDto source, UUID formId, Paragraph target) {
-        target.setQuestion(source.getQuestion());
-        target.setDescription(source.getDescription());
-        target.setRequired(source.getRequired());
-        target.setValidationConfig(JsonUtil.objectToOldJsonNode(source.getValidationConfig()));
-        target.setOrderIndex(source.getOrderIndex());
-        if (formId != null) {
-            target.setForm(formService.getFormById(formId));
-        }
+    @Override
+    public void delete(Long questionId) {
+        paragraphRepository.deleteById(questionId);
     }
 
-    private void setProperties(ParagraphAddUpdateReqDto source, Paragraph target) {
-        setProperties(source, null, target);
+    private void setPropertiesForNew(ParagraphAddUpdateReqDto source, Paragraph target, Question question) {
+        target.setQuestion(question);
+        target.setValidationConfig(JsonUtil.objectToOldJsonNode(source.getValidationConfig()));
     }
 }

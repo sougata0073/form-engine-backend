@@ -21,29 +21,6 @@ public class CheckboxResDto extends QuestionRes {
     private List<CheckboxOptionResDto> options;
     private ValidationConfig validationConfig;
 
-    public CheckboxResDto(Long id, String question, String description, Boolean required, List<CheckboxOptionResDto> options, ValidationConfig validationConfig, Integer orderIndex, QuestionType questionType) {
-        super(id, question, description, required, orderIndex, questionType);
-        this.options = options;
-        this.validationConfig = validationConfig;
-    }
-
-    public static CheckboxResDto create(Checkbox cb) {
-        try {
-            return new CheckboxResDto(
-                    cb.getId(),
-                    cb.getQuestion(),
-                    cb.getDescription(),
-                    cb.getRequired(),
-                    cb.getOptions().stream().map(o -> new CheckboxOptionResDto(o.getId(), o.getOption(), o.getOrderIndex())).toList(),
-                    JsonUtil.oldJsonNodeToObject(cb.getValidationConfig(), ValidationConfig.class),
-                    cb.getOrderIndex(),
-                    QuestionType.CHECKBOX
-            );
-        } catch (JsonProcessingException e) {
-            throw new JsonParsingException(JsonUtil.oldJsonNodeToString(cb.getValidationConfig()));
-        }
-    }
-
     public record CheckboxOptionResDto(
             @JsonSerialize(using = ToStringSerializer.class)
             Long id,

@@ -5,17 +5,18 @@ import com.sougata.form_service.constant.ValidationMessages;
 import com.sougata.form_service.constant.ViewFormErrorReason;
 import com.sougata.form_service.dto.common.SuccessMessageDto;
 import com.sougata.form_service.dto.form.*;
-import com.sougata.form_service.dto.question.response.QuestionRes;
 import com.sougata.form_service.dto.validation.request.ResponseValidationRequestDto;
 import com.sougata.form_service.exception.*;
 import com.sougata.form_service.feignClient.FormDataServiceFeignClient;
 import com.sougata.form_service.model.Form;
 import com.sougata.form_service.projection.QuestionIdProjection;
 import com.sougata.form_service.repository.FormRepository;
-import com.sougata.form_service.repository.QuestionRepositoryFactory;
+import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormService;
+import com.sougata.form_service.service.FormServiceCached;
 import com.sougata.form_service.service.questionManager.QuestionManagerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,19 +28,21 @@ public class FormServiceImpl implements FormService {
 
     private final FormRepository formRepo;
     private final QuestionManagerFactory questionManagerFactory;
-    private final QuestionRepositoryFactory questionRepositoryFactory;
     private final FormDataServiceFeignClient formDataServiceFeignClient;
+    private final QuestionRepository questionRepository;
+    private final FormServiceCached formServiceCached;
 
     @Autowired
     public FormServiceImpl(
             FormRepository formRepo,
             QuestionManagerFactory questionManagerFactory,
-            QuestionRepositoryFactory questionRepositoryFactory, FormDataServiceFeignClient formDataServiceFeignClient
+            FormDataServiceFeignClient formDataServiceFeignClient, QuestionRepository questionRepository, FormServiceCached formServiceCached
     ) {
         this.formRepo = formRepo;
         this.questionManagerFactory = questionManagerFactory;
-        this.questionRepositoryFactory = questionRepositoryFactory;
         this.formDataServiceFeignClient = formDataServiceFeignClient;
+        this.questionRepository = questionRepository;
+        this.formServiceCached = formServiceCached;
     }
 
     @Override
@@ -80,33 +83,7 @@ public class FormServiceImpl implements FormService {
 
     @Override
     public FormResponseDto getFormDetails(UUID id) {
-        Form f = getFormById(id);
-
-        List<QuestionRes> questions = new ArrayList<>();
-
-        questionRepositoryFactory.getAll().forEach(qRepo ->
-                questions.addAll(
-                        qRepo.findByFormId(f.getId())
-                                .stream()
-                                .map(qRepo::toQuestionResDto)
-                                .toList()
-                ));
-
-        questions.sort(Comparator.comparingInt(QuestionRes::getOrderIndex));
-
-        return new FormResponseDto(
-                f.getId(),
-                f.getName(),
-                f.getTitle(),
-                f.getDescription(),
-                f.getPublished(),
-                f.getAcceptingResponse(),
-                f.getNotAcceptingResponseMessage(),
-                f.getStopAcceptingResponseOn(),
-                f.getStopAcceptingResponseAfterResponse(),
-                f.getLastOpenedOn(),
-                questions
-        );
+        return formServiceCached.getFormDetails(id);
     }
 
     @Override
@@ -179,16 +156,11 @@ public class FormServiceImpl implements FormService {
     @Override
     public SuccessMessageDto validateResponse(UUID formId, ResponseValidationRequestDto dto) {
 
-        List<Long> requiredQuestionIds = new ArrayList<>();
-
         // Getting IDs of questions which are marked as required
-        questionRepositoryFactory.getAll().forEach(qRepo -> {
-            requiredQuestionIds.addAll(
-                    qRepo.findByFormIdAndRequired(formId, true)
-                            .stream().map(QuestionIdProjection::getId)
-                            .toList()
-            );
-        });
+        List<Long> requiredQuestionIds = new ArrayList<>(
+                questionRepository.findByFormIdAndRequired(formId, true).stream()
+                        .map(QuestionIdProjection::getId).toList()
+        );
 
         Set<Long> responseQuestionIds = new HashSet<>();
 
@@ -232,10 +204,18 @@ public class FormServiceImpl implements FormService {
     }
 
     @Override
+    @Cacheable(cacheNames = {"formInfo"}, key = "#formId")
     public FormInfoResDto getFormInfo(UUID formId) {
         Form f = getFormById(formId);
 
         return FormInfoResDto.create(f);
+    }
+
+    @Override
+    public SuccessMessageDto deleteForm(UUID formId) {
+        formRepo.deleteById(formId);
+
+        return new SuccessMessageDto("Form deleted successfully with ID: " + formId);
     }
 
 }

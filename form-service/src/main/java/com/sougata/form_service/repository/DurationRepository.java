@@ -6,16 +6,12 @@ import com.sougata.form_service.model.questionSchema.Duration;
 import org.springframework.stereotype.Repository;
 
 @Repository("DURATION_REPOSITORY")
-public interface DurationRepository extends QuestionRepository<Duration, Long, DurationResDto> {
+public interface DurationRepository extends AnyTypeQuestionRepository<Duration, Long, DurationResDto> {
 
     @Override
     default QuestionType getQuestionType() {
         return QuestionType.DURATION;
     }
 
-    @Override
-    default DurationResDto toQuestionResDto(Duration duration) {
-        return DurationResDto.create(duration);
-    }
 }
 

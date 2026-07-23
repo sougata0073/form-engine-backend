@@ -6,86 +6,140 @@ import com.sougata.form_service.constant.ValidationId;
 import com.sougata.form_service.dto.question.request.CheckboxAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.CheckboxResDto;
 import com.sougata.form_service.dto.validation.request.CheckboxValidationRequestDto;
+import com.sougata.form_service.dto.validationConfig.ValidationConfig;
 import com.sougata.form_service.exception.JsonParsingException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.exception.ResponseValidationException;
 import com.sougata.form_service.model.questionSchema.Checkbox;
 import com.sougata.form_service.model.questionSchema.CheckboxOption;
+import com.sougata.form_service.model.questionSchema.Question;
 import com.sougata.form_service.repository.CheckboxRepository;
+import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.responseValidator.ResponseValidatorFactory;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.QuestionManager;
 import com.sougata.form_service.util.JsonUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("CHECKBOX_QUESTION_MANAGER")
-public class CheckboxManager extends QuestionManager<CheckboxAddUpdateReqDto, CheckboxResDto, CheckboxValidationRequestDto> {
+public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdateReqDto, CheckboxResDto, CheckboxValidationRequestDto> {
 
     private final CheckboxRepository checkboxRepository;
-    private final FormService formService;
     private final ResponseValidatorFactory responseValidatorFactory;
 
     @Autowired
-    public CheckboxManager(CheckboxRepository checkboxRepository, FormService formService, ResponseValidatorFactory responseValidatorFactory) {
+    public CheckboxManager(CheckboxRepository checkboxRepository, FormService formService, ResponseValidatorFactory responseValidatorFactory, QuestionRepository questionRepository) {
+        super(questionRepository, formService);
         this.checkboxRepository = checkboxRepository;
-        this.formService = formService;
         this.responseValidatorFactory = responseValidatorFactory;
     }
 
     @Override
     public CheckboxResDto get(UUID formId, Long questionId) {
-        return CheckboxResDto.create(
-                checkboxRepository.findByFormIdAndId(formId, questionId)
+        return toQuestionResDto(
+                checkboxRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                         .orElseThrow(() -> new QuestionNotFoundException(questionId))
         );
     }
 
     @Override
+    @Transactional
     public CheckboxResDto create(UUID formId, CheckboxAddUpdateReqDto crudDto) {
-        Checkbox newCb = new Checkbox();
+        var newCb = new Checkbox();
 
-        setProperties(crudDto, formId, newCb);
+        var question = createQuestion(crudDto, formId);
 
-        Checkbox savedCb = checkboxRepository.save(newCb);
+        setPropertiesForNew(crudDto, newCb, question);
 
-        return CheckboxResDto.create(savedCb);
+        var savedCb = checkboxRepository.save(newCb);
+
+        return toQuestionResDto(savedCb);
     }
 
     @Override
     public CheckboxResDto create(UUID formId, Long questionId, CheckboxAddUpdateReqDto crudDto) {
-        Checkbox newCb = new Checkbox();
+        var newCb = new Checkbox();
 
-        newCb.setId(questionId);
-        setProperties(crudDto, formId, newCb);
+        var question = updateQuestion(questionId, crudDto);
 
-        Checkbox savedCb = checkboxRepository.save(newCb);
+        setPropertiesForNew(crudDto, newCb, question);
 
-        return CheckboxResDto.create(savedCb);
+        var savedCb = checkboxRepository.save(newCb);
+
+        return toQuestionResDto(savedCb);
     }
 
     @Override
+    @Transactional
     public CheckboxResDto update(Long questionId, CheckboxAddUpdateReqDto crudDto) {
         Checkbox cb = checkboxRepository.findById(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.CHECKBOX, questionId));
-        setProperties(crudDto, cb);
+
+        updateQuestion(questionId, crudDto);
+        cb.setValidationConfig(JsonUtil.objectToOldJsonNode(crudDto.getValidationConfig()));
+
+        Map<Long, CheckboxOption> existingOptions = cb.getOptions().stream()
+                .collect(Collectors.toMap(CheckboxOption::getId, option -> option));
+        Set<Long> requestOptionIds = crudDto.getOptions().stream()
+                .map(CheckboxAddUpdateReqDto.Option::id)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        cb.getOptions().removeIf(option -> !requestOptionIds.contains(option.getId()));
+
+        for (int i = 0; i < crudDto.getOptions().size(); i++) {
+            var dto = crudDto.getOptions().get(i);
+
+            if (dto.id() == null) {
+                CheckboxOption option = new CheckboxOption();
+                option.setOption(dto.option());
+                option.setOrderIndex(i);
+                option.setCheckbox(cb);
+
+                cb.getOptions().add(option);
+            } else {
+                CheckboxOption option = existingOptions.get(dto.id());
+                if (option == null) {
+                    throw new IllegalArgumentException("Invalid option id: " + dto.id());
+                }
+                option.setOption(dto.option());
+                option.setOrderIndex(i);
+            }
+        }
 
         checkboxRepository.save(cb);
 
-        return CheckboxResDto.create(cb);
+        return toQuestionResDto(cb);
     }
 
     @Override
-    public void delete(Long questionId) {
-        checkboxRepository.deleteById(questionId);
-    }
+    public CheckboxResDto toQuestionResDto(Checkbox question) {
+        var cb = new CheckboxResDto();
 
-    @Override
-    public boolean exists(Long questionId) {
-        return checkboxRepository.existsById(questionId);
+        populateCommonFields(question, cb);
+
+        cb.setOptions(
+                question.getOptions().stream()
+                        .map(o ->
+                                new CheckboxResDto.CheckboxOptionResDto(o.getId(), o.getOption(), o.getOrderIndex())
+                        )
+                        .toList()
+        );
+
+        try {
+            cb.setValidationConfig(
+                    JsonUtil.oldJsonNodeToObject(question.getValidationConfig(), ValidationConfig.class)
+            );
+        } catch (JsonProcessingException e) {
+            throw new JsonParsingException(JsonUtil.oldJsonNodeToString(question.getValidationConfig()));
+        }
+
+        return cb;
     }
 
     @Override
@@ -121,77 +175,32 @@ public class CheckboxManager extends QuestionManager<CheckboxAddUpdateReqDto, Ch
     }
 
     @Override
-    public Class<CheckboxAddUpdateReqDto> getCrudDtoClass() {
-        return CheckboxAddUpdateReqDto.class;
-    }
-
-    @Override
-    public Class<CheckboxValidationRequestDto> getValidationDtoClass() {
-        return CheckboxValidationRequestDto.class;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public CheckboxRepository getQuestionRepository() {
-        return checkboxRepository;
-    }
-
-    @Override
     public QuestionType getQuestionType() {
         return QuestionType.CHECKBOX;
     }
 
-    private void setProperties(CheckboxAddUpdateReqDto source, UUID formId, Checkbox target) {
-
-        target.setQuestion(source.getQuestion());
-        target.setDescription(source.getDescription());
-        target.setRequired(source.getRequired());
-        target.setValidationConfig(JsonUtil.objectToOldJsonNode(source.getValidationConfig()));
-        target.setOrderIndex(source.getOrderIndex());
-
-        Map<Long, CheckboxOption> existingOptions = target.getOptions().stream()
-                .collect(Collectors.toMap(CheckboxOption::getId, option -> option));
-
-        Set<Long> requestOptionIds = source.getOptions().stream()
-                .map(CheckboxAddUpdateReqDto.Option::id)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-
-        target.getOptions().removeIf(option -> !requestOptionIds.contains(option.getId()));
-
-        for (int i = 0; i < source.getOptions().size(); i++) {
-
-            var dto = source.getOptions().get(i);
-
-            if (dto.id() == null) {
-
-                CheckboxOption option = new CheckboxOption();
-                option.setOption(dto.option());
-                option.setOrderIndex(i);
-                option.setCheckbox(target);
-
-                target.getOptions().add(option);
-
-            } else {
-
-                CheckboxOption option = existingOptions.get(dto.id());
-
-                if (option == null) {
-                    throw new IllegalArgumentException("Invalid option id: " + dto.id());
-                }
-
-                option.setOption(dto.option());
-                option.setOrderIndex(i);
-            }
-        }
-
-        if (formId != null) {
-            target.setForm(formService.getFormById(formId));
-        }
+    @Override
+    public void delete(Long questionId) {
+        checkboxRepository.deleteById(questionId);
     }
 
-    private void setProperties(CheckboxAddUpdateReqDto source, Checkbox target) {
-        setProperties(source, null, target);
+    private void setPropertiesForNew(CheckboxAddUpdateReqDto source, Checkbox target, Question question) {
+        var options = new ArrayList<CheckboxOption>();
+
+        for (int i = 0; i < source.getOptions().size(); i++) {
+            var op = source.getOptions().get(i);
+            var cbOp = new CheckboxOption();
+
+            cbOp.setOption(op.option());
+            cbOp.setCheckbox(target);
+            cbOp.setOrderIndex(i);
+
+            options.add(cbOp);
+        }
+
+        target.setQuestion(question);
+        target.setValidationConfig(JsonUtil.objectToOldJsonNode(source.getValidationConfig()));
+        target.setOptions(options);
     }
 
 }

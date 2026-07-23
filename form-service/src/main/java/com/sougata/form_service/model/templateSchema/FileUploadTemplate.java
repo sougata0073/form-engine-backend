@@ -40,13 +40,13 @@ public class FileUploadTemplate extends QuestionTemplate<FileUploadTemplate> {
     public FileUpload fromTemplate(Form f, FileUploadTemplate t) {
         var fileUpload = new FileUpload();
 
-        fileUpload.setQuestion(t.getQuestion());
-        fileUpload.setDescription(t.getDescription());
-        fileUpload.setRequired(t.getRequired());
-        fileUpload.setForm(f);
-        fileUpload.setOrderIndex(t.getOrderIndex());
-        fileUpload.setAllowedFileTypes(t.getAllowedFileTypes());
-        fileUpload.setMaxFileSize(t.getMaxFileSize());
+//        fileUpload.setQuestion(t.getQuestion());
+//        fileUpload.setDescription(t.getDescription());
+//        fileUpload.setRequired(t.getRequired());
+//        fileUpload.setForm(f);
+//        fileUpload.setOrderIndex(t.getOrderIndex());
+//        fileUpload.setAllowedFileTypes(t.getAllowedFileTypes());
+//        fileUpload.setMaxFileSize(t.getMaxFileSize());
 
         return fileUpload;
     }

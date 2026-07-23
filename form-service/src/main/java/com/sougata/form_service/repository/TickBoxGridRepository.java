@@ -6,16 +6,12 @@ import com.sougata.form_service.model.questionSchema.TickBoxGrid;
 import org.springframework.stereotype.Repository;
 
 @Repository("TICK_BOX_GRID_REPOSITORY")
-public interface TickBoxGridRepository extends QuestionRepository<TickBoxGrid, Long, TickBoxGridResDto> {
+public interface TickBoxGridRepository extends AnyTypeQuestionRepository<TickBoxGrid, Long, TickBoxGridResDto> {
 
     @Override
     default QuestionType getQuestionType() {
         return QuestionType.TICK_BOX_GRID;
     }
 
-    @Override
-    default TickBoxGridResDto toQuestionResDto(TickBoxGrid tickBoxGrid) {
-        return TickBoxGridResDto.create(tickBoxGrid);
-    }
 }
 

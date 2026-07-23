@@ -10,9 +10,9 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository("SHORT_ANSWER_REPOSITORY")
-public interface ShortAnswerRepository extends QuestionRepository<ShortAnswer, Long, ShortAnswerResDto> {
+public interface ShortAnswerRepository extends AnyTypeQuestionRepository<ShortAnswer, Long, ShortAnswerResDto> {
 
-    @Query("select s.validationConfig from ShortAnswer s where s.id = :id")
+    @Query("select s.validationConfig from ShortAnswer s where s.questionId = :id")
     Optional<JsonNode> getValidationConfig(Long id);
 
     @Override
@@ -20,9 +20,5 @@ public interface ShortAnswerRepository extends QuestionRepository<ShortAnswer, L
         return QuestionType.SHORT_ANSWER;
     }
 
-    @Override
-    default ShortAnswerResDto toQuestionResDto(ShortAnswer shortAnswer) {
-        return ShortAnswerResDto.create(shortAnswer);
-    }
 }
 

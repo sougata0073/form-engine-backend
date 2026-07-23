@@ -36,27 +36,27 @@ public class CheckboxTemplate extends QuestionTemplate<CheckboxTemplate> {
     public Checkbox fromTemplate(Form f, CheckboxTemplate t) {
         var checkbox = new Checkbox();
 
-        checkbox.setQuestion(t.getQuestion());
-        checkbox.setDescription(t.getDescription());
-        checkbox.setRequired(t.getRequired());
-        checkbox.setForm(f);
-        checkbox.setOrderIndex(t.getOrderIndex());
-        checkbox.setValidationConfig(t.getValidationConfig());
-
-        var options = t.getOptions()
-                .stream()
-                .map(op -> {
-                    var option = new CheckboxOption();
-
-                    option.setOption(op.getOption());
-                    option.setOrderIndex(op.getOrderIndex());
-                    option.setCheckbox(checkbox);
-
-                    return option;
-                })
-                .toList();
-
-        checkbox.setOptions(options);
+//        checkbox.setQuestion(t.getQuestion());
+//        checkbox.setDescription(t.getDescription());
+//        checkbox.setRequired(t.getRequired());
+//        checkbox.setForm(f);
+//        checkbox.setOrderIndex(t.getOrderIndex());
+//        checkbox.setValidationConfig(t.getValidationConfig());
+//
+//        var options = t.getOptions()
+//                .stream()
+//                .map(op -> {
+//                    var option = new CheckboxOption();
+//
+//                    option.setOption(op.getOption());
+//                    option.setOrderIndex(op.getOrderIndex());
+//                    option.setCheckbox(checkbox);
+//
+//                    return option;
+//                })
+//                .toList();
+//
+//        checkbox.setOptions(options);
 
         return checkbox;
     }

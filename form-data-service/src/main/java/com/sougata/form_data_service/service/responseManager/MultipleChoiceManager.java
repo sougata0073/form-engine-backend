@@ -2,9 +2,9 @@ package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.MultipleChoiceResponseAddReqDto;
+import com.sougata.form_data_service.dto.question.response.MultipleChoiceResDto;
 import com.sougata.form_data_service.dto.response.question.MultipleChoiceResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.MultipleChoiceResponseSummaryDto;
-import com.sougata.form_data_service.form_schema.dto.questionSchema.response.MultipleChoiceResDto;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.MultipleChoice;
 import com.sougata.form_data_service.repository.MultipleChoiceRepository;

@@ -36,41 +36,41 @@ public class MultipleChoiceGridTemplate extends QuestionTemplate<MultipleChoiceG
     public MultipleChoiceGrid fromTemplate(Form f, MultipleChoiceGridTemplate t) {
         var multipleChoiceGrid = new MultipleChoiceGrid();
 
-        multipleChoiceGrid.setQuestion(t.getQuestion());
-        multipleChoiceGrid.setDescription(t.getDescription());
-        multipleChoiceGrid.setRequired(t.getRequired());
-        multipleChoiceGrid.setForm(f);
-        multipleChoiceGrid.setOrderIndex(t.getOrderIndex());
-        multipleChoiceGrid.setEachRowRequired(t.getEachRowRequired());
-
-        var rows = t.getRows()
-                .stream()
-                .map(op -> {
-                    var row = new MultipleChoiceGridRow();
-
-                    row.setRowName(op.getRowName());
-                    row.setOrderIndex(op.getOrderIndex());
-                    row.setMultipleChoiceGrid(multipleChoiceGrid);
-
-                    return row;
-                })
-                .toList();
-
-        var columns = t.getColumns()
-                .stream()
-                .map(op -> {
-                    var column = new MultipleChoiceGridColumn();
-
-                    column.setColumnName(op.getColumnName());
-                    column.setOrderIndex(op.getOrderIndex());
-                    column.setMultipleChoiceGrid(multipleChoiceGrid);
-
-                    return column;
-                })
-                .toList();
-
-        multipleChoiceGrid.setRows(rows);
-        multipleChoiceGrid.setColumns(columns);
+//        multipleChoiceGrid.setQuestion(t.getQuestion());
+//        multipleChoiceGrid.setDescription(t.getDescription());
+//        multipleChoiceGrid.setRequired(t.getRequired());
+//        multipleChoiceGrid.setForm(f);
+//        multipleChoiceGrid.setOrderIndex(t.getOrderIndex());
+//        multipleChoiceGrid.setEachRowRequired(t.getEachRowRequired());
+//
+//        var rows = t.getRows()
+//                .stream()
+//                .map(op -> {
+//                    var row = new MultipleChoiceGridRow();
+//
+//                    row.setRowName(op.getRowName());
+//                    row.setOrderIndex(op.getOrderIndex());
+//                    row.setMultipleChoiceGrid(multipleChoiceGrid);
+//
+//                    return row;
+//                })
+//                .toList();
+//
+//        var columns = t.getColumns()
+//                .stream()
+//                .map(op -> {
+//                    var column = new MultipleChoiceGridColumn();
+//
+//                    column.setColumnName(op.getColumnName());
+//                    column.setOrderIndex(op.getOrderIndex());
+//                    column.setMultipleChoiceGrid(multipleChoiceGrid);
+//
+//                    return column;
+//                })
+//                .toList();
+//
+//        multipleChoiceGrid.setRows(rows);
+//        multipleChoiceGrid.setColumns(columns);
 
         return multipleChoiceGrid;
     }

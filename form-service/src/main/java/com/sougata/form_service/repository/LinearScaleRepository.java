@@ -9,9 +9,9 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 @Repository("LINEAR_SCALE_REPOSITORY")
-public interface LinearScaleRepository extends QuestionRepository<LinearScale, Long, LinearScaleResDto> {
+public interface LinearScaleRepository extends AnyTypeQuestionRepository<LinearScale, Long, LinearScaleResDto> {
 
-    @Query("select l.toNumber from LinearScale l where l.id = :id")
+    @Query("select l.toNumber from LinearScale l where l.questionId = :id")
     Optional<Integer> getToNumber(Long id);
 
     @Override
@@ -19,9 +19,5 @@ public interface LinearScaleRepository extends QuestionRepository<LinearScale, L
         return QuestionType.LINEAR_SCALE;
     }
 
-    @Override
-    default LinearScaleResDto toQuestionResDto(LinearScale linearScale) {
-        return LinearScaleResDto.create(linearScale);
-    }
 }
 

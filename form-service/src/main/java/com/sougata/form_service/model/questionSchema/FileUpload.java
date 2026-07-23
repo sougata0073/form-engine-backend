@@ -1,5 +1,7 @@
 package com.sougata.form_service.model.questionSchema;
 
+import com.github.f4b6a3.tsid.TsidCreator;
+import com.sougata.form_service.model.Auditable;
 import com.sougata.form_service.model.FileType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -17,7 +19,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-public class FileUpload extends Question {
+public class FileUpload extends AnyTypeQuestion {
 
     @ManyToMany
     @JoinTable(

@@ -6,16 +6,12 @@ import com.sougata.form_service.model.questionSchema.MultipleChoiceGrid;
 import org.springframework.stereotype.Repository;
 
 @Repository("MULTIPLE_CHOICE_GRID_REPOSITORY")
-public interface MultipleChoiceGridRepository extends QuestionRepository<MultipleChoiceGrid, Long, MultipleChoiceGridResDto> {
+public interface MultipleChoiceGridRepository extends AnyTypeQuestionRepository<MultipleChoiceGrid, Long, MultipleChoiceGridResDto> {
 
     @Override
     default QuestionType getQuestionType() {
         return QuestionType.MULTIPLE_CHOICE_GRID;
     }
 
-    @Override
-    default MultipleChoiceGridResDto toQuestionResDto(MultipleChoiceGrid multipleChoiceGrid) {
-        return MultipleChoiceGridResDto.create(multipleChoiceGrid);
-    }
 }
 

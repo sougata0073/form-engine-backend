@@ -14,27 +14,9 @@ import java.util.List;
 @Getter
 @Setter
 public class MultipleChoiceGridResDto extends QuestionRes {
+    private Boolean eachRowRequired;
     private List<MultipleChoiceGridRowResDto> rows;
     private List<MultipleChoiceGridColumnResDto> columns;
-
-    public MultipleChoiceGridResDto(Long id, String question, String description, Boolean required, Integer orderIndex, QuestionType questionType, List<MultipleChoiceGridRowResDto> rows, List<MultipleChoiceGridColumnResDto> columns) {
-        super(id, question, description, required, orderIndex, questionType);
-        this.rows = rows;
-        this.columns = columns;
-    }
-
-    public static MultipleChoiceGridResDto create(MultipleChoiceGrid mcg) {
-        return new MultipleChoiceGridResDto(
-                mcg.getId(),
-                mcg.getQuestion(),
-                mcg.getDescription(),
-                mcg.getRequired(),
-                mcg.getOrderIndex(),
-                QuestionType.MULTIPLE_CHOICE_GRID,
-                mcg.getRows().stream().map(row -> new MultipleChoiceGridRowResDto(row.getId(), row.getRowName(), row.getOrderIndex())).toList(),
-                mcg.getColumns().stream().map(column -> new MultipleChoiceGridColumnResDto(column.getId(), column.getColumnName(), column.getOrderIndex())).toList()
-        );
-    }
 
     public record MultipleChoiceGridRowResDto(
             @JsonSerialize(using = ToStringSerializer.class)

@@ -15,25 +15,4 @@ import lombok.Setter;
 @Setter
 public class ShortAnswerResDto extends QuestionRes {
     private ValidationConfig validationConfig;
-
-    public ShortAnswerResDto(Long id, String question, String description, Boolean required, Integer orderIndex, QuestionType questionType, ValidationConfig validationConfig) {
-        super(id, question, description, required, orderIndex, questionType);
-        this.validationConfig = validationConfig;
-    }
-
-    public static ShortAnswerResDto create(ShortAnswer sa) {
-        try {
-            return new ShortAnswerResDto(
-                    sa.getId(),
-                    sa.getQuestion(),
-                    sa.getDescription(),
-                    sa.getRequired(),
-                    sa.getOrderIndex(),
-                    QuestionType.SHORT_ANSWER,
-                    JsonUtil.oldJsonNodeToObject(sa.getValidationConfig(), ValidationConfig.class)
-            );
-        } catch (JsonProcessingException e) {
-            throw new JsonParsingException(JsonUtil.oldJsonNodeToString(sa.getValidationConfig()));
-        }
-    }
 }

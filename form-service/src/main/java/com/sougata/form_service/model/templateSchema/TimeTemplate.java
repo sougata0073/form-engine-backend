@@ -16,11 +16,11 @@ public class TimeTemplate extends QuestionTemplate<TimeTemplate> {
     public Time fromTemplate(Form f, TimeTemplate t) {
         var time = new Time();
 
-        time.setQuestion(t.getQuestion());
-        time.setDescription(t.getDescription());
-        time.setRequired(t.getRequired());
-        time.setForm(f);
-        time.setOrderIndex(t.getOrderIndex());
+//        time.setQuestion(t.getQuestion());
+//        time.setDescription(t.getDescription());
+//        time.setRequired(t.getRequired());
+//        time.setForm(f);
+//        time.setOrderIndex(t.getOrderIndex());
 
         return time;
     }

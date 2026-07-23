@@ -6,16 +6,11 @@ import com.sougata.form_service.model.questionSchema.Checkbox;
 import org.springframework.stereotype.Repository;
 
 @Repository("CHECKBOX_REPOSITORY")
-public interface CheckboxRepository extends QuestionRepository<Checkbox, Long, CheckboxResDto> {
+public interface CheckboxRepository extends AnyTypeQuestionRepository<Checkbox, Long, CheckboxResDto> {
 
     @Override
     default QuestionType getQuestionType() {
         return QuestionType.CHECKBOX;
-    }
-
-    @Override
-    default CheckboxResDto toQuestionResDto(Checkbox checkbox) {
-        return CheckboxResDto.create(checkbox);
     }
 
 }

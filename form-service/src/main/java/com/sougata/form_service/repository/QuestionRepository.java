@@ -1,21 +1,22 @@
 package com.sougata.form_service.repository;
 
-import com.sougata.form_service.constant.QuestionType;
-import com.sougata.form_service.dto.question.response.QuestionRes;
 import com.sougata.form_service.model.questionSchema.Question;
 import com.sougata.form_service.projection.QuestionIdProjection;
 import com.sougata.form_service.projection.QuestionSummaryProjection;
+import com.sougata.form_service.projection.QuestionTypeProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface QuestionRepository<Q extends Question, ID, QRD extends QuestionRes> extends JpaRepository<Q, ID> {
+@Repository
+public interface QuestionRepository extends JpaRepository<Question, Long> {
 
-    List<Q> findByFormId(UUID id);
+    List<Question> findByFormId(UUID id);
 
-    Optional<Q> findByFormIdAndId(UUID formId, Long questionId);
+    Optional<Question> findByFormIdAndId(UUID formId, Long questionId);
 
     List<QuestionSummaryProjection> findQuestionSummariesByFormId(UUID formId);
 
@@ -23,15 +24,5 @@ public interface QuestionRepository<Q extends Question, ID, QRD extends Question
 
     List<QuestionIdProjection> findByFormIdAndRequired(UUID formId, Boolean required);
 
-    default QuestionType getQuestionType() {
-        throw new UnsupportedOperationException(
-                "Must be implemented by concrete repository"
-        );
-    }
-
-    default QRD toQuestionResDto(Q question) {
-        throw new UnsupportedOperationException(
-                "Must be implemented by concrete repository"
-        );
-    }
+    Optional<QuestionTypeProjection> findQuestionTypeById(Long questionId);
 }

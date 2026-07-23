@@ -1,6 +1,8 @@
 package com.sougata.form_service.model.questionSchema;
 
+import com.github.f4b6a3.tsid.TsidCreator;
 import com.sougata.form_service.constant.RatingIcon;
+import com.sougata.form_service.model.Auditable;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,7 +17,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @Getter
 @Setter
-public class Rating extends Question {
+public class Rating extends AnyTypeQuestion {
 
     @Column(nullable = false)
     private Integer maxRatingNumber;

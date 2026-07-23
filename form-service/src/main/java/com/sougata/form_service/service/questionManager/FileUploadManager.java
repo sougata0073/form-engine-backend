@@ -2,6 +2,7 @@ package com.sougata.form_service.service.questionManager;
 
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.FileUploadAddUpdateReqDto;
+import com.sougata.form_service.dto.question.response.FileTypeRes;
 import com.sougata.form_service.dto.question.response.FileUploadResDto;
 import com.sougata.form_service.dto.validation.request.FileUploadValidationRequestDto;
 import com.sougata.form_service.exception.FileTypeNotFoundException;
@@ -9,12 +10,16 @@ import com.sougata.form_service.exception.InvalidFileSizeException;
 import com.sougata.form_service.exception.InvalidFileTypeException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.FileType;
+import com.sougata.form_service.model.questionSchema.Checkbox;
 import com.sougata.form_service.model.questionSchema.FileUpload;
+import com.sougata.form_service.model.questionSchema.Question;
 import com.sougata.form_service.repository.FileTypeRepository;
 import com.sougata.form_service.repository.FileUploadRepository;
+import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.QuestionManager;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
@@ -22,61 +27,87 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service("FILE_UPLOAD_QUESTION_MANAGER")
-public class FileUploadManager extends QuestionManager<FileUploadAddUpdateReqDto, FileUploadResDto, FileUploadValidationRequestDto> {
+public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAddUpdateReqDto, FileUploadResDto, FileUploadValidationRequestDto> {
 
     private final FileUploadRepository fileUploadRepository;
     private final FileTypeRepository fileTypeRepository;
-    private final FormService formService;
 
-    public FileUploadManager(FileUploadRepository fileUploadRepository, FileTypeRepository fileTypeRepository, FormService formService) {
+    public FileUploadManager(FileUploadRepository fileUploadRepository, FileTypeRepository fileTypeRepository, FormService formService, QuestionRepository questionRepository) {
+        super(questionRepository, formService);
         this.fileUploadRepository = fileUploadRepository;
         this.fileTypeRepository = fileTypeRepository;
-        this.formService = formService;
     }
 
     @Override
     public FileUploadResDto get(UUID formId, Long questionId) {
-        return FileUploadResDto.create(fileUploadRepository.findByFormIdAndId(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
+        return toQuestionResDto(fileUploadRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
+    @Transactional
     public FileUploadResDto create(UUID formId, FileUploadAddUpdateReqDto crudDto) {
-        FileUpload newFu = new FileUpload();
+        var newFu = new FileUpload();
 
-        setProperties(crudDto, formId, newFu);
+        var question = createQuestion(crudDto, formId);
 
-        FileUpload saved = fileUploadRepository.save(newFu);
+        setPropertiesForNew(crudDto, newFu, question);
 
-        return FileUploadResDto.create(saved);
+        var saved = fileUploadRepository.save(newFu);
+
+        return toQuestionResDto(saved);
     }
 
     @Override
     public FileUploadResDto create(UUID formId, Long questionId, FileUploadAddUpdateReqDto crudDto) {
-        FileUpload newFu = new FileUpload();
+        var newFu = new FileUpload();
 
-        newFu.setId(questionId);
-        setProperties(crudDto, formId, newFu);
+        var question = updateQuestion(questionId, crudDto);
 
-        FileUpload saved = fileUploadRepository.save(newFu);
+        setPropertiesForNew(crudDto, newFu, question);
 
-        return FileUploadResDto.create(saved);
+        var saved = fileUploadRepository.save(newFu);
+
+        return toQuestionResDto(saved);
     }
 
     @Override
+    @Transactional
     public FileUploadResDto update(Long questionId, FileUploadAddUpdateReqDto crudDto) {
         FileUpload fu = fileUploadRepository.findById(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.FILE_UPLOAD, questionId));
 
-        setProperties(crudDto, fu);
+        updateQuestion(questionId, crudDto);
+
+        List<String> categories = crudDto.getAllowedFileCategories();
+        List<FileType> fileTypes = categories.stream()
+                .map(category ->
+                        fileTypeRepository.findById(category)
+                                .orElseThrow(() -> new FileTypeNotFoundException(category))
+                ).collect(Collectors.toList());
+
+        fu.getAllowedFileTypes().clear();
+
+        fu.setMaxFileSize(crudDto.getMaxFileSize());
+        fu.setAllowedFileTypes(fileTypes);
 
         fileUploadRepository.save(fu);
 
-        return FileUploadResDto.create(fu);
+        return toQuestionResDto(fu);
     }
 
     @Override
-    public boolean exists(Long questionId) {
-        return fileUploadRepository.existsById(questionId);
+    public FileUploadResDto toQuestionResDto(FileUpload question) {
+        var f = new FileUploadResDto();
+
+        populateCommonFields(question, f);
+
+        f.setAllowedFileTypes(question.getAllowedFileTypes().stream()
+                .map(ft -> new FileTypeRes(ft.getCategory(), Arrays.asList(ft.getMimeTypes())))
+                .toList()
+        );
+        f.setMaxFileSize(question.getMaxFileSize());
+
+        return f;
     }
 
     @Override
@@ -104,33 +135,16 @@ public class FileUploadManager extends QuestionManager<FileUploadAddUpdateReqDto
     }
 
     @Override
-    public Class<FileUploadAddUpdateReqDto> getCrudDtoClass() {
-        return FileUploadAddUpdateReqDto.class;
-    }
-
-    @Override
-    public Class<FileUploadValidationRequestDto> getValidationDtoClass() {
-        return FileUploadValidationRequestDto.class;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public FileUploadRepository getQuestionRepository() {
-        return fileUploadRepository;
-    }
-
-    @Override
     public QuestionType getQuestionType() {
         return QuestionType.FILE_UPLOAD;
     }
 
-    private void setProperties(FileUploadAddUpdateReqDto source, UUID formId, FileUpload target) {
-        target.setQuestion(source.getQuestion());
-        target.setDescription(source.getDescription());
-        target.setRequired(source.getRequired());
-        target.setMaxFileSize(source.getMaxFileSize());
-        target.setOrderIndex(source.getOrderIndex());
+    @Override
+    public void delete(Long questionId) {
+        fileUploadRepository.deleteById(questionId);
+    }
 
+    private void setPropertiesForNew(FileUploadAddUpdateReqDto source, FileUpload target, Question question) {
         List<String> categories = source.getAllowedFileCategories();
         List<FileType> fileTypes = categories.stream()
                 .map(category ->
@@ -138,14 +152,8 @@ public class FileUploadManager extends QuestionManager<FileUploadAddUpdateReqDto
                                 .orElseThrow(() -> new FileTypeNotFoundException(category))
                 ).collect(Collectors.toList());
 
+        target.setQuestion(question);
+        target.setMaxFileSize(source.getMaxFileSize());
         target.setAllowedFileTypes(fileTypes);
-
-        if (formId != null) {
-            target.setForm(formService.getFormById(formId));
-        }
-    }
-
-    private void setProperties(FileUploadAddUpdateReqDto source, FileUpload target) {
-        setProperties(source, null, target);
     }
 }

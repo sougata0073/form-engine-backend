@@ -8,75 +8,99 @@ import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.exception.ResponseValidationException;
 import com.sougata.form_service.model.questionSchema.Dropdown;
 import com.sougata.form_service.model.questionSchema.DropdownOption;
+import com.sougata.form_service.model.questionSchema.Question;
 import com.sougata.form_service.repository.DropdownRepository;
+import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.QuestionManager;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("DROPDOWN_QUESTION_MANAGER")
-public class DropdownManager extends QuestionManager<DropdownAddUpdateReqDto, DropdownResDto, DropdownValidationRequestDto> {
+public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdateReqDto, DropdownResDto, DropdownValidationRequestDto> {
 
     private final DropdownRepository dropdownRepository;
-    private final FormService formService;
 
-    public DropdownManager(DropdownRepository dropdownRepository, FormService formService) {
+    public DropdownManager(DropdownRepository dropdownRepository, FormService formService, QuestionRepository questionRepository) {
+        super(questionRepository, formService);
         this.dropdownRepository = dropdownRepository;
-        this.formService = formService;
     }
 
     @Override
     public DropdownResDto get(UUID formId, Long questionId) {
-        return DropdownResDto.create(dropdownRepository.findByFormIdAndId(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
+        return toQuestionResDto(dropdownRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
+    @Transactional
     public DropdownResDto create(UUID formId, DropdownAddUpdateReqDto crudDto) {
-        Dropdown newDd = new Dropdown();
+        var newDd = new Dropdown();
 
-        setProperties(crudDto, formId, newDd);
+        var question = createQuestion(crudDto, formId);
 
-        Dropdown saved = dropdownRepository.save(newDd);
+        setPropertiesForNew(crudDto, newDd, question);
 
-        return DropdownResDto.create(saved);
+        var saved = dropdownRepository.save(newDd);
+
+        return toQuestionResDto(saved);
     }
 
     @Override
     public DropdownResDto create(UUID formId, Long questionId, DropdownAddUpdateReqDto crudDto) {
-        Dropdown newDd = new Dropdown();
+        var newDd = new Dropdown();
 
-        newDd.setId(questionId);
-        setProperties(crudDto, formId, newDd);
+        var question = updateQuestion(questionId, crudDto);
 
-        Dropdown saved = dropdownRepository.save(newDd);
+        setPropertiesForNew(crudDto, newDd, question);
 
-        return DropdownResDto.create(saved);
+        var saved = dropdownRepository.save(newDd);
+
+        return toQuestionResDto(saved);
     }
 
     @Override
+    @Transactional
     public DropdownResDto update(Long questionId, DropdownAddUpdateReqDto crudDto) {
         Dropdown dd = dropdownRepository.findById(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.DROPDOWN, questionId));
 
-        setProperties(crudDto, dd);
+        updateQuestion(questionId, crudDto);
+
+        Map<Long, DropdownOption> existingOptions = dd.getOptions().stream()
+                .collect(Collectors.toMap(DropdownOption::getId, option -> option));
+        Set<Long> requestOptionIds = crudDto.getOptions().stream()
+                .map(DropdownAddUpdateReqDto.Option::id)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        dd.getOptions().removeIf(option -> !requestOptionIds.contains(option.getId()));
+
+        for (int i = 0; i < crudDto.getOptions().size(); i++) {
+            var dto = crudDto.getOptions().get(i);
+
+            if (dto.id() == null) {
+                DropdownOption option = new DropdownOption();
+                option.setOption(dto.option());
+                option.setOrderIndex(i);
+                option.setDropdown(dd);
+
+                dd.getOptions().add(option);
+            } else {
+                DropdownOption option = existingOptions.get(dto.id());
+                if (option == null) {
+                    throw new IllegalArgumentException("Invalid dropdown option id: " + dto.id());
+                }
+                option.setOption(dto.option());
+                option.setOrderIndex(i);
+            }
+        }
+
         dropdownRepository.save(dd);
 
-        return DropdownResDto.create(dd);
-    }
-
-    @Override
-    public boolean exists(Long questionId) {
-        return dropdownRepository.existsById(questionId);
-    }
-
-    @Override
-    public void delete(Long questionId) {
-        dropdownRepository.deleteById(questionId);
+        return toQuestionResDto(dd);
     }
 
     @Override
@@ -97,75 +121,45 @@ public class DropdownManager extends QuestionManager<DropdownAddUpdateReqDto, Dr
     }
 
     @Override
-    public Class<DropdownAddUpdateReqDto> getCrudDtoClass() {
-        return DropdownAddUpdateReqDto.class;
-    }
-
-    @Override
-    public Class<DropdownValidationRequestDto> getValidationDtoClass() {
-        return DropdownValidationRequestDto.class;
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public DropdownRepository getQuestionRepository() {
-        return dropdownRepository;
-    }
-
-    @Override
     public QuestionType getQuestionType() {
         return QuestionType.DROPDOWN;
     }
 
-    private void setProperties(DropdownAddUpdateReqDto source, UUID formId, Dropdown target) {
-
-        target.setQuestion(source.getQuestion());
-        target.setDescription(source.getDescription());
-        target.setRequired(source.getRequired());
-        target.setOrderIndex(source.getOrderIndex());
-
-        Map<Long, DropdownOption> existingOptions = target.getOptions().stream()
-                .collect(Collectors.toMap(DropdownOption::getId, option -> option));
-
-        Set<Long> requestOptionIds = source.getOptions().stream()
-                .map(DropdownAddUpdateReqDto.Option::id)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet());
-
-        target.getOptions().removeIf(option -> !requestOptionIds.contains(option.getId()));
-
-        for (int i = 0; i < source.getOptions().size(); i++) {
-
-            var dto = source.getOptions().get(i);
-
-            if (dto.id() == null) {
-
-                DropdownOption option = new DropdownOption();
-                option.setOption(dto.option());
-                option.setOrderIndex(i);
-                option.setDropdown(target);
-
-                target.getOptions().add(option);
-
-            } else {
-
-                DropdownOption option = existingOptions.get(dto.id());
-
-                if (option == null) {
-                    throw new IllegalArgumentException("Invalid dropdown option id: " + dto.id());
-                }
-
-                option.setOption(dto.option());
-                option.setOrderIndex(i);
-            }
-        }
-
-        if (formId != null) {
-            target.setForm(formService.getFormById(formId));
-        }
+    @Override
+    public void delete(Long questionId) {
+        dropdownRepository.deleteById(questionId);
     }
 
-    private void setProperties(DropdownAddUpdateReqDto source, Dropdown target) {
-        setProperties(source, null, target);
+    @Override
+    public DropdownResDto toQuestionResDto(Dropdown question) {
+        var dd = new DropdownResDto();
+
+        populateCommonFields(question, dd);
+
+        dd.setOptions(
+                question.getOptions().stream()
+                        .map(o -> new DropdownResDto.DropdownOptionResDto(o.getId(), o.getOption(), o.getOrderIndex()))
+                        .toList()
+        );
+
+        return dd;
+    }
+
+    private void setPropertiesForNew(DropdownAddUpdateReqDto source, Dropdown target, Question question) {
+        var options = new ArrayList<DropdownOption>();
+
+        for (int i = 0; i < source.getOptions().size(); i++) {
+            var op = source.getOptions().get(i);
+            var ddOp = new DropdownOption();
+
+            ddOp.setOption(op.option());
+            ddOp.setDropdown(target);
+            ddOp.setOrderIndex(i);
+
+            options.add(ddOp);
+        }
+
+        target.setQuestion(question);
+        target.setOptions(options);
     }
 }

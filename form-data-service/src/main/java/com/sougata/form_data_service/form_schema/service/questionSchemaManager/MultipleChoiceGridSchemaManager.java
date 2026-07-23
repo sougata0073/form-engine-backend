@@ -2,43 +2,20 @@ package com.sougata.form_data_service.form_schema.service.questionSchemaManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.MultipleChoiceGridResponseAddReqDto;
-import com.sougata.form_data_service.form_schema.dto.questionSchema.response.MultipleChoiceGridResDto;
-import com.sougata.form_data_service.form_schema.exception.QuestionSchemaNotFoundException;
+import com.sougata.form_data_service.dto.question.response.MultipleChoiceGridResDto;
 import com.sougata.form_data_service.form_schema.exception.ResponseValidationException;
-import com.sougata.form_data_service.form_schema.model.MultipleChoiceGridColumnSchema;
-import com.sougata.form_data_service.form_schema.model.MultipleChoiceGridRowSchema;
-import com.sougata.form_data_service.form_schema.model.MultipleChoiceGridSchema;
-import com.sougata.form_data_service.form_schema.repository.MultipleChoiceGridSchemaRepository;
 import com.sougata.form_data_service.form_schema.service.QuestionSchemaManager;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.UUID;
 
 @Service("MULTIPLE_CHOICE_GRID_QUESTION_SCHEMA_MANAGER")
-public class MultipleChoiceGridSchemaManager extends QuestionSchemaManager<MultipleChoiceGridSchema, MultipleChoiceGridResDto, MultipleChoiceGridResponseAddReqDto> {
-
-    private final MultipleChoiceGridSchemaRepository multipleChoiceGridSchemaRepository;
-
-    public MultipleChoiceGridSchemaManager(MultipleChoiceGridSchemaRepository multipleChoiceGridSchemaRepository) {
-        this.multipleChoiceGridSchemaRepository = multipleChoiceGridSchemaRepository;
-    }
+public class MultipleChoiceGridSchemaManager extends QuestionSchemaManager<MultipleChoiceGridResDto, MultipleChoiceGridResponseAddReqDto> {
 
     @Override
-    public MultipleChoiceGridResDto get(UUID formId, Long questionId) {
-        return toQuestionResDto(
-                multipleChoiceGridSchemaRepository.findByFormIdAndId(formId, questionId)
-                        .orElseThrow(() -> new QuestionSchemaNotFoundException(questionId))
-        );
-    }
-
-    @Override
-    public boolean validateResponse(MultipleChoiceGridResponseAddReqDto validationDto) {
-        var mcg = multipleChoiceGridSchemaRepository.findById(validationDto.getQuestionId())
-                .orElseThrow(() -> new QuestionSchemaNotFoundException(QuestionType.MULTIPLE_CHOICE_GRID, validationDto.getQuestionId()));
-
+    public boolean validateResponse(MultipleChoiceGridResponseAddReqDto validationDto, MultipleChoiceGridResDto mcg) {
         if (validationDto.getRows().size() > mcg.getRows().size()) {
             throw new ResponseValidationException(
                     "The response contains more rows than are available. Available rows: "
@@ -60,8 +37,8 @@ public class MultipleChoiceGridSchemaManager extends QuestionSchemaManager<Multi
             );
         }
 
-        var rowSet = new HashSet<>(mcg.getRows().stream().map(MultipleChoiceGridRowSchema::getId).toList());
-        var columnSet = new HashSet<>(mcg.getColumns().stream().map(MultipleChoiceGridColumnSchema::getId).toList());
+        var rowSet = new HashSet<>(mcg.getRows().stream().map(MultipleChoiceGridResDto.MultipleChoiceGridRowResDto::id).toList());
+        var columnSet = new HashSet<>(mcg.getColumns().stream().map(MultipleChoiceGridResDto.MultipleChoiceGridColumnResDto::id).toList());
         var invalidRows = new ArrayList<Long>();
         var invalidColumns = new HashMap<Long, ArrayList<Long>>();
 
@@ -99,28 +76,5 @@ public class MultipleChoiceGridSchemaManager extends QuestionSchemaManager<Multi
     @Override
     public QuestionType getQuestionType() {
         return QuestionType.MULTIPLE_CHOICE_GRID;
-    }
-
-    @Override
-    public MultipleChoiceGridResDto toQuestionResDto(MultipleChoiceGridSchema questionSchema) {
-        var mc = new MultipleChoiceGridResDto();
-
-        populateCommonFields(questionSchema, mc);
-
-        var rows = questionSchema.getRows().stream()
-                .map(row ->
-                        new MultipleChoiceGridResDto.MultipleChoiceGridRowResDto(row.getId(), row.getRowName(), row.getOrderIndex())
-                )
-                .toList();
-        var columns = questionSchema.getColumns().stream()
-                .map(column ->
-                        new MultipleChoiceGridResDto.MultipleChoiceGridColumnResDto(column.getId(), column.getColumnName(), column.getOrderIndex())
-                )
-                .toList();
-
-        mc.setRows(rows);
-        mc.setColumns(columns);
-
-        return mc;
     }
 }

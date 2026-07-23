@@ -1,5 +1,7 @@
 package com.sougata.form_service.model.questionSchema;
 
+import com.github.f4b6a3.tsid.TsidCreator;
+import com.sougata.form_service.model.Auditable;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,7 +19,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-public class MultipleChoice extends Question {
+public class MultipleChoice extends AnyTypeQuestion {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "multipleChoice")
     private List<MultipleChoiceOption> options = new ArrayList<>();

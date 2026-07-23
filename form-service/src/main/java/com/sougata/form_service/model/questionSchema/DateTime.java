@@ -1,14 +1,16 @@
 package com.sougata.form_service.model.questionSchema;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.Table;
+import com.github.f4b6a3.tsid.TsidCreator;
+import com.sougata.form_service.model.Auditable;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
 @Table(name = "date_times")
 @EntityListeners(AuditingEntityListener.class)
-public class DateTime extends Question {
-
-
+public class DateTime extends AnyTypeQuestion {
 }

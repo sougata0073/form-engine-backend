@@ -36,41 +36,41 @@ public class TickBoxGridTemplate extends QuestionTemplate<TickBoxGridTemplate> {
     public TickBoxGrid fromTemplate(Form f, TickBoxGridTemplate t) {
         var tickBoxGrid = new TickBoxGrid();
 
-        tickBoxGrid.setQuestion(t.getQuestion());
-        tickBoxGrid.setDescription(t.getDescription());
-        tickBoxGrid.setRequired(t.getRequired());
-        tickBoxGrid.setForm(f);
-        tickBoxGrid.setOrderIndex(t.getOrderIndex());
-        tickBoxGrid.setEachRowRequired(t.getEachRowRequired());
-
-        var rows = t.getRows()
-                .stream()
-                .map(op -> {
-                    var row = new TickBoxGridRow();
-
-                    row.setRowName(op.getRowName());
-                    row.setOrderIndex(op.getOrderIndex());
-                    row.setTickBoxGrid(tickBoxGrid);
-
-                    return row;
-                })
-                .toList();
-
-        var columns = t.getColumns()
-                .stream()
-                .map(op -> {
-                    var column = new TickBoxGridColumn();
-
-                    column.setColumnName(op.getColumnName());
-                    column.setOrderIndex(op.getOrderIndex());
-                    column.setTickBoxGrid(tickBoxGrid);
-
-                    return column;
-                })
-                .toList();
-
-        tickBoxGrid.setRows(rows);
-        tickBoxGrid.setColumns(columns);
+//        tickBoxGrid.setQuestion(t.getQuestion());
+//        tickBoxGrid.setDescription(t.getDescription());
+//        tickBoxGrid.setRequired(t.getRequired());
+//        tickBoxGrid.setForm(f);
+//        tickBoxGrid.setOrderIndex(t.getOrderIndex());
+//        tickBoxGrid.setEachRowRequired(t.getEachRowRequired());
+//
+//        var rows = t.getRows()
+//                .stream()
+//                .map(op -> {
+//                    var row = new TickBoxGridRow();
+//
+//                    row.setRowName(op.getRowName());
+//                    row.setOrderIndex(op.getOrderIndex());
+//                    row.setTickBoxGrid(tickBoxGrid);
+//
+//                    return row;
+//                })
+//                .toList();
+//
+//        var columns = t.getColumns()
+//                .stream()
+//                .map(op -> {
+//                    var column = new TickBoxGridColumn();
+//
+//                    column.setColumnName(op.getColumnName());
+//                    column.setOrderIndex(op.getOrderIndex());
+//                    column.setTickBoxGrid(tickBoxGrid);
+//
+//                    return column;
+//                })
+//                .toList();
+//
+//        tickBoxGrid.setRows(rows);
+//        tickBoxGrid.setColumns(columns);
 
         return tickBoxGrid;
     }

@@ -6,16 +6,12 @@ import com.sougata.form_service.model.questionSchema.FileUpload;
 import org.springframework.stereotype.Repository;
 
 @Repository("FILE_UPLOAD_REPOSITORY")
-public interface FileUploadRepository extends QuestionRepository<FileUpload, Long, FileUploadResDto> {
+public interface FileUploadRepository extends AnyTypeQuestionRepository<FileUpload, Long, FileUploadResDto> {
 
     @Override
     default QuestionType getQuestionType() {
         return QuestionType.FILE_UPLOAD;
     }
 
-    @Override
-    default FileUploadResDto toQuestionResDto(FileUpload fileUpload) {
-        return FileUploadResDto.create(fileUpload);
-    }
 }
 

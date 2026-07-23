@@ -29,26 +29,26 @@ public class DropdownTemplate extends QuestionTemplate<DropdownTemplate> {
     public Dropdown fromTemplate(Form f, DropdownTemplate t) {
         var dropdown = new Dropdown();
 
-        dropdown.setQuestion(t.getQuestion());
-        dropdown.setDescription(t.getDescription());
-        dropdown.setRequired(t.getRequired());
-        dropdown.setForm(f);
-        dropdown.setOrderIndex(t.getOrderIndex());
-
-        var options = t.getOptions()
-                .stream()
-                .map(op -> {
-                    var option = new DropdownOption();
-
-                    option.setOption(op.getOption());
-                    option.setOrderIndex(op.getOrderIndex());
-                    option.setDropdown(dropdown);
-
-                    return option;
-                })
-                .toList();
-
-        dropdown.setOptions(options);
+//        dropdown.setQuestion(t.getQuestion());
+//        dropdown.setDescription(t.getDescription());
+//        dropdown.setRequired(t.getRequired());
+//        dropdown.setForm(f);
+//        dropdown.setOrderIndex(t.getOrderIndex());
+//
+//        var options = t.getOptions()
+//                .stream()
+//                .map(op -> {
+//                    var option = new DropdownOption();
+//
+//                    option.setOption(op.getOption());
+//                    option.setOrderIndex(op.getOrderIndex());
+//                    option.setDropdown(dropdown);
+//
+//                    return option;
+//                })
+//                .toList();
+//
+//        dropdown.setOptions(options);
 
         return dropdown;
     }
