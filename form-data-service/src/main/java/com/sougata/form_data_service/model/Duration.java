@@ -17,7 +17,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @Getter
 @Setter
-public class Duration extends QuestionResponse {
+public class Duration extends AnyTypeQuestionResponse {
 
     @Column(nullable = false)
     private Integer hours;

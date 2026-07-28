@@ -19,7 +19,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @Getter
 @Setter
-public class Date extends QuestionResponse {
+public class Date extends AnyTypeQuestionResponse {
 
     @Column(nullable = false)
     private Instant date;

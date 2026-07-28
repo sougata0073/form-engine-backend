@@ -1,8 +1,9 @@
 package com.sougata.form_service.model.questionSchema;
 
-import com.github.f4b6a3.tsid.TsidCreator;
-import com.sougata.form_service.model.Auditable;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

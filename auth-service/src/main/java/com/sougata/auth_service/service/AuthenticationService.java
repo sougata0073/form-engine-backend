@@ -34,14 +34,8 @@ public class AuthenticationService {
 
     public JwtTokenResponseDto registerUser(RegisterRequestDto dto) {
 
-        var prevUser = userRepository.findByEmail(dto.email());
-
-        if (prevUser.isPresent()) {
-            var u = prevUser.get();
-
-            if (u.getAuthProvider().name().equals(AuthProvider.EMAIL_PASSWORD.name())) {
-                throw new EmailIsAlreadyInUseException("Email is already in use. Email: " + dto.email());
-            }
+        if (userRepository.existsByEmailAndAuthProvider(dto.email(), AuthProvider.EMAIL_PASSWORD)) {
+            throw new EmailIsAlreadyInUseException("Email is already in use. Email: " + dto.email());
         }
 
         User newUser = new User();
@@ -67,7 +61,14 @@ public class AuthenticationService {
         var authToken = new UsernamePasswordAuthenticationToken(
                 dto.email(), dto.password()
         );
-        Authentication auth = authenticationManager.authenticate(authToken);
+        Authentication auth;
+
+        try {
+            auth = authenticationManager.authenticate(authToken);
+        } catch (Exception ex) {
+            System.out.println("Exception: " + ex);
+            throw ex;
+        }
 
         if (auth.isAuthenticated() && auth.getPrincipal() instanceof UserPrincipal user) {
 

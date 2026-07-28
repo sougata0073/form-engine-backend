@@ -4,23 +4,24 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-
 @NoArgsConstructor
 @Getter
 @Setter
-public class DurationResponseQuestionDto extends ResponseQuestionDto {
+public class DurationResponseQuestionDto extends ResponseQuestionDto<DurationResponseQuestionDto.Response> {
 
-    private List<Response> responses;
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class Response extends ResponseByQuestionResponse {
 
-    public record Response(
-            Integer hours,
-            Integer minutes,
-            Integer seconds,
-            Integer responseCount,
-            List<String> responseIds
-    ) {
+        private Integer hours;
+        private Integer minutes;
+        private Integer seconds;
 
+    }
+
+    @NoArgsConstructor
+    public static class Summary extends ResponseByQuestionSummary {
     }
 
 }

@@ -17,7 +17,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @Getter
 @Setter
-public class MultipleChoice extends QuestionResponse {
+public class MultipleChoice extends AnyTypeQuestionResponse {
 
     @Column(nullable = false)
     private Long responseOptionId;

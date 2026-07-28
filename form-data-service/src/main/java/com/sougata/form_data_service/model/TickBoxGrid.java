@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-public class TickBoxGrid extends QuestionResponse {
+public class TickBoxGrid extends AnyTypeQuestionResponse {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "tickBoxGrid")
     private List<TickBoxGridRow> responses = new ArrayList<>();

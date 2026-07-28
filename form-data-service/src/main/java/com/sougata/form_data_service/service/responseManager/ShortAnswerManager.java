@@ -7,30 +7,43 @@ import com.sougata.form_data_service.dto.response.question.ShortAnswerResponseQu
 import com.sougata.form_data_service.dto.response.summary.ShortAnswerResponseSummaryDto;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.ShortAnswer;
+import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import com.sougata.form_data_service.repository.ShortAnswerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("SHORT_ANSWER_RESPONSE_MANAGER")
-public class ShortAnswerManager
-        extends ResponseManager<ShortAnswerResponseAddReqDto, ShortAnswerResponseSummaryDto, ShortAnswerResDto, ShortAnswerResponseQuestionDto> {
+public class ShortAnswerManager extends ResponseManager<
+        ShortAnswerResponseAddReqDto,
+        ShortAnswerResponseSummaryDto,
+        ShortAnswerResDto,
+        ShortAnswerResponseQuestionDto,
+        ShortAnswerResponseQuestionDto.Response,
+        ShortAnswerResponseQuestionDto.Summary
+        > {
 
     private final ShortAnswerRepository shortAnswerRepository;
 
     @Autowired
-    public ShortAnswerManager(ShortAnswerRepository shortAnswerRepository) {
+    public ShortAnswerManager(ShortAnswerRepository shortAnswerRepository, QuestionResponseRepository questionResponseRepository) {
+        super(questionResponseRepository);
         this.shortAnswerRepository = shortAnswerRepository;
     }
 
     @Override
+    @Transactional
     public void create(ShortAnswerResponseAddReqDto response, FormResponse formResponse) {
         ShortAnswer shortAnswer = new ShortAnswer();
+
+        var qr = createQuestionResponse(response.getQuestionId(), formResponse);
+
         shortAnswer.setText(response.getText());
-        shortAnswer.setQuestionId(response.getQuestionId());
-        shortAnswer.setFormResponse(formResponse);
+        shortAnswer.setQuestionResponse(qr);
 
         shortAnswerRepository.save(shortAnswer);
     }
@@ -81,20 +94,35 @@ public class ShortAnswerManager
     }
 
     @Override
-    public ShortAnswerResponseQuestionDto getResponseByQuestion(UUID formId, ShortAnswerResDto questionRes) {
-        var grouped = shortAnswerRepository.groupedByText(formId, questionRes.getId());
+    public ShortAnswerResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, ShortAnswerResDto questionResponse) {
+        var sum = new ShortAnswerResponseQuestionDto.Summary();
+
+        sum.setQuestionId(questionResponse.getId());
+        sum.setQuestion(questionResponse.getQuestion());
+        sum.setQuestionType(questionResponse.getQuestionType());
+        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
+        sum.setDistinctResponseCount(shortAnswerRepository.getDistinctResponseCount(formId, questionResponse.getId()));
+
+        return sum;
+    }
+
+    @Override
+    public ShortAnswerResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
+
+        var grouped = shortAnswerRepository.groupedByText(formId, questionId, pageable);
 
         var sa = new ShortAnswerResponseQuestionDto();
 
-        var responses = grouped.stream().map(g -> new ShortAnswerResponseQuestionDto.Response(
-                g.get("text", String.class),
-                g.get("responseCount", Long.class).intValue(),
-                Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList()
-        )).toList();
+        var responses = grouped.stream().map(g -> {
+            var res = new ShortAnswerResponseQuestionDto.Response();
 
-        sa.setQuestionId(questionRes.getId());
-        sa.setQuestion(questionRes.getQuestion());
-        sa.setQuestionType(questionRes.getQuestionType());
+            res.setText(g.get("text", String.class));
+            res.setResponseCount(g.get("responseCount", Long.class));
+            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+
+            return res;
+        }).toList();
+
         sa.setResponses(responses);
 
         return sa;
@@ -107,8 +135,6 @@ public class ShortAnswerManager
 
     @Override
     public void deleteResponses(UUID formId, Long questionId) {
-        var entities = shortAnswerRepository.findByFormIdAndQuestionId(formId, questionId);
-
-        shortAnswerRepository.deleteAll(entities);
+        shortAnswerRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
     }
 }

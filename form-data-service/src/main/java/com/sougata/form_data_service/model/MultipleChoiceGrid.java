@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-public class MultipleChoiceGrid extends QuestionResponse {
+public class MultipleChoiceGrid extends AnyTypeQuestionResponse {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "multipleChoiceGrid")
     private List<MultipleChoiceGridRow> responses = new ArrayList<>();

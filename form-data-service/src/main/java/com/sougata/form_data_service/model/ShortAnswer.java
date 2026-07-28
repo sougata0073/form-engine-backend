@@ -17,7 +17,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @Getter
 @Setter
-public class ShortAnswer extends QuestionResponse {
+public class ShortAnswer extends AnyTypeQuestionResponse {
 
     @Column(nullable = false)
     private String text;

@@ -1,6 +1,5 @@
 package com.sougata.form_service.service;
 
-import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.common.SuccessMessageDto;
 import com.sougata.form_service.dto.question.QuestionSummariesResDto;
 import com.sougata.form_service.dto.question.QuestionSummaryDto;

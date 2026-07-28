@@ -5,7 +5,6 @@ import com.sougata.form_service.dto.question.request.DurationAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.DurationResDto;
 import com.sougata.form_service.dto.validation.request.DurationValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.questionSchema.DateTime;
 import com.sougata.form_service.model.questionSchema.Duration;
 import com.sougata.form_service.repository.DurationRepository;
 import com.sougata.form_service.repository.QuestionRepository;

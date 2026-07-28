@@ -12,24 +12,26 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-public class TickBoxGridResponseQuestionDto extends ResponseQuestionDto {
+public class TickBoxGridResponseQuestionDto extends ResponseQuestionDto<TickBoxGridResponseQuestionDto.Response> {
 
-    private List<TickBoxGridResDto.TickBoxGridRowResDto> rows;
-    private List<TickBoxGridResDto.TickBoxGridColumnResDto> columns;
-    private List<RowRes> responses;
+    @JsonSerialize(using = ToStringSerializer.class)
+    private Long rowId;
 
-    public record RowRes(
-            @JsonSerialize(using = ToStringSerializer.class)
-            Long rowId,
-            List<ColumnRes> responses
-    ) {
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class Response extends ResponseByQuestionResponse {
+
+        private List<String> columnIds;
+
     }
 
-    public record ColumnRes(
-            List<String> columnIds,
-            Integer responseCount,
-            List<String> responseIds
-    ) {
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class Summary extends ResponseByQuestionSummary {
+        private List<TickBoxGridResDto.TickBoxGridRowResDto> rows;
+        private List<TickBoxGridResDto.TickBoxGridColumnResDto> columns;
     }
 
 }

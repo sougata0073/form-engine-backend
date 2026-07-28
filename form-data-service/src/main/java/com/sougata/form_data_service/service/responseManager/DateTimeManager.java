@@ -8,29 +8,43 @@ import com.sougata.form_data_service.dto.response.summary.DateTimeResponseSummar
 import com.sougata.form_data_service.model.DateTime;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.repository.DateTimeRepository;
+import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("DATE_TIME_RESPONSE_MANAGER")
-public class DateTimeManager extends ResponseManager<DateTimeResponseAddReqDto, DateTimeResponseSummaryDto, DateTimeResDto, DateTimeResponseQuestionDto> {
+public class DateTimeManager extends ResponseManager<
+        DateTimeResponseAddReqDto,
+        DateTimeResponseSummaryDto,
+        DateTimeResDto,
+        DateTimeResponseQuestionDto,
+        DateTimeResponseQuestionDto.Response,
+        DateTimeResponseQuestionDto.Summary
+        > {
 
     private final DateTimeRepository dateTimeRepository;
 
     @Autowired
-    public DateTimeManager(DateTimeRepository dateTimeRepository) {
+    public DateTimeManager(DateTimeRepository dateTimeRepository, QuestionResponseRepository questionResponseRepository) {
+        super(questionResponseRepository);
         this.dateTimeRepository = dateTimeRepository;
     }
 
     @Override
+    @Transactional
     public void create(DateTimeResponseAddReqDto response, FormResponse formResponse) {
         DateTime dateTime = new DateTime();
+
+        var qr = createQuestionResponse(response.getQuestionId(), formResponse);
+
         dateTime.setDateTime(response.getDateTime());
-        dateTime.setQuestionId(response.getQuestionId());
-        dateTime.setFormResponse(formResponse);
+        dateTime.setQuestionResponse(qr);
 
         dateTimeRepository.save(dateTime);
     }
@@ -82,25 +96,35 @@ public class DateTimeManager extends ResponseManager<DateTimeResponseAddReqDto, 
     }
 
     @Override
-    public DateTimeResponseQuestionDto getResponseByQuestion(UUID formId, DateTimeResDto questionRes) {
-        var grouped = dateTimeRepository.groupedByDateTimes(formId, questionRes.getId());
+    public DateTimeResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, DateTimeResDto questionResponse) {
+        var sum = new DateTimeResponseQuestionDto.Summary();
+
+        sum.setQuestionId(questionResponse.getId());
+        sum.setQuestion(questionResponse.getQuestion());
+        sum.setQuestionType(questionResponse.getQuestionType());
+        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
+        sum.setDistinctResponseCount(dateTimeRepository.getDistinctResponseCount(formId, questionResponse.getId()));
+
+        return sum;
+    }
+
+    @Override
+    public DateTimeResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
+        var grouped = dateTimeRepository.groupedByDateTimes(formId, questionId, pageable);
 
         var dt = new DateTimeResponseQuestionDto();
 
         var responses = grouped.stream().map(g -> {
-            Instant dateTime = g.get("dateTime", Instant.class);
+            var res = new DateTimeResponseQuestionDto.Response();
 
-            return new DateTimeResponseQuestionDto.Response(
-                    dateTime,
-                    g.get("responseCount", Long.class).intValue(),
-                    Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList()
-            );
+            res.setDateTime(g.get("dateTime", Instant.class));
+            res.setResponseCount(g.get("responseCount", Long.class));
+            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+
+            return res;
 
         }).toList();
 
-        dt.setQuestionId(questionRes.getId());
-        dt.setQuestion(questionRes.getQuestion());
-        dt.setQuestionType(questionRes.getQuestionType());
         dt.setResponses(responses);
 
         return dt;
@@ -113,8 +137,6 @@ public class DateTimeManager extends ResponseManager<DateTimeResponseAddReqDto, 
 
     @Override
     public void deleteResponses(UUID formId, Long questionId) {
-        var entities = dateTimeRepository.findByFormIdAndQuestionId(formId, questionId);
-
-        dateTimeRepository.deleteAll(entities);
+        dateTimeRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
     }
 }

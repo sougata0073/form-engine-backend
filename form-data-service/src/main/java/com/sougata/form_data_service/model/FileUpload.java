@@ -17,7 +17,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @Getter
 @Setter
-public class FileUpload extends QuestionResponse {
+public class FileUpload extends AnyTypeQuestionResponse {
 
     private String fileName;
 

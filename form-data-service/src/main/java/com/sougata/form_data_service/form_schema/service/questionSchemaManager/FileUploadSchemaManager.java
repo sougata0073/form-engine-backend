@@ -20,7 +20,7 @@ public class FileUploadSchemaManager extends QuestionSchemaManager<FileUploadRes
             throw new InvalidFileSizeException(validationDto.getFileSize(), fu.getMaxFileSize());
         }
 
-        if (fu.getAllowedFileTypes() != null) {
+        if (!fu.getAllowedFileTypes().isEmpty()) {
             List<String> mimeTypes = fu.getAllowedFileTypes()
                     .stream()
                     .map(FileTypeRes::mimeTypes)

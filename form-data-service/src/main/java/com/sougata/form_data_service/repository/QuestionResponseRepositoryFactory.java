@@ -2,7 +2,7 @@ package com.sougata.form_data_service.repository;
 
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.exception.NoQuestionResponseRepositoryFoundException;
-import com.sougata.form_data_service.model.QuestionResponse;
+import com.sougata.form_data_service.model.AnyTypeQuestionResponse;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
@@ -22,11 +22,11 @@ public class QuestionResponseRepositoryFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public <Q extends QuestionResponse, ID> QuestionResponseRepository<Q, ID> get(QuestionType questionType) {
+    public <Q extends AnyTypeQuestionResponse, ID> AnyTypeQuestionResponseRepository<Q, ID> get(QuestionType questionType) {
         try {
             return applicationContext.getBean(
                     String.format("%s_RESPONSE_REPOSITORY", questionType.name()),
-                    QuestionResponseRepository.class
+                    AnyTypeQuestionResponseRepository.class
             );
         } catch (BeansException e) {
             throw new NoQuestionResponseRepositoryFoundException(questionType);
@@ -34,13 +34,13 @@ public class QuestionResponseRepositoryFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public <Q extends QuestionResponse, ID> List<QuestionResponseRepository<Q, ID>> getAll() {
-        List<QuestionResponseRepository<Q, ID>> repos = new ArrayList<>();
+    public <Q extends AnyTypeQuestionResponse, ID> List<AnyTypeQuestionResponseRepository<Q, ID>> getAll() {
+        List<AnyTypeQuestionResponseRepository<Q, ID>> repos = new ArrayList<>();
 
         for (QuestionType questionType : QuestionType.values()) {
             var repo = applicationContext.getBean(
                     String.format("%s_RESPONSE_REPOSITORY", questionType.name()),
-                    QuestionResponseRepository.class
+                    AnyTypeQuestionResponseRepository.class
             );
 
             repos.add(repo);

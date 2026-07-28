@@ -2,10 +2,7 @@ package com.sougata.auth_service.model;
 
 import com.sougata.auth_service.constant.AuthProvider;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.util.UUID;

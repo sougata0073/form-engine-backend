@@ -7,30 +7,44 @@ import com.sougata.form_data_service.dto.response.question.RatingResponseQuestio
 import com.sougata.form_data_service.dto.response.summary.RatingResponseSummaryDto;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.Rating;
+import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import com.sougata.form_data_service.repository.RatingRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Service("RATING_RESPONSE_MANAGER")
-public class RatingManager extends ResponseManager<RatingResponseAddReqDto, RatingResponseSummaryDto, RatingResDto, RatingResponseQuestionDto> {
+public class RatingManager extends ResponseManager<
+        RatingResponseAddReqDto,
+        RatingResponseSummaryDto,
+        RatingResDto,
+        RatingResponseQuestionDto,
+        RatingResponseQuestionDto.Response,
+        RatingResponseQuestionDto.Summary
+        > {
 
     private final RatingRepository ratingRepository;
 
     @Autowired
-    public RatingManager(RatingRepository ratingRepository) {
+    public RatingManager(RatingRepository ratingRepository, QuestionResponseRepository questionResponseRepository) {
+        super(questionResponseRepository);
         this.ratingRepository = ratingRepository;
     }
 
     @Override
+    @Transactional
     public void create(RatingResponseAddReqDto response, FormResponse formResponse) {
         Rating rating = new Rating();
+
+        var qr = createQuestionResponse(response.getQuestionId(), formResponse);
+
         rating.setRating(response.getRating());
-        rating.setQuestionId(response.getQuestionId());
-        rating.setFormResponse(formResponse);
+        rating.setQuestionResponse(qr);
 
         ratingRepository.save(rating);
     }
@@ -104,22 +118,36 @@ public class RatingManager extends ResponseManager<RatingResponseAddReqDto, Rati
     }
 
     @Override
-    public RatingResponseQuestionDto getResponseByQuestion(UUID formId, RatingResDto questionRes) {
-        var grouped = ratingRepository.groupedByRating(formId, questionRes.getId());
+    public RatingResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, RatingResDto questionResponse) {
+        var sum = new RatingResponseQuestionDto.Summary();
+
+        sum.setQuestionId(questionResponse.getId());
+        sum.setQuestion(questionResponse.getQuestion());
+        sum.setQuestionType(questionResponse.getQuestionType());
+        sum.setRatingIcon(questionResponse.getRatingIcon());
+        sum.setMaxRatingNumber(questionResponse.getMaxRatingNumber());
+        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
+        sum.setDistinctResponseCount(ratingRepository.getDistinctResponseCount(formId, questionResponse.getId()));
+
+        return sum;
+    }
+
+    @Override
+    public RatingResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
+        var grouped = ratingRepository.groupedByRating(formId, questionId, pageable);
 
         var r = new RatingResponseQuestionDto();
 
-        var responses = grouped.stream().map(g -> new RatingResponseQuestionDto.Response(
-                g.get("rating", Integer.class),
-                g.get("responseCount", Long.class).intValue(),
-                Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList()
-        )).toList();
+        var responses = grouped.stream().map(g -> {
+            var res = new RatingResponseQuestionDto.Response();
 
-        r.setRatingIcon(questionRes.getRatingIcon());
-        r.setMaxRatingNumber(questionRes.getMaxRatingNumber());
-        r.setQuestionId(questionRes.getId());
-        r.setQuestion(questionRes.getQuestion());
-        r.setQuestionType(questionRes.getQuestionType());
+            res.setRating(g.get("rating", Integer.class));
+            res.setResponseCount(g.get("responseCount", Long.class));
+            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+                            
+            return res;
+        }).toList();
+
         r.setResponses(responses);
 
         return r;
@@ -133,8 +161,6 @@ public class RatingManager extends ResponseManager<RatingResponseAddReqDto, Rati
 
     @Override
     public void deleteResponses(UUID formId, Long questionId) {
-        var entities = ratingRepository.findByFormIdAndQuestionId(formId, questionId);
-
-        ratingRepository.deleteAll(entities);
+        ratingRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
     }
 }

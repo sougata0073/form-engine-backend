@@ -1,9 +1,6 @@
 package com.sougata.form_service.model.questionSchema;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.github.f4b6a3.tsid.TsidCreator;
-import com.sougata.form_service.model.Auditable;
-import com.sougata.form_service.model.Form;
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

@@ -17,7 +17,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @Getter
 @Setter
-public class Rating extends QuestionResponse {
+public class Rating extends AnyTypeQuestionResponse {
 
     @Column(nullable = false)
     private Integer rating;

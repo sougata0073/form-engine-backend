@@ -2,8 +2,6 @@ package com.sougata.form_service.model.templateSchema;
 
 import com.sougata.form_service.model.Form;
 import com.sougata.form_service.model.questionSchema.TickBoxGrid;
-import com.sougata.form_service.model.questionSchema.TickBoxGridColumn;
-import com.sougata.form_service.model.questionSchema.TickBoxGridRow;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

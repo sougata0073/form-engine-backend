@@ -5,23 +5,26 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-
 @NoArgsConstructor
 @Getter
 @Setter
-public class RatingResponseQuestionDto extends ResponseQuestionDto {
+public class RatingResponseQuestionDto extends ResponseQuestionDto<RatingResponseQuestionDto.Response> {
 
-    private RatingIcon ratingIcon;
-    private Integer maxRatingNumber;
-    private List<Response> responses;
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class Response extends ResponseByQuestionResponse {
 
-    public record Response(
-            Integer rating,
-            Integer responseCount,
-            List<String> responseIds
-    ) {
+        private Integer rating;
 
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class Summary extends ResponseByQuestionSummary {
+        private RatingIcon ratingIcon;
+        private Integer maxRatingNumber;
     }
 
 }

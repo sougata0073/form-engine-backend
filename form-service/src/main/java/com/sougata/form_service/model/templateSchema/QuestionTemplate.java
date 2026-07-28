@@ -4,7 +4,6 @@ import com.github.f4b6a3.tsid.TsidCreator;
 import com.sougata.form_service.model.Form;
 import com.sougata.form_service.model.Template;
 import com.sougata.form_service.model.questionSchema.AnyTypeQuestion;
-import com.sougata.form_service.model.questionSchema.Question;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

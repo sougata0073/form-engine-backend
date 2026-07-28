@@ -27,7 +27,7 @@ public class TickBoxGridRow extends Auditable {
     private Long rowId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(nullable = false)
+    @JoinColumn(nullable = false, name = "tick_box_grid_id")
     private TickBoxGrid tickBoxGrid;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "tickBoxGridRow")

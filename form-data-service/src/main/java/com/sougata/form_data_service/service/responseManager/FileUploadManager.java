@@ -8,31 +8,45 @@ import com.sougata.form_data_service.dto.response.summary.FileUploadResponseSumm
 import com.sougata.form_data_service.model.FileUpload;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.repository.FileUploadRepository;
+import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("FILE_UPLOAD_RESPONSE_MANAGER")
-public class FileUploadManager extends ResponseManager<FileUploadResponseAddReqDto, FileUploadResponseSummaryDto, FileUploadResDto, FileUploadResponseQuestionDto> {
+public class FileUploadManager extends ResponseManager<
+        FileUploadResponseAddReqDto,
+        FileUploadResponseSummaryDto,
+        FileUploadResDto,
+        FileUploadResponseQuestionDto,
+        FileUploadResponseQuestionDto.Response,
+        FileUploadResponseQuestionDto.Summary
+        > {
 
     private final FileUploadRepository fileUploadRepository;
 
     @Autowired
-    public FileUploadManager(FileUploadRepository fileUploadRepository) {
+    public FileUploadManager(FileUploadRepository fileUploadRepository, QuestionResponseRepository questionResponseRepository) {
+        super(questionResponseRepository);
         this.fileUploadRepository = fileUploadRepository;
     }
 
     @Override
+    @Transactional
     public void create(FileUploadResponseAddReqDto response, FormResponse formResponse) {
         FileUpload fileUpload = new FileUpload();
+
+        var qr = createQuestionResponse(response.getQuestionId(), formResponse);
+
         fileUpload.setFileName(response.getFileName());
         fileUpload.setFileUrl(response.getFileUrl());
         fileUpload.setFileMimeType(response.getFileMimeType());
         fileUpload.setFileSize(response.getFileSize());
-        fileUpload.setQuestionId(response.getQuestionId());
-        fileUpload.setFormResponse(formResponse);
+        fileUpload.setQuestionResponse(qr);
 
         fileUploadRepository.save(fileUpload);
     }
@@ -89,25 +103,39 @@ public class FileUploadManager extends ResponseManager<FileUploadResponseAddReqD
     }
 
     @Override
-    public FileUploadResponseQuestionDto getResponseByQuestion(UUID formId, FileUploadResDto questionRes) {
-        var grouped = fileUploadRepository.groupedByFile(formId, questionRes.getId());
+    public FileUploadResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, FileUploadResDto questionResponse) {
+        var sum = new FileUploadResponseQuestionDto.Summary();
 
-        var sa = new FileUploadResponseQuestionDto();
+        sum.setQuestionId(questionResponse.getId());
+        sum.setQuestion(questionResponse.getQuestion());
+        sum.setQuestionType(questionResponse.getQuestionType());
+        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
+        sum.setDistinctResponseCount(fileUploadRepository.getDistinctResponseCount(formId, questionResponse.getId()));
 
-        var responses = grouped.stream().map(g -> new FileUploadResponseQuestionDto.Response(
-                g.get("fileName", String.class),
-                g.get("fileUrl", String.class),
-                g.get("fileMimeType", String.class),
-                g.get("responseCount", Long.class).intValue(),
-                Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList()
-        )).toList();
+        return sum;
+    }
 
-        sa.setQuestionId(questionRes.getId());
-        sa.setQuestion(questionRes.getQuestion());
-        sa.setQuestionType(questionRes.getQuestionType());
-        sa.setResponses(responses);
+    @Override
+    public FileUploadResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
+        var grouped = fileUploadRepository.groupedByFile(formId, questionId, pageable);
 
-        return sa;
+        var fu = new FileUploadResponseQuestionDto();
+
+        var responses = grouped.stream().map(g -> {
+            var res = new FileUploadResponseQuestionDto.Response();
+
+            res.setFileName(g.get("fileName", String.class));
+            res.setFileUrl(g.get("fileUrl", String.class));
+            res.setFileMimeType(g.get("fileMimeType", String.class));
+            res.setResponseCount(g.get("responseCount", Long.class));
+            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+                            
+            return res;
+        }).toList();
+
+        fu.setResponses(responses);
+
+        return fu;
     }
 
     @Override
@@ -117,8 +145,6 @@ public class FileUploadManager extends ResponseManager<FileUploadResponseAddReqD
 
     @Override
     public void deleteResponses(UUID formId, Long questionId) {
-        var entities = fileUploadRepository.findByFormIdAndQuestionId(formId, questionId);
-
-        fileUploadRepository.deleteAll(entities);
+        fileUploadRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
     }
 }

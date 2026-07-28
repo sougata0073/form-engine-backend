@@ -1,6 +1,5 @@
 package com.sougata.form_service.controller;
 
-import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.common.SuccessMessageDto;
 import com.sougata.form_service.dto.form.*;
 import com.sougata.form_service.dto.question.QuestionSummariesResDto;
@@ -13,7 +12,6 @@ import com.sougata.form_service.service.QuestionService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

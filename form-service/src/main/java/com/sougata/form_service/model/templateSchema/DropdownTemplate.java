@@ -2,7 +2,6 @@ package com.sougata.form_service.model.templateSchema;
 
 import com.sougata.form_service.model.Form;
 import com.sougata.form_service.model.questionSchema.Dropdown;
-import com.sougata.form_service.model.questionSchema.DropdownOption;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

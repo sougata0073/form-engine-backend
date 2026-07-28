@@ -12,25 +12,28 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-public class MultipleChoiceGridResponseQuestionDto extends ResponseQuestionDto {
+public class MultipleChoiceGridResponseQuestionDto extends ResponseQuestionDto<MultipleChoiceGridResponseQuestionDto.Response> {
 
-    private List<MultipleChoiceGridResDto.MultipleChoiceGridRowResDto> rows;
-    private List<MultipleChoiceGridResDto.MultipleChoiceGridColumnResDto> columns;
-    private List<RowRes> responses;
+    @JsonSerialize(using = ToStringSerializer.class)
+    private Long rowId;
 
-    public record RowRes(
-            @JsonSerialize(using = ToStringSerializer.class)
-            Long rowId,
-            List<ColumnRes> responses
-    ) {
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class Response extends ResponseByQuestionResponse {
+
+        @JsonSerialize(using = ToStringSerializer.class)
+        private Long columnId;
+
     }
 
-    public record ColumnRes(
-            @JsonSerialize(using = ToStringSerializer.class)
-            Long columnId,
-            Integer responseCount,
-            List<String> responseIds
-    ) {
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class Summary extends ResponseByQuestionSummary {
+        private List<MultipleChoiceGridResDto.MultipleChoiceGridRowResDto> rows;
+        private List<MultipleChoiceGridResDto.MultipleChoiceGridColumnResDto> columns;
     }
 
 }

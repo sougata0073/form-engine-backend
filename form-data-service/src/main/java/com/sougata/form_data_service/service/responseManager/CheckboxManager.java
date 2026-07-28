@@ -9,27 +9,39 @@ import com.sougata.form_data_service.model.Checkbox;
 import com.sougata.form_data_service.model.CheckboxOption;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.repository.CheckboxRepository;
+import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("CHECKBOX_RESPONSE_MANAGER")
-public class CheckboxManager extends ResponseManager<CheckboxResponseAddReqDto, CheckboxResponseSummaryDto, CheckboxResDto, CheckboxResponseQuestionDto> {
+public class CheckboxManager extends ResponseManager<
+        CheckboxResponseAddReqDto,
+        CheckboxResponseSummaryDto,
+        CheckboxResDto,
+        CheckboxResponseQuestionDto,
+        CheckboxResponseQuestionDto.Response,
+        CheckboxResponseQuestionDto.Summary
+        > {
 
     private final CheckboxRepository checkboxRepository;
 
     @Autowired
-    public CheckboxManager(CheckboxRepository checkboxRepository) {
+    public CheckboxManager(CheckboxRepository checkboxRepository, QuestionResponseRepository questionResponseRepository) {
+        super(questionResponseRepository);
         this.checkboxRepository = checkboxRepository;
     }
 
     @Override
+    @Transactional
     public void create(CheckboxResponseAddReqDto response, FormResponse formResponse) {
         Checkbox cb = new Checkbox();
-        cb.setQuestionId(response.getQuestionId());
-        cb.setFormResponse(formResponse);
+
+        var qr = createQuestionResponse(response.getQuestionId(), formResponse);
 
         var responses = response.getResponseOptionIds().stream().map(id -> {
             var op = new CheckboxOption();
@@ -41,6 +53,7 @@ public class CheckboxManager extends ResponseManager<CheckboxResponseAddReqDto, 
         }).collect(Collectors.toCollection(ArrayList::new));
 
         cb.setResponses(responses);
+        cb.setQuestionResponse(qr);
 
         checkboxRepository.save(cb);
     }
@@ -105,21 +118,35 @@ public class CheckboxManager extends ResponseManager<CheckboxResponseAddReqDto, 
     }
 
     @Override
-    public CheckboxResponseQuestionDto getResponseByQuestion(UUID formId, CheckboxResDto questionRes) {
-        var grouped = checkboxRepository.groupedByResponseOptions(formId, questionRes.getId());
+    public CheckboxResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, CheckboxResDto questionResponse) {
+        var sum = new CheckboxResponseQuestionDto.Summary();
+
+        sum.setQuestionId(questionResponse.getId());
+        sum.setQuestion(questionResponse.getQuestion());
+        sum.setQuestionType(questionResponse.getQuestionType());
+        sum.setOptions(questionResponse.getOptions());
+        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
+        sum.setDistinctResponseCount(checkboxRepository.getDistinctResponseCount(formId, questionResponse.getId()));
+
+        return sum;
+    }
+
+    @Override
+    public CheckboxResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
+        var grouped = checkboxRepository.groupedByResponseOptions(formId, questionId, pageable);
 
         var cb = new CheckboxResponseQuestionDto();
 
-        var responses = grouped.stream().map(g -> new CheckboxResponseQuestionDto.Response(
-                Arrays.stream(g.get("optionIds", Long[].class)).map(Object::toString).toList(),
-                g.get("responseCount", Long.class).intValue(),
-                Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList()
-        )).toList();
+        var responses = grouped.stream().map(g -> {
+            var res = new CheckboxResponseQuestionDto.Response();
 
-        cb.setOptions(questionRes.getOptions());
-        cb.setQuestionId(questionRes.getId());
-        cb.setQuestion(questionRes.getQuestion());
-        cb.setQuestionType(questionRes.getQuestionType());
+            res.setOptionIds(Arrays.stream(g.get("optionIds", Long[].class)).map(Object::toString).toList());
+            res.setResponseCount(g.get("responseCount", Long.class));
+            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+
+            return res;
+        }).toList();
+
         cb.setResponses(responses);
 
         return cb;
@@ -132,8 +159,6 @@ public class CheckboxManager extends ResponseManager<CheckboxResponseAddReqDto, 
 
     @Override
     public void deleteResponses(UUID formId, Long questionId) {
-        var entities = checkboxRepository.findByFormIdAndQuestionId(formId, questionId);
-
-        checkboxRepository.deleteAll(entities);
+        checkboxRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
     }
 }

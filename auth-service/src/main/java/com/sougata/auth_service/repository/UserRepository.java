@@ -13,28 +13,30 @@ import java.util.UUID;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, UUID> {
-    Optional<User> findByEmail(String email);
+//    Optional<User> findByEmail(String email);
 
     Optional<User> findByEmailAndAuthProvider(String email, AuthProvider authProvider);
 
+    boolean existsByEmailAndAuthProvider(String email, AuthProvider authProvider);
+
     boolean existsByEmail(String email);
 
-    boolean existsBySocialAuthId(String socialAuthId);
-
-    boolean existsBySocialAuthIdAndAuthProvider(String socialAuthId, AuthProvider authProvider);
+//    boolean existsBySocialAuthId(String socialAuthId);
+//
+//    boolean existsBySocialAuthIdAndAuthProvider(String socialAuthId, AuthProvider authProvider);
 
     Optional<User> findBySocialAuthIdAndAuthProvider(String socialAuthId, AuthProvider authProvider);
 
     @Query("""
-    select
-    new com.sougata.auth_service.dto.UserSummaryDto(
-        u.id,
-        u.username,
-        u.email,
-        u.avatarUrl
-    )
-    from User u
-    where u.id in :userIds
-    """)
+            select
+            new com.sougata.auth_service.dto.UserSummaryDto(
+                u.id,
+                u.username,
+                u.email,
+                u.avatarUrl
+            )
+            from User u
+            where u.id in :userIds
+            """)
     List<UserSummaryDto> getUserSummaries(List<UUID> userIds);
 }

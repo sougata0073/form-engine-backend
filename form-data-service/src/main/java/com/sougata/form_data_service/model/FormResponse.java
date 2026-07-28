@@ -39,45 +39,6 @@ public class FormResponse extends Auditable {
     private UUID userId;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "formResponse")
-    private List<Checkbox> checkboxes = new ArrayList<>();
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "formResponse")
-    private List<Date> dates = new ArrayList<>();
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "formResponse")
-    private List<DateTime> dateTimes = new ArrayList<>();
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "formResponse")
-    private List<Dropdown> dropdowns = new ArrayList<>();
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "formResponse")
-    private List<Duration> durations = new ArrayList<>();
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "formResponse")
-    private List<FileUpload> fileUploads = new ArrayList<>();
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "formResponse")
-    private List<LinearScale> linearScales = new ArrayList<>();
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "formResponse")
-    private List<MultipleChoice> multipleChoices = new ArrayList<>();
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "formResponse")
-    private List<MultipleChoiceGrid> multipleChoiceGrids = new ArrayList<>();
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "formResponse")
-    private List<Paragraph> paragraphs = new ArrayList<>();
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "formResponse")
-    private List<Rating> ratings = new ArrayList<>();
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "formResponse")
-    private List<ShortAnswer> shortAnswers = new ArrayList<>();
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "formResponse")
-    private List<TickBoxGrid> tickBoxGrids = new ArrayList<>();
-
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "formResponse")
-    private List<Time> times = new ArrayList<>();
+    private List<QuestionResponse> questionResponses = new ArrayList<>();
 
 }

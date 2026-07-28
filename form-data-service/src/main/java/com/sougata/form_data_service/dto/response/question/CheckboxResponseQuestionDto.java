@@ -10,17 +10,20 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-public class CheckboxResponseQuestionDto extends ResponseQuestionDto {
+public class CheckboxResponseQuestionDto extends ResponseQuestionDto<CheckboxResponseQuestionDto.Response> {
 
-    private List<CheckboxResDto.CheckboxOptionResDto> options;
-    private List<Response> responses;
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class Response extends ResponseByQuestionResponse {
+        private List<String> optionIds;
+    }
 
-    public record Response(
-            List<String> optionIds,
-            Integer responseCount,
-            List<String> responseIds
-    ) {
-
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class Summary extends ResponseByQuestionSummary {
+        private List<CheckboxResDto.CheckboxOptionResDto> options;
     }
 
 }

@@ -8,28 +8,42 @@ import com.sougata.form_data_service.dto.response.summary.MultipleChoiceResponse
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.MultipleChoice;
 import com.sougata.form_data_service.repository.MultipleChoiceRepository;
+import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("MULTIPLE_CHOICE_RESPONSE_MANAGER")
-public class MultipleChoiceManager extends ResponseManager<MultipleChoiceResponseAddReqDto, MultipleChoiceResponseSummaryDto, MultipleChoiceResDto, MultipleChoiceResponseQuestionDto> {
+public class MultipleChoiceManager extends ResponseManager<
+        MultipleChoiceResponseAddReqDto,
+        MultipleChoiceResponseSummaryDto,
+        MultipleChoiceResDto,
+        MultipleChoiceResponseQuestionDto,
+        MultipleChoiceResponseQuestionDto.Response,
+        MultipleChoiceResponseQuestionDto.Summary
+        > {
 
     private final MultipleChoiceRepository multipleChoiceRepository;
 
     @Autowired
-    public MultipleChoiceManager(MultipleChoiceRepository multipleChoiceRepository) {
+    public MultipleChoiceManager(MultipleChoiceRepository multipleChoiceRepository, QuestionResponseRepository questionResponseRepository) {
+        super(questionResponseRepository);
         this.multipleChoiceRepository = multipleChoiceRepository;
     }
 
     @Override
+    @Transactional
     public void create(MultipleChoiceResponseAddReqDto response, FormResponse formResponse) {
         MultipleChoice multipleChoice = new MultipleChoice();
+
+        var qr = createQuestionResponse(response.getQuestionId(), formResponse);
+
         multipleChoice.setResponseOptionId(response.getResponseOptionId());
-        multipleChoice.setQuestionId(response.getQuestionId());
-        multipleChoice.setFormResponse(formResponse);
+        multipleChoice.setQuestionResponse(qr);
 
         multipleChoiceRepository.save(multipleChoice);
     }
@@ -93,21 +107,35 @@ public class MultipleChoiceManager extends ResponseManager<MultipleChoiceRespons
     }
 
     @Override
-    public MultipleChoiceResponseQuestionDto getResponseByQuestion(UUID formId, MultipleChoiceResDto questionRes) {
-        var grouped = multipleChoiceRepository.groupedByResponseOption(formId, questionRes.getId());
+    public MultipleChoiceResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, MultipleChoiceResDto questionResponse) {
+        var sum = new MultipleChoiceResponseQuestionDto.Summary();
+
+        sum.setQuestionId(questionResponse.getId());
+        sum.setQuestion(questionResponse.getQuestion());
+        sum.setQuestionType(questionResponse.getQuestionType());
+        sum.setOptions(questionResponse.getOptions());
+        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
+        sum.setDistinctResponseCount(multipleChoiceRepository.getDistinctResponseCount(formId, questionResponse.getId()));
+
+        return sum;
+    }
+
+    @Override
+    public MultipleChoiceResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
+        var grouped = multipleChoiceRepository.groupedByResponseOption(formId, questionId, pageable);
 
         var mc = new MultipleChoiceResponseQuestionDto();
 
-        var responses = grouped.stream().map(g -> new MultipleChoiceResponseQuestionDto.Response(
-                g.get("optionId", Long.class),
-                g.get("responseCount", Long.class).intValue(),
-                Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList()
-        )).toList();
+        var responses = grouped.stream().map(g -> {
+            var res = new MultipleChoiceResponseQuestionDto.Response();
 
-        mc.setOptions(questionRes.getOptions());
-        mc.setQuestionId(questionRes.getId());
-        mc.setQuestion(questionRes.getQuestion());
-        mc.setQuestionType(questionRes.getQuestionType());
+            res.setOptionId(g.get("optionId", Long.class));
+            res.setResponseCount(g.get("responseCount", Long.class));
+            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+
+            return res;
+        }).toList();
+
         mc.setResponses(responses);
 
         return mc;
@@ -120,8 +148,6 @@ public class MultipleChoiceManager extends ResponseManager<MultipleChoiceRespons
 
     @Override
     public void deleteResponses(UUID formId, Long questionId) {
-        var entities = multipleChoiceRepository.findByFormIdAndQuestionId(formId, questionId);
-
-        multipleChoiceRepository.deleteAll(entities);
+        multipleChoiceRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
     }
 }

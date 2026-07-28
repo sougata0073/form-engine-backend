@@ -1,6 +1,6 @@
 package com.sougata.form_service.model;
 
-import com.sougata.form_service.model.questionSchema.*;
+import com.sougata.form_service.model.questionSchema.Question;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

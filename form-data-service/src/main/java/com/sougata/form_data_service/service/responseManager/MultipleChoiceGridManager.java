@@ -10,29 +10,40 @@ import com.sougata.form_data_service.model.MultipleChoiceGrid;
 import com.sougata.form_data_service.model.MultipleChoiceGridRow;
 import com.sougata.form_data_service.projection.CommonResponseSummaryProjection;
 import com.sougata.form_data_service.repository.MultipleChoiceGridRepository;
+import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service("MULTIPLE_CHOICE_GRID_RESPONSE_MANAGER")
-public class MultipleChoiceGridManager extends ResponseManager<MultipleChoiceGridResponseAddReqDto, MultipleChoiceGridResponseSummaryDto, MultipleChoiceGridResDto, MultipleChoiceGridResponseQuestionDto> {
+public class MultipleChoiceGridManager extends ResponseManager<
+        MultipleChoiceGridResponseAddReqDto,
+        MultipleChoiceGridResponseSummaryDto,
+        MultipleChoiceGridResDto,
+        MultipleChoiceGridResponseQuestionDto,
+        MultipleChoiceGridResponseQuestionDto.Response,
+        MultipleChoiceGridResponseQuestionDto.Summary
+        > {
 
     private final MultipleChoiceGridRepository multipleChoiceGridRepository;
 
     @Autowired
-    public MultipleChoiceGridManager(MultipleChoiceGridRepository multipleChoiceGridRepository) {
+    public MultipleChoiceGridManager(MultipleChoiceGridRepository multipleChoiceGridRepository, QuestionResponseRepository questionResponseRepository) {
+        super(questionResponseRepository);
         this.multipleChoiceGridRepository = multipleChoiceGridRepository;
     }
 
     @Override
+    @Transactional
     public void create(MultipleChoiceGridResponseAddReqDto response, FormResponse formResponse) {
         MultipleChoiceGrid multipleChoiceGrid = new MultipleChoiceGrid();
 
-        multipleChoiceGrid.setQuestionId(response.getQuestionId());
-        multipleChoiceGrid.setFormResponse(formResponse);
+        var qr = createQuestionResponse(response.getQuestionId(), formResponse);
 
         var responses = response.getRows().stream().map(r -> {
             var row = new MultipleChoiceGridRow();
@@ -44,6 +55,7 @@ public class MultipleChoiceGridManager extends ResponseManager<MultipleChoiceGri
             return row;
         }).collect(Collectors.toCollection(ArrayList::new));
 
+        multipleChoiceGrid.setQuestionResponse(qr);
         multipleChoiceGrid.setResponses(responses);
 
         multipleChoiceGridRepository.save(multipleChoiceGrid);
@@ -125,31 +137,60 @@ public class MultipleChoiceGridManager extends ResponseManager<MultipleChoiceGri
     }
 
     @Override
-    public MultipleChoiceGridResponseQuestionDto getResponseByQuestion(UUID formId, MultipleChoiceGridResDto questionRes) {
-        var grouped = multipleChoiceGridRepository.groupedByResponseRowColumn(formId, questionRes.getId());
+    public MultipleChoiceGridResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, MultipleChoiceGridResDto questionResponse) {
+        var sum = new MultipleChoiceGridResponseQuestionDto.Summary();
+
+        sum.setQuestionId(questionResponse.getId());
+        sum.setQuestion(questionResponse.getQuestion());
+        sum.setQuestionType(questionResponse.getQuestionType());
+        sum.setRows(questionResponse.getRows());
+        sum.setColumns(questionResponse.getColumns());
+
+        var responseCount = getTotalResponseCount(formId, questionResponse.getId());
+
+        sum.setTotalResponseCount(responseCount);
+        sum.setDistinctResponseCount(responseCount);
+
+        return sum;
+    }
+
+    @Override
+    public MultipleChoiceGridResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
+
+        var rowIdString = extraParams.get("rowId");
+
+        if (rowIdString == null) {
+            throw new IllegalArgumentException("Row ID is required");
+        }
+
+        long rowId;
+
+        try {
+            rowId = Long.parseLong(rowIdString);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid row ID: " + rowIdString);
+        }
+
+        var grouped = multipleChoiceGridRepository.groupedByResponseRowColumn(
+                formId,
+                questionId,
+                rowId,
+                pageable
+        );
 
         var mc = new MultipleChoiceGridResponseQuestionDto();
-        var rowMap = grouped.stream().collect(Collectors.groupingBy(g -> g.get("rowId", Long.class)));
 
         var responses = grouped.stream().map(g -> {
-            var rowId = g.get("rowId", Long.class);
-            return new MultipleChoiceGridResponseQuestionDto.RowRes(
-                    rowId,
-                    rowMap.get(rowId).stream()
-                            .map(r -> new MultipleChoiceGridResponseQuestionDto.ColumnRes(
-                                            r.get("columnId", Long.class),
-                                            r.get("responseCount", Long.class).intValue(),
-                                            Arrays.stream(r.get("responseIds", Long[].class)).map(Object::toString).toList()
-                                    )
-                            ).toList()
-            );
+            var res = new MultipleChoiceGridResponseQuestionDto.Response();
+
+            res.setColumnId(g.get("columnId", Long.class));
+            res.setResponseCount(g.get("responseCount", Long.class));
+            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+
+            return res;
         }).toList();
 
-        mc.setRows(questionRes.getRows());
-        mc.setColumns(questionRes.getColumns());
-        mc.setQuestionId(questionRes.getId());
-        mc.setQuestion(questionRes.getQuestion());
-        mc.setQuestionType(questionRes.getQuestionType());
+        mc.setRowId(rowId);
         mc.setResponses(responses);
 
         return mc;
@@ -162,8 +203,6 @@ public class MultipleChoiceGridManager extends ResponseManager<MultipleChoiceGri
 
     @Override
     public void deleteResponses(UUID formId, Long questionId) {
-        var entities = multipleChoiceGridRepository.findByFormIdAndQuestionId(formId, questionId);
-
-        multipleChoiceGridRepository.deleteAll(entities);
+        multipleChoiceGridRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
     }
 }

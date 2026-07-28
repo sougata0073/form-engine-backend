@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-public class Checkbox extends QuestionResponse {
+public class Checkbox extends AnyTypeQuestionResponse {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "checkbox")
     private List<CheckboxOption> responses = new ArrayList<>();

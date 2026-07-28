@@ -17,7 +17,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @Getter
 @Setter
-public class Dropdown extends QuestionResponse {
+public class Dropdown extends AnyTypeQuestionResponse {
 
     @Column(nullable = false)
     private Long responseOptionId;

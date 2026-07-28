@@ -8,28 +8,42 @@ import com.sougata.form_data_service.dto.response.summary.DropdownResponseSummar
 import com.sougata.form_data_service.model.Dropdown;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.repository.DropdownRepository;
+import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("DROPDOWN_RESPONSE_MANAGER")
-public class DropdownManager extends ResponseManager<DropdownResponseAddReqDto, DropdownResponseSummaryDto, DropdownResDto, DropdownResponseQuestionDto> {
+public class DropdownManager extends ResponseManager<
+        DropdownResponseAddReqDto,
+        DropdownResponseSummaryDto,
+        DropdownResDto,
+        DropdownResponseQuestionDto,
+        DropdownResponseQuestionDto.Response,
+        DropdownResponseQuestionDto.Summary
+        > {
 
     private final DropdownRepository dropdownRepository;
 
     @Autowired
-    public DropdownManager(DropdownRepository dropdownRepository) {
+    public DropdownManager(DropdownRepository dropdownRepository, QuestionResponseRepository questionResponseRepository) {
+        super(questionResponseRepository);
         this.dropdownRepository = dropdownRepository;
     }
 
     @Override
+    @Transactional
     public void create(DropdownResponseAddReqDto response, FormResponse formResponse) {
         Dropdown dropdown = new Dropdown();
+
+        var qr = createQuestionResponse(response.getQuestionId(), formResponse);
+
         dropdown.setResponseOptionId(response.getResponseOptionId());
-        dropdown.setQuestionId(response.getQuestionId());
-        dropdown.setFormResponse(formResponse);
+        dropdown.setQuestionResponse(qr);
 
         dropdownRepository.save(dropdown);
     }
@@ -93,21 +107,35 @@ public class DropdownManager extends ResponseManager<DropdownResponseAddReqDto, 
     }
 
     @Override
-    public DropdownResponseQuestionDto getResponseByQuestion(UUID formId, DropdownResDto questionRes) {
-        var grouped = dropdownRepository.groupedByResponseOption(formId, questionRes.getId());
+    public DropdownResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, DropdownResDto questionResponse) {
+        var sum = new DropdownResponseQuestionDto.Summary();
+
+        sum.setQuestionId(questionResponse.getId());
+        sum.setQuestion(questionResponse.getQuestion());
+        sum.setQuestionType(questionResponse.getQuestionType());
+        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
+        sum.setOptions(questionResponse.getOptions());
+        sum.setDistinctResponseCount(dropdownRepository.getDistinctResponseCount(formId, questionResponse.getId()));
+
+        return sum;
+    }
+
+    @Override
+    public DropdownResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
+        var grouped = dropdownRepository.groupedByResponseOption(formId, questionId, pageable);
 
         var d = new DropdownResponseQuestionDto();
 
-        var responses = grouped.stream().map(g -> new DropdownResponseQuestionDto.Response(
-                g.get("optionId", Long.class),
-                g.get("responseCount", Long.class).intValue(),
-                Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList()
-        )).toList();
+        var responses = grouped.stream().map(g -> {
+            var res = new DropdownResponseQuestionDto.Response();
 
-        d.setOptions(questionRes.getOptions());
-        d.setQuestionId(questionRes.getId());
-        d.setQuestion(questionRes.getQuestion());
-        d.setQuestionType(questionRes.getQuestionType());
+            res.setOptionId(g.get("optionId", Long.class));
+            res.setResponseCount(g.get("responseCount", Long.class));
+            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+
+            return res;
+        }).toList();
+
         d.setResponses(responses);
 
         return d;
@@ -120,8 +148,6 @@ public class DropdownManager extends ResponseManager<DropdownResponseAddReqDto, 
 
     @Override
     public void deleteResponses(UUID formId, Long questionId) {
-        var entities = dropdownRepository.findByFormIdAndQuestionId(formId, questionId);
-
-        dropdownRepository.deleteAll(entities);
+        dropdownRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
     }
 }

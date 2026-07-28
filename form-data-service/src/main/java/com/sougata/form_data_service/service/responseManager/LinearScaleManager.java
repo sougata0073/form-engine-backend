@@ -8,29 +8,43 @@ import com.sougata.form_data_service.dto.response.summary.LinearScaleResponseSum
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.LinearScale;
 import com.sougata.form_data_service.repository.LinearScaleRepository;
+import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @Service("LINEAR_SCALE_RESPONSE_MANAGER")
-public class LinearScaleManager extends ResponseManager<LinearScaleResponseAddReqDto, LinearScaleResponseSummaryDto, LinearScaleResDto, LinearScaleResponseQuestionDto> {
+public class LinearScaleManager extends ResponseManager<
+        LinearScaleResponseAddReqDto,
+        LinearScaleResponseSummaryDto,
+        LinearScaleResDto,
+        LinearScaleResponseQuestionDto,
+        LinearScaleResponseQuestionDto.Response,
+        LinearScaleResponseQuestionDto.Summary
+        > {
 
     private final LinearScaleRepository linearScaleRepository;
 
     @Autowired
-    public LinearScaleManager(LinearScaleRepository linearScaleRepository) {
+    public LinearScaleManager(LinearScaleRepository linearScaleRepository, QuestionResponseRepository questionResponseRepository) {
+        super(questionResponseRepository);
         this.linearScaleRepository = linearScaleRepository;
     }
 
     @Override
+    @Transactional
     public void create(LinearScaleResponseAddReqDto response, FormResponse formResponse) {
         LinearScale linearScale = new LinearScale();
+
+        var qr = createQuestionResponse(response.getQuestionId(), formResponse);
+
         linearScale.setScale(response.getScale());
-        linearScale.setQuestionId(response.getQuestionId());
-        linearScale.setFormResponse(formResponse);
+        linearScale.setQuestionResponse(qr);
 
         linearScaleRepository.save(linearScale);
     }
@@ -95,22 +109,36 @@ public class LinearScaleManager extends ResponseManager<LinearScaleResponseAddRe
     }
 
     @Override
-    public LinearScaleResponseQuestionDto getResponseByQuestion(UUID formId, LinearScaleResDto questionRes) {
-        var grouped = linearScaleRepository.groupedByResponseScale(formId, questionRes.getId());
+    public LinearScaleResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, LinearScaleResDto questionResponse) {
+        var sum = new LinearScaleResponseQuestionDto.Summary();
+
+        sum.setQuestionId(questionResponse.getId());
+        sum.setQuestion(questionResponse.getQuestion());
+        sum.setQuestionType(questionResponse.getQuestionType());
+        sum.setFromNumber(questionResponse.getFromNumber());
+        sum.setToNumber(questionResponse.getToNumber());
+        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
+        sum.setDistinctResponseCount(linearScaleRepository.getDistinctResponseCount(formId, questionResponse.getId()));
+
+        return sum;
+    }
+
+    @Override
+    public LinearScaleResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
+        var grouped = linearScaleRepository.groupedByResponseScale(formId, questionId, pageable);
 
         var ls = new LinearScaleResponseQuestionDto();
 
-        var responses = grouped.stream().map(g -> new LinearScaleResponseQuestionDto.Response(
-                g.get("scale", Integer.class),
-                g.get("responseCount", Long.class).intValue(),
-                Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList()
-        )).toList();
+        var responses = grouped.stream().map(g -> {
+            var res = new LinearScaleResponseQuestionDto.Response();
 
-        ls.setFromNumber(questionRes.getFromNumber());
-        ls.setToNumber(questionRes.getToNumber());
-        ls.setQuestionId(questionRes.getId());
-        ls.setQuestion(questionRes.getQuestion());
-        ls.setQuestionType(questionRes.getQuestionType());
+            res.setScale(g.get("scale", Integer.class));
+            res.setResponseCount(g.get("responseCount", Long.class));
+            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+            
+            return res;
+        }).toList();
+
         ls.setResponses(responses);
 
         return ls;
@@ -123,8 +151,6 @@ public class LinearScaleManager extends ResponseManager<LinearScaleResponseAddRe
 
     @Override
     public void deleteResponses(UUID formId, Long questionId) {
-        var entities = linearScaleRepository.findByFormIdAndQuestionId(formId, questionId);
-
-        linearScaleRepository.deleteAll(entities);
+        linearScaleRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
     }
 }

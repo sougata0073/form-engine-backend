@@ -3,7 +3,6 @@ package com.sougata.form_service.model.templateSchema;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.sougata.form_service.model.Form;
 import com.sougata.form_service.model.questionSchema.Checkbox;
-import com.sougata.form_service.model.questionSchema.CheckboxOption;
 import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

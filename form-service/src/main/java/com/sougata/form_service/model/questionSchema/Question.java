@@ -11,9 +11,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Entity
 @Table(name = "questions")
 @EntityListeners(AuditingEntityListener.class)
@@ -45,46 +42,4 @@ public class Question extends Auditable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = false)
     private Form form;
-
-//    @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private Checkbox checkbox;
-//
-//    @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private Dropdown dropdown;
-//
-//    @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private FileUpload fileUpload;
-//
-//    @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private LinearScale linearScale;
-//
-//    @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private MultipleChoice multipleChoice;
-//
-//    @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private MultipleChoiceGrid multipleChoiceGrid;
-//
-//    @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private Paragraph paragraph;
-//
-//    @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private Rating rating;
-//
-//    @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private ShortAnswer shortAnswer;
-//
-//    @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private TickBoxGrid tickBoxGrid;
-//
-//    @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private Date date;
-//
-//    @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private Time time;
-//
-//    @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private DateTime dateTime;
-//
-//    @OneToOne(mappedBy = "question", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private Duration duration;
 }

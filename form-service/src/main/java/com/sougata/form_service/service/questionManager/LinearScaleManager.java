@@ -7,7 +7,6 @@ import com.sougata.form_service.dto.question.response.LinearScaleResDto;
 import com.sougata.form_service.dto.validation.request.LinearScaleValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.exception.ResponseValidationException;
-import com.sougata.form_service.model.questionSchema.Checkbox;
 import com.sougata.form_service.model.questionSchema.LinearScale;
 import com.sougata.form_service.model.questionSchema.Question;
 import com.sougata.form_service.repository.LinearScaleRepository;

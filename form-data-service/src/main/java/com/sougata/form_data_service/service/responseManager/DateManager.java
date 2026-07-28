@@ -8,29 +8,42 @@ import com.sougata.form_data_service.dto.response.summary.DateResponseSummaryDto
 import com.sougata.form_data_service.model.Date;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.repository.DateRepository;
+import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("DATE_RESPONSE_MANAGER")
-public class DateManager extends ResponseManager<DateResponseAddReqDto, DateResponseSummaryDto, DateResDto, DateResponseQuestionDto> {
+public class DateManager extends ResponseManager<
+        DateResponseAddReqDto,
+        DateResponseSummaryDto,
+        DateResDto,
+        DateResponseQuestionDto,
+        DateResponseQuestionDto.Response,
+        DateResponseQuestionDto.Summary
+        > {
 
     private final DateRepository dateRepository;
 
     @Autowired
-    public DateManager(DateRepository dateRepository) {
+    public DateManager(DateRepository dateRepository, QuestionResponseRepository questionResponseRepository) {
+        super(questionResponseRepository);
         this.dateRepository = dateRepository;
     }
 
     @Override
+    @Transactional
     public void create(DateResponseAddReqDto response, FormResponse formResponse) {
         Date date = new Date();
+        var qr = createQuestionResponse(response.getQuestionId(), formResponse);
+
+        date.setQuestionResponse(qr);
         date.setDate(response.getDate());
-        date.setQuestionId(response.getQuestionId());
-        date.setFormResponse(formResponse);
 
         dateRepository.save(date);
     }
@@ -82,25 +95,35 @@ public class DateManager extends ResponseManager<DateResponseAddReqDto, DateResp
     }
 
     @Override
-    public DateResponseQuestionDto getResponseByQuestion(UUID formId, DateResDto questionRes) {
-        var grouped = dateRepository.groupedByDate(formId, questionRes.getId());
+    public DateResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, DateResDto questionResponse) {
+        var sum = new DateResponseQuestionDto.Summary();
+
+        sum.setQuestionId(questionResponse.getId());
+        sum.setQuestion(questionResponse.getQuestion());
+        sum.setQuestionType(questionResponse.getQuestionType());
+        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
+        sum.setDistinctResponseCount(dateRepository.getDistinctResponseCount(formId, questionResponse.getId()));
+
+        return sum;
+    }
+
+    @Override
+    public DateResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
+        var grouped = dateRepository.groupedByDate(formId, questionId, pageable);
 
         var d = new DateResponseQuestionDto();
 
         var responses = grouped.stream().map(g -> {
-            Instant date = g.get("date", Instant.class);
+            var res = new DateResponseQuestionDto.Response();
 
-            return new DateResponseQuestionDto.Response(
-                    date,
-                    g.get("responseCount", Long.class).intValue(),
-                    Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList()
-            );
+            res.setDate(g.get("date", Instant.class));
+            res.setResponseCount(g.get("responseCount", Long.class));
+            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+            
+            return res;
 
         }).toList();
 
-        d.setQuestionId(questionRes.getId());
-        d.setQuestion(questionRes.getQuestion());
-        d.setQuestionType(questionRes.getQuestionType());
         d.setResponses(responses);
 
         return d;
@@ -113,8 +136,6 @@ public class DateManager extends ResponseManager<DateResponseAddReqDto, DateResp
 
     @Override
     public void deleteResponses(UUID formId, Long questionId) {
-        var entities = dateRepository.findByFormIdAndQuestionId(formId, questionId);
-
-        dateRepository.deleteAll(entities);
+        dateRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
     }
 }

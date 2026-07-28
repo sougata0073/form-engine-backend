@@ -1,11 +1,13 @@
 package com.sougata.form_data_service.service.impl;
 
-import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.form.FormResponseAddReqDto;
 import com.sougata.form_data_service.dto.form.FormResponseAddResDto;
 import com.sougata.form_data_service.dto.form.FormResponseSummaryResDto;
+import com.sougata.form_data_service.dto.question.QuestionSummaryDto;
 import com.sougata.form_data_service.dto.response.FormResponseSummaryDto;
 import com.sougata.form_data_service.dto.response.question.AllResponseCountAndIdsResDto;
+import com.sougata.form_data_service.dto.response.question.ResponseByQuestionResponse;
+import com.sougata.form_data_service.dto.response.question.ResponseByQuestionSummary;
 import com.sougata.form_data_service.dto.response.question.ResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.ResponseSummaryDto;
 import com.sougata.form_data_service.dto.response.summary.ResponseSummaryResDto;
@@ -14,11 +16,14 @@ import com.sougata.form_data_service.dto.validation.ResponseValidationRequestDto
 import com.sougata.form_data_service.exception.FormSubmitException;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.feignClient.FormServiceFeignClient;
+import com.sougata.form_data_service.form_schema.service.FormSchemaService;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.repository.FormResponseRepository;
+import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import com.sougata.form_data_service.service.FormResponseService;
 import com.sougata.form_data_service.service.responseManager.ResponseManagerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,17 +37,21 @@ public class FormResponseServiceImpl implements FormResponseService {
     private final ResponseManagerFactory responseManagerFactory;
     private final AuthServiceFeignClient authServiceFeignClient;
     private final FormServiceFeignClient formServiceFeignClient;
+    private final QuestionResponseRepository questionResponseRepository;
+    private final FormSchemaService formSchemaService;
 
     @Autowired
     public FormResponseServiceImpl(
             FormResponseRepository formResponseRepository,
             ResponseManagerFactory responseManagerFactory,
-            AuthServiceFeignClient authServiceFeignClient, FormServiceFeignClient formServiceFeignClient
-    ) {
+            AuthServiceFeignClient authServiceFeignClient, FormServiceFeignClient formServiceFeignClient,
+            QuestionResponseRepository questionResponseRepository, FormSchemaService formSchemaService) {
         this.formResponseRepository = formResponseRepository;
         this.responseManagerFactory = responseManagerFactory;
         this.authServiceFeignClient = authServiceFeignClient;
         this.formServiceFeignClient = formServiceFeignClient;
+        this.questionResponseRepository = questionResponseRepository;
+        this.formSchemaService = formSchemaService;
     }
 
     @Override
@@ -72,7 +81,7 @@ public class FormResponseServiceImpl implements FormResponseService {
 
         var validationBody = new ResponseValidationRequestDto(req.responses());
 
-        var validationResponse = formServiceFeignClient.validateResponse(formId, validationBody);
+        var validationResponse = formSchemaService.validateResponse(formId, validationBody);
 
         FormResponse formResponse = new FormResponse();
 
@@ -119,11 +128,19 @@ public class FormResponseServiceImpl implements FormResponseService {
     }
 
     @Override
-    public ResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId) {
+    public ResponseByQuestionSummary getResponseByQuestionSummary(UUID formId, Long questionId) {
         var qRes = formServiceFeignClient.getQuestion(formId, questionId);
         var manager = responseManagerFactory.get(qRes.getQuestionType());
 
-        return manager.getResponseByQuestion(formId, qRes);
+        return manager.getResponseByQuestionSummary(formId, qRes);
+    }
+
+    @Override
+    public ResponseQuestionDto<? extends ResponseByQuestionResponse> getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
+        var qSummary = formServiceFeignClient.getQuestionSummary(formId, questionId);
+        var manager = responseManagerFactory.get(qSummary.questionType());
+
+        return manager.getResponseByQuestion(formId, qSummary.id(), extraParams, pageable);
     }
 
     @Override
@@ -132,8 +149,13 @@ public class FormResponseServiceImpl implements FormResponseService {
     }
 
     @Override
-    public void deleteResponses(UUID formId, Long questionId, QuestionType questionType) {
-        responseManagerFactory.get(questionType).deleteResponses(formId, questionId);
+    @Transactional
+    public void deleteResponses(UUID formId, QuestionSummaryDto questionSummary) {
+
+        var manager = responseManagerFactory.get(questionSummary.questionType());
+
+        manager.deleteResponses(formId, questionSummary.id());
+        questionResponseRepository.deleteAllByFormIdAndQuestionId(formId, questionSummary.id());
     }
 
     @Override

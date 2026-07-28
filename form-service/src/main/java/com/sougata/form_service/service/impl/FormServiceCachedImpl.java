@@ -45,10 +45,10 @@ public class FormServiceCachedImpl implements FormServiceCached {
         var questions = questionRepository.findByFormId(id);
         var questionTypeMap = questions.stream().collect(Collectors.groupingBy(Question::getQuestionType));
 
-        questions.forEach(q -> {
-            var repo = anyTypeQuestionRepositoryFactory.get(q.getQuestionType());
-            var manager = questionManagerFactory.get(q.getQuestionType());
-            var qIds = questionTypeMap.get(q.getQuestionType()).stream().map(Question::getId).collect(Collectors.toList());
+        questionTypeMap.keySet().forEach(qType -> {
+            var repo = anyTypeQuestionRepositoryFactory.get(qType);
+            var manager = questionManagerFactory.get(qType);
+            var qIds = questionTypeMap.get(qType).stream().map(Question::getId).collect(Collectors.toList());
 
             var qs = repo.findAllById((Iterable<Object>) (Iterable<?>) qIds).stream().map(manager::toQuestionResDto).toList();
 

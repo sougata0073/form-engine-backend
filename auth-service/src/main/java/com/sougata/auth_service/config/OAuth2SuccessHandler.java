@@ -45,11 +45,11 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         }
 
         AuthProvider authProvider = AuthProvider.valueOf(oauthToken.getAuthorizedClientRegistrationId().toUpperCase());
-        User extractedUser = extractOAuth2UserAuthAttributes(oAuth2User, authProvider);
 
+        var extractedUser = extractOAuth2UserAuthAttributes(oAuth2User, authProvider);
         var prevUser = userRepository.findBySocialAuthIdAndAuthProvider(extractedUser.getSocialAuthId(), authProvider);
 
-        User savedUser = prevUser.orElseGet(() -> userRepository.save(extractedUser));
+        var savedUser = prevUser.orElseGet(() -> userRepository.save(extractedUser));
 
         String jwt = jwtService.generateJwtToken(
                 savedUser.getId().toString(), savedUser.getUsername(), savedUser.getEmail(), savedUser.getAvatarUrl()

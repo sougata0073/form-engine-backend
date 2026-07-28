@@ -12,17 +12,22 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-public class MultipleChoiceResponseQuestionDto extends ResponseQuestionDto {
+public class MultipleChoiceResponseQuestionDto extends ResponseQuestionDto<MultipleChoiceResponseQuestionDto.Response> {
 
-    private List<MultipleChoiceResDto.MultipleChoiceOptionResDto> options;
-    private List<Response> responses;
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class Response extends ResponseByQuestionResponse {
 
-    public record Response(
-            @JsonSerialize(using = ToStringSerializer.class)
-            Long optionId,
-            Integer responseCount,
-            List<String> responseIds
-    ) {
+        @JsonSerialize(using = ToStringSerializer.class)
+        private Long optionId;
 
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class Summary extends ResponseByQuestionSummary {
+        private List<MultipleChoiceResDto.MultipleChoiceOptionResDto> options;
     }
 }

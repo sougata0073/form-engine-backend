@@ -2,8 +2,6 @@ package com.sougata.form_service.model.templateSchema;
 
 import com.sougata.form_service.model.Form;
 import com.sougata.form_service.model.questionSchema.MultipleChoiceGrid;
-import com.sougata.form_service.model.questionSchema.MultipleChoiceGridColumn;
-import com.sougata.form_service.model.questionSchema.MultipleChoiceGridRow;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

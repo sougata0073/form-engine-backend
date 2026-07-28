@@ -24,7 +24,7 @@ public class CheckboxOption extends Auditable {
     private Long responseOptionId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(nullable = false)
+    @JoinColumn(nullable = false, name = "checkbox_id")
     private Checkbox checkbox;
 
 }

@@ -8,28 +8,42 @@ import com.sougata.form_data_service.dto.response.summary.ParagraphResponseSumma
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.Paragraph;
 import com.sougata.form_data_service.repository.ParagraphRepository;
+import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("PARAGRAPH_RESPONSE_MANAGER")
-public class ParagraphManager extends ResponseManager<ParagraphResponseAddReqDto, ParagraphResponseSummaryDto, ParagraphResDto, ParagraphResponseQuestionDto> {
+public class ParagraphManager extends ResponseManager<
+        ParagraphResponseAddReqDto,
+        ParagraphResponseSummaryDto,
+        ParagraphResDto,
+        ParagraphResponseQuestionDto,
+        ParagraphResponseQuestionDto.Response,
+        ParagraphResponseQuestionDto.Summary
+        > {
 
     private final ParagraphRepository paragraphRepository;
 
     @Autowired
-    public ParagraphManager(ParagraphRepository paragraphRepository) {
+    public ParagraphManager(ParagraphRepository paragraphRepository, QuestionResponseRepository questionResponseRepository) {
+        super(questionResponseRepository);
         this.paragraphRepository = paragraphRepository;
     }
 
     @Override
+    @Transactional
     public void create(ParagraphResponseAddReqDto response, FormResponse formResponse) {
         Paragraph paragraph = new Paragraph();
+
+        var qr = createQuestionResponse(response.getQuestionId(), formResponse);
+
         paragraph.setText(response.getText());
-        paragraph.setQuestionId(response.getQuestionId());
-        paragraph.setFormResponse(formResponse);
+        paragraph.setQuestionResponse(qr);
 
         paragraphRepository.save(paragraph);
     }
@@ -80,20 +94,34 @@ public class ParagraphManager extends ResponseManager<ParagraphResponseAddReqDto
     }
 
     @Override
-    public ParagraphResponseQuestionDto getResponseByQuestion(UUID formId, ParagraphResDto questionRes) {
-        var grouped = paragraphRepository.groupedByText(formId, questionRes.getId());
+    public ParagraphResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, ParagraphResDto questionResponse) {
+        var sum = new ParagraphResponseQuestionDto.Summary();
+
+        sum.setQuestionId(questionResponse.getId());
+        sum.setQuestion(questionResponse.getQuestion());
+        sum.setQuestionType(questionResponse.getQuestionType());
+        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
+        sum.setDistinctResponseCount(paragraphRepository.getDistinctResponseCount(formId, questionResponse.getId()));
+
+        return sum;
+    }
+
+    @Override
+    public ParagraphResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
+        var grouped = paragraphRepository.groupedByText(formId, questionId, pageable);
 
         var p = new ParagraphResponseQuestionDto();
 
-        var responses = grouped.stream().map(g -> new ParagraphResponseQuestionDto.Response(
-                g.get("text", String.class),
-                g.get("responseCount", Long.class).intValue(),
-                Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList()
-        )).toList();
+        var responses = grouped.stream().map(g -> {
+            var res = new ParagraphResponseQuestionDto.Response();
 
-        p.setQuestionId(questionRes.getId());
-        p.setQuestion(questionRes.getQuestion());
-        p.setQuestionType(questionRes.getQuestionType());
+            res.setText(g.get("text", String.class));
+            res.setResponseCount(g.get("responseCount", Long.class));
+            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+
+            return res;
+        }).toList();
+
         p.setResponses(responses);
 
         return p;
@@ -106,8 +134,6 @@ public class ParagraphManager extends ResponseManager<ParagraphResponseAddReqDto
 
     @Override
     public void deleteResponses(UUID formId, Long questionId) {
-        var entities = paragraphRepository.findByFormIdAndQuestionId(formId, questionId);
-
-        paragraphRepository.deleteAll(entities);
+        paragraphRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
     }
 }

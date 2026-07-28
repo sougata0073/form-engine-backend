@@ -7,30 +7,44 @@ import com.sougata.form_data_service.dto.response.question.TimeResponseQuestionD
 import com.sougata.form_data_service.dto.response.summary.TimeResponseSummaryDto;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.Time;
+import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import com.sougata.form_data_service.repository.TimeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("TIME_RESPONSE_MANAGER")
-public class TimeManager extends ResponseManager<TimeResponseAddReqDto, TimeResponseSummaryDto, TimeResDto, TimeResponseQuestionDto> {
+public class TimeManager extends ResponseManager<
+        TimeResponseAddReqDto,
+        TimeResponseSummaryDto,
+        TimeResDto,
+        TimeResponseQuestionDto,
+        TimeResponseQuestionDto.Response,
+        TimeResponseQuestionDto.Summary
+        > {
 
     private final TimeRepository timeRepository;
 
     @Autowired
-    public TimeManager(TimeRepository timeRepository) {
+    public TimeManager(TimeRepository timeRepository, QuestionResponseRepository questionResponseRepository) {
+        super(questionResponseRepository);
         this.timeRepository = timeRepository;
     }
 
     @Override
+    @Transactional
     public void create(TimeResponseAddReqDto response, FormResponse formResponse) {
         Time time = new Time();
+
+        var qr = createQuestionResponse(response.getQuestionId(), formResponse);
+
         time.setTime(response.getTime());
-        time.setQuestionId(response.getQuestionId());
-        time.setFormResponse(formResponse);
+        time.setQuestionResponse(qr);
 
         timeRepository.save(time);
     }
@@ -82,25 +96,35 @@ public class TimeManager extends ResponseManager<TimeResponseAddReqDto, TimeResp
     }
 
     @Override
-    public TimeResponseQuestionDto getResponseByQuestion(UUID formId, TimeResDto questionRes) {
-        var grouped = timeRepository.groupedByTime(formId, questionRes.getId());
+    public TimeResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, TimeResDto questionResponse) {
+        var sum = new TimeResponseQuestionDto.Summary();
+
+        sum.setQuestionId(questionResponse.getId());
+        sum.setQuestion(questionResponse.getQuestion());
+        sum.setQuestionType(questionResponse.getQuestionType());
+        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
+        sum.setDistinctResponseCount(timeRepository.getDistinctResponseCount(formId, questionResponse.getId()));
+
+        return sum;
+    }
+
+    @Override
+    public TimeResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
+        var grouped = timeRepository.groupedByTime(formId, questionId, pageable);
 
         var t = new TimeResponseQuestionDto();
 
         var responses = grouped.stream().map(g -> {
-            Instant time = g.get("time", Instant.class);
+            var res = new TimeResponseQuestionDto.Response();
 
-            return new TimeResponseQuestionDto.Response(
-                    time,
-                    g.get("responseCount", Long.class).intValue(),
-                    Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList()
-            );
+            res.setTime(g.get("time", Instant.class));
+            res.setResponseCount(g.get("responseCount", Long.class));
+            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+
+            return res;
 
         }).toList();
 
-        t.setQuestionId(questionRes.getId());
-        t.setQuestion(questionRes.getQuestion());
-        t.setQuestionType(questionRes.getQuestionType());
         t.setResponses(responses);
 
         return t;
@@ -113,8 +137,6 @@ public class TimeManager extends ResponseManager<TimeResponseAddReqDto, TimeResp
 
     @Override
     public void deleteResponses(UUID formId, Long questionId) {
-        var entities = timeRepository.findByFormIdAndQuestionId(formId, questionId);
-
-        timeRepository.deleteAll(entities);
+        timeRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
     }
 }

@@ -10,30 +10,41 @@ import com.sougata.form_data_service.model.TickBoxGrid;
 import com.sougata.form_data_service.model.TickBoxGridColumn;
 import com.sougata.form_data_service.model.TickBoxGridRow;
 import com.sougata.form_data_service.projection.CommonResponseSummaryProjection;
+import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import com.sougata.form_data_service.repository.TickBoxGridRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service("TICK_BOX_GRID_RESPONSE_MANAGER")
-public class TickBoxGridManager extends ResponseManager<TickBoxGridResponseAddReqDto, TickBoxGridResponseSummaryDto, TickBoxGridResDto, TickBoxGridResponseQuestionDto> {
+public class TickBoxGridManager extends ResponseManager<
+        TickBoxGridResponseAddReqDto,
+        TickBoxGridResponseSummaryDto,
+        TickBoxGridResDto,
+        TickBoxGridResponseQuestionDto,
+        TickBoxGridResponseQuestionDto.Response,
+        TickBoxGridResponseQuestionDto.Summary
+        > {
 
     private final TickBoxGridRepository tickBoxGridRepository;
 
     @Autowired
-    public TickBoxGridManager(TickBoxGridRepository tickBoxGridRepository) {
+    public TickBoxGridManager(TickBoxGridRepository tickBoxGridRepository, QuestionResponseRepository questionResponseRepository) {
+        super(questionResponseRepository);
         this.tickBoxGridRepository = tickBoxGridRepository;
     }
 
     @Override
+    @Transactional
     public void create(TickBoxGridResponseAddReqDto response, FormResponse formResponse) {
         TickBoxGrid tickBoxGrid = new TickBoxGrid();
 
-        tickBoxGrid.setQuestionId(response.getQuestionId());
-        tickBoxGrid.setFormResponse(formResponse);
+        var qr = createQuestionResponse(response.getQuestionId(), formResponse);
 
         var responses = response.getRows().stream().map(r -> {
             var row = new TickBoxGridRow();
@@ -54,6 +65,7 @@ public class TickBoxGridManager extends ResponseManager<TickBoxGridResponseAddRe
             return row;
         }).collect(Collectors.toCollection(ArrayList::new));
 
+        tickBoxGrid.setQuestionResponse(qr);
         tickBoxGrid.setResponses(responses);
 
         tickBoxGridRepository.save(tickBoxGrid);
@@ -135,35 +147,54 @@ public class TickBoxGridManager extends ResponseManager<TickBoxGridResponseAddRe
     }
 
     @Override
-    public TickBoxGridResponseQuestionDto getResponseByQuestion(UUID formId, TickBoxGridResDto questionRes) {
+    public TickBoxGridResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, TickBoxGridResDto questionResponse) {
+        var sum = new TickBoxGridResponseQuestionDto.Summary();
 
-        var grouped = tickBoxGridRepository.groupedByResponseRowColumn(formId, questionRes.getId());
+        sum.setQuestionId(questionResponse.getId());
+        sum.setQuestion(questionResponse.getQuestion());
+        sum.setQuestionType(questionResponse.getQuestionType());
+        sum.setRows(questionResponse.getRows());
+        sum.setColumns(questionResponse.getColumns());
+
+        var responseCount = getTotalResponseCount(formId, questionResponse.getId());
+
+        sum.setTotalResponseCount(responseCount);
+        sum.setDistinctResponseCount(responseCount);
+
+        return sum;
+    }
+
+    @Override
+    public TickBoxGridResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
+
+        var rowIdString = extraParams.get("rowId");
+
+        if (rowIdString == null) {
+            throw new IllegalArgumentException("Row ID is required");
+        }
+
+        var rowId = Long.parseLong(rowIdString);
+
+        var grouped = tickBoxGridRepository.groupedByResponseRowColumn(
+                formId,
+                questionId,
+                rowId,
+                pageable
+        );
 
         var tb = new TickBoxGridResponseQuestionDto();
 
-        var rowMap = grouped.stream()
-                .collect(Collectors.groupingBy(g -> g.get("rowId", Long.class)));
+        var responses = grouped.stream().map(g -> {
+            var res = new TickBoxGridResponseQuestionDto.Response();
 
-        var responses = grouped.stream()
-                .map(g -> {
-                    var rowId = g.get("rowId", Long.class);
-                    return new TickBoxGridResponseQuestionDto.RowRes(
-                            rowId,
-                            rowMap.get(rowId).stream()
-                                    .map(r -> new TickBoxGridResponseQuestionDto.ColumnRes(
-                                            Arrays.stream(r.get("columnIds", Long[].class)).map(Object::toString).toList(),
-                                            r.get("responseCount", Long.class).intValue(),
-                                            Arrays.stream(r.get("responseIds", Long[].class)).map(Object::toString).toList()
-                                    )).toList()
-                    );
-                })
-                .toList();
+            res.setColumnIds(Arrays.stream(g.get("columnIds", Long[].class)).map(Object::toString).toList());
+            res.setResponseCount(g.get("responseCount", Long.class));
+            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
 
-        tb.setRows(questionRes.getRows());
-        tb.setColumns(questionRes.getColumns());
-        tb.setQuestionId(questionRes.getId());
-        tb.setQuestion(questionRes.getQuestion());
-        tb.setQuestionType(questionRes.getQuestionType());
+            return res;
+        }).toList();
+
+        tb.setRowId(rowId);
         tb.setResponses(responses);
 
         return tb;
@@ -176,8 +207,6 @@ public class TickBoxGridManager extends ResponseManager<TickBoxGridResponseAddRe
 
     @Override
     public void deleteResponses(UUID formId, Long questionId) {
-        var entities = tickBoxGridRepository.findByFormIdAndQuestionId(formId, questionId);
-
-        tickBoxGridRepository.deleteAll(entities);
+        tickBoxGridRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
     }
 }

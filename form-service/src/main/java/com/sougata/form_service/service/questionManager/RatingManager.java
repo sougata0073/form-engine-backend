@@ -7,7 +7,6 @@ import com.sougata.form_service.dto.question.response.RatingResDto;
 import com.sougata.form_service.dto.validation.request.RatingValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.exception.ResponseValidationException;
-import com.sougata.form_service.model.questionSchema.Checkbox;
 import com.sougata.form_service.model.questionSchema.Question;
 import com.sougata.form_service.model.questionSchema.Rating;
 import com.sougata.form_service.repository.QuestionRepository;

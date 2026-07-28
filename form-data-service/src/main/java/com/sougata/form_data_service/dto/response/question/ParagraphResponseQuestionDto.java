@@ -4,21 +4,22 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-
 @NoArgsConstructor
 @Getter
 @Setter
-public class ParagraphResponseQuestionDto extends ResponseQuestionDto {
+public class ParagraphResponseQuestionDto extends ResponseQuestionDto<ParagraphResponseQuestionDto.Response> {
 
-    private List<Response> responses;
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class Response extends ResponseByQuestionResponse {
 
-    public record Response(
-            String text,
-            Integer responseCount,
-            List<String> responseIds
-    ) {
+        private String text;
 
+    }
+
+    @NoArgsConstructor
+    public static class Summary extends ResponseByQuestionSummary {
     }
 
 }

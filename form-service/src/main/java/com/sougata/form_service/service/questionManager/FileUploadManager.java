@@ -10,7 +10,6 @@ import com.sougata.form_service.exception.InvalidFileSizeException;
 import com.sougata.form_service.exception.InvalidFileTypeException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.FileType;
-import com.sougata.form_service.model.questionSchema.Checkbox;
 import com.sougata.form_service.model.questionSchema.FileUpload;
 import com.sougata.form_service.model.questionSchema.Question;
 import com.sougata.form_service.repository.FileTypeRepository;
@@ -119,7 +118,7 @@ public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAdd
             throw new InvalidFileSizeException(validationDto.getFileSize(), fu.getMaxFileSize());
         }
 
-        if (fu.getAllowedFileTypes() != null) {
+        if (!fu.getAllowedFileTypes().isEmpty()) {
             List<String> mimeTypes = fu.getAllowedFileTypes()
                     .stream()
                     .map(FileType::getMimeTypes)

@@ -27,7 +27,7 @@ public class MultipleChoiceGridRow extends Auditable {
     private Long responseColumnId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(nullable = false)
+    @JoinColumn(nullable = false, name = "multiple_choice_grid_id")
     private MultipleChoiceGrid multipleChoiceGrid;
 
 }

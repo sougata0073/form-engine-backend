@@ -1,6 +1,5 @@
 package com.sougata.form_service.service.impl;
 
-import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.common.SuccessMessageDto;
 import com.sougata.form_service.dto.question.QuestionSummariesResDto;
 import com.sougata.form_service.dto.question.QuestionSummaryDto;
@@ -19,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.UUID;
 
 @Service
@@ -71,12 +69,19 @@ public class QuestionServiceImpl implements QuestionService {
     @Transactional
     public SuccessMessageDto deleteQuestion(UUID formId, Long questionId) {
 
-        // TODO
-//        formDataServiceFeignClient.deleteResponses(formId, questionId, questionType);
+        var questionSummaryProjection = questionRepository.findQuestionSummaryByFormIdAndId(formId, questionId)
+                .orElseThrow(() -> new QuestionNotFoundException(questionId));
 
-        var questionType = questionRepository.findQuestionTypeById(questionId)
-                .orElseThrow(() -> new QuestionNotFoundException(questionId)).getQuestionType();
-        var manager = questionManagerFactory.get(questionType);
+        var questionSummary = new QuestionSummaryDto(
+                questionSummaryProjection.getId(),
+                questionSummaryProjection.getQuestion(),
+                questionSummaryProjection.getQuestionType(),
+                questionSummaryProjection.getOrderIndex()
+        );
+
+        formDataServiceFeignClient.deleteResponses(formId, questionSummary);
+
+        var manager = questionManagerFactory.get(questionSummary.questionType());
 
         manager.delete(questionId);
         questionRepository.deleteById(questionId);

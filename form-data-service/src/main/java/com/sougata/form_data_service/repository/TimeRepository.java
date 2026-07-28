@@ -2,6 +2,7 @@ package com.sougata.form_data_service.repository;
 
 import com.sougata.form_data_service.model.Time;
 import jakarta.persistence.Tuple;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
@@ -9,22 +10,33 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository("TIME_RESPONSE_REPOSITORY")
-public interface TimeRepository extends QuestionResponseRepository<Time, Long> {
+public interface TimeRepository extends AnyTypeQuestionResponseRepository<Time, Long> {
 
-    @Query("select t.questionId questionId, t.time time from Time t where t.formResponse.formId = :formId")
+    @Query("select t.questionResponse.questionId questionId, t.time time from Time t where t.questionResponse.formResponse.formId = :formId")
     List<Tuple> getResponseTimes(UUID formId);
+
+    @Query("""
+            select
+            count(distinct t.time)
+            from Time t
+            where t.questionResponse.questionId = :questionId and t.questionResponse.formResponse.formId = :formId
+            """)
+    Long getDistinctResponseCount(UUID formId, Long questionId);
 
     @Query(value = """
             select
             t.time time,
-            count(t.id) responseCount,
+            count(t.question_response_id) responseCount,
             array_agg(fr.id order by fr.created_at) responseIds
             from times t
+            join question_responses qr
+            on qr.id = t.question_response_id
             join form_responses fr
-            on t.form_response_id = fr.id
-            where fr.form_id = :formId and t.question_id = :questionId
+            on qr.form_response_id = fr.id
+            where fr.form_id = :formId and qr.question_id = :questionId
             group by t.time
+            order by responseCount desc
             """, nativeQuery = true)
-    List<Tuple> groupedByTime(UUID formId, Long questionId);
+    List<Tuple> groupedByTime(UUID formId, long questionId, Pageable pageable);
 
 }

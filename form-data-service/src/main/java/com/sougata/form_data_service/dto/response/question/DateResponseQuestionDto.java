@@ -5,21 +5,23 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
-import java.util.List;
 
 @NoArgsConstructor
 @Getter
 @Setter
-public class DateResponseQuestionDto extends ResponseQuestionDto {
+public class DateResponseQuestionDto extends ResponseQuestionDto<DateResponseQuestionDto.Response> {
 
-    private List<Response> responses;
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    public static class Response extends ResponseByQuestionResponse {
 
-    public record Response(
-            Instant date,
-            Integer responseCount,
-            List<String> responseIds
-    ) {
+        private Instant date;
 
+    }
+
+    @NoArgsConstructor
+    public static class Summary extends ResponseByQuestionSummary {
     }
 
 }

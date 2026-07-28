@@ -2,7 +2,6 @@ package com.sougata.form_service.model.templateSchema;
 
 import com.sougata.form_service.model.Form;
 import com.sougata.form_service.model.questionSchema.MultipleChoice;
-import com.sougata.form_service.model.questionSchema.MultipleChoiceOption;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
