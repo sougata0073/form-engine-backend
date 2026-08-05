@@ -5,10 +5,14 @@ import com.sougata.form_data_service.dto.question.request.RatingResponseAddReqDt
 import com.sougata.form_data_service.dto.question.response.RatingResDto;
 import com.sougata.form_data_service.dto.response.question.RatingResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.RatingResponseSummaryDto;
+import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.Rating;
+import com.sougata.form_data_service.repository.FormResponseRepository;
 import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import com.sougata.form_data_service.repository.RatingRepository;
+import com.sougata.form_data_service.util.IdUtil;
+import jakarta.persistence.Tuple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,13 +29,14 @@ public class RatingManager extends ResponseManager<
         RatingResDto,
         RatingResponseQuestionDto,
         RatingResponseQuestionDto.Response,
-        RatingResponseQuestionDto.Summary
+        RatingResponseQuestionDto.Summary,
+        RatingResponseQuestionDto.FormResponsesReqDto
         > {
 
     private final RatingRepository ratingRepository;
 
     @Autowired
-    public RatingManager(RatingRepository ratingRepository, QuestionResponseRepository questionResponseRepository) {
+    public RatingManager(RatingRepository ratingRepository, QuestionResponseRepository questionResponseRepository, FormResponseRepository formResponseRepository, AuthServiceFeignClient authServiceFeignClient) {
         super(questionResponseRepository);
         this.ratingRepository = ratingRepository;
     }
@@ -118,6 +123,11 @@ public class RatingManager extends ResponseManager<
     }
 
     @Override
+    public RatingResponseSummaryDto getResponseSummary(UUID formId, Long questionId, RatingResDto questionRes, Pageable pageable) {
+        return null;
+    }
+
+    @Override
     public RatingResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, RatingResDto questionResponse) {
         var sum = new RatingResponseQuestionDto.Summary();
 
@@ -141,16 +151,30 @@ public class RatingManager extends ResponseManager<
         var responses = grouped.stream().map(g -> {
             var res = new RatingResponseQuestionDto.Response();
 
+            res.setQuestionId(questionId);
+            res.setQuestionType(getQuestionType());
             res.setRating(g.get("rating", Integer.class));
             res.setResponseCount(g.get("responseCount", Long.class));
-            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
-                            
+
+            var map = new HashMap<String, List<String>>();
+
+            map.put("rating", List.of(res.getRating() == null ? "" : res.getRating().toString()));
+
+            res.setFormResponsesIdentifier(IdUtil.generateCompressedEncodedId(map));
+
             return res;
         }).toList();
 
+        r.setQuestionId(questionId);
+        r.setQuestionType(getQuestionType());
         r.setResponses(responses);
 
         return r;
+    }
+
+    @Override
+    public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
+        return List.of();
     }
 
 

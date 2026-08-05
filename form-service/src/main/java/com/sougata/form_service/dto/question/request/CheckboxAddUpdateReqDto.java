@@ -1,10 +1,11 @@
 package com.sougata.form_service.dto.question.request;
 
 import com.sougata.form_service.constant.ValidationMessages;
-import com.sougata.form_service.dto.validationConfig.ValidationConfig;
+import com.sougata.form_service.validation.configuration.ValidationConfig;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -25,12 +26,13 @@ public class CheckboxAddUpdateReqDto extends QuestionAddUpdateReq {
     @NotNull(message = ValidationMessages.VALIDATION_CONFIG_NOT_NULL)
     private ValidationConfig validationConfig;
 
-    public record Option(
-            Long id,
-
-            @Length(min = 1)
-            String option
-    ) {
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Option {
+        private Long id;
+        private @Length(min = 1) String option;
     }
 
 }

@@ -1,12 +1,9 @@
 package com.sougata.form_service.service.questionManager;
 
 import com.sougata.form_service.constant.QuestionType;
-import com.sougata.form_service.constant.ValidationMessages;
 import com.sougata.form_service.dto.question.request.RatingAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.RatingResDto;
-import com.sougata.form_service.dto.validation.request.RatingValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.exception.ResponseValidationException;
 import com.sougata.form_service.model.questionSchema.Question;
 import com.sougata.form_service.model.questionSchema.Rating;
 import com.sougata.form_service.repository.QuestionRepository;
@@ -19,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service("RATING_QUESTION_MANAGER")
-public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto, RatingResDto, RatingValidationRequestDto> {
+public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto, RatingResDto> {
 
     private final RatingRepository ratingRepository;
 
@@ -88,25 +85,13 @@ public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto
     }
 
     @Override
-    public boolean validateResponse(RatingValidationRequestDto validationDto) {
-        var maxRatingNumber = ratingRepository.getMaxRatingNumber(validationDto.getQuestionId())
-                .orElseThrow(() -> new QuestionNotFoundException(QuestionType.RATING, validationDto.getQuestionId()));
-
-        if (validationDto.getRating() > maxRatingNumber) {
-            throw new ResponseValidationException(String.format(ValidationMessages.INVALID_RATING_NUMBER, maxRatingNumber));
-        }
-
-        return true;
-    }
-
-    @Override
     public QuestionType getQuestionType() {
         return QuestionType.RATING;
     }
 
     @Override
-    public void delete(Long questionId) {
-        ratingRepository.deleteById(questionId);
+    public void delete(UUID formId, Long questionId) {
+        ratingRepository.deleteQuestion(formId, questionId);
     }
 
     private void setPropertiesForNew(RatingAddUpdateReqDto source, Rating target, Question question) {

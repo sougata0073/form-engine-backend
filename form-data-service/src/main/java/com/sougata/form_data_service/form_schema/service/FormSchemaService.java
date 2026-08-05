@@ -29,7 +29,7 @@ public class FormSchemaService {
 
     public SuccessMessageDto validateResponse(UUID formId, ResponseValidationRequestDto dto) {
 
-        var questionResList = formServiceFeignClient.getFormDetails(formId).questions();
+        var questionResList = formServiceFeignClient.getFormDetails(formId).getQuestions();
 
         // Getting IDs of questions which are marked as required
         List<Long> requiredQuestionIds = questionResList.stream().filter(QuestionRes::getRequired).map(QuestionRes::getId).toList();
@@ -37,7 +37,7 @@ public class FormSchemaService {
         Set<Long> responseQuestionIds = new HashSet<>();
 
         // Putting question IDs of all responses into a HashSet
-        dto.responses().forEach(vReq -> responseQuestionIds.add(vReq.getQuestionId()));
+        dto.getResponses().forEach(vReq -> responseQuestionIds.add(vReq.getQuestionId()));
 
         List<String> missingQuestionIds = new ArrayList<>();
 
@@ -56,7 +56,7 @@ public class FormSchemaService {
         var questionResMap = questionResList.stream().collect(Collectors.groupingBy(QuestionRes::getId));
 
         // Now passing each response into validators
-        dto.responses().forEach(vReq -> {
+        dto.getResponses().forEach(vReq -> {
             var questionManager = questionSchemaManagerFactory.get(vReq.getQuestionType());
             boolean isValid = questionManager.validateResponse(vReq,
                     questionResMap.get(vReq.getQuestionId()).stream().findFirst()

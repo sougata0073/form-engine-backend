@@ -16,7 +16,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @AllArgsConstructor
 @Getter
 @Setter
-public class QuestionResponse extends Auditable {
+public class QuestionResponse {
 
     @Id
     private Long id = TsidCreator.getTsid().toLong();

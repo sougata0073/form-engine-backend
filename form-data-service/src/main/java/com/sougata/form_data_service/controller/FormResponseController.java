@@ -2,15 +2,17 @@ package com.sougata.form_data_service.controller;
 
 import com.sougata.form_data_service.dto.form.FormResponseAddReqDto;
 import com.sougata.form_data_service.dto.form.FormResponseAddResDto;
-import com.sougata.form_data_service.dto.form.FormResponseSummaryResDto;
+import com.sougata.form_data_service.dto.form.FormResponseSummariesDto;
+import com.sougata.form_data_service.dto.form.FormResponseSummaryShortDto;
 import com.sougata.form_data_service.dto.question.QuestionSummaryDto;
-import com.sougata.form_data_service.dto.response.question.AllResponseCountAndIdsResDto;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionResponse;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionSummary;
 import com.sougata.form_data_service.dto.response.question.ResponseQuestionDto;
+import com.sougata.form_data_service.dto.response.summary.ResponseSummaryDto;
 import com.sougata.form_data_service.dto.response.summary.ResponseSummaryResDto;
 import com.sougata.form_data_service.service.FormResponseService;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -35,8 +37,11 @@ public class FormResponseController {
 
     @PostMapping(path = "{formId}/response")
     @Caching(evict = {
-            @CacheEvict(cacheNames = {"responseSummary", "responseSummaries", "responseCountAndIds"}, key = "#formId"),
-            @CacheEvict(cacheNames = {"responseByQuestionSummary", "responseByQuestion"}, allEntries = true)
+            @CacheEvict(cacheNames = {"formResponseSummaryShort", "responseSummaries"}, key = "#formId"),
+            @CacheEvict(
+                    cacheNames = {"responseByQuestionSummary", "responseByQuestion", "formResponseSummaries", "responseSummary"},
+                    allEntries = true
+            )
     })
     public ResponseEntity<FormResponseAddResDto> addFormResponse(
             @PathVariable("formId") UUID formId,
@@ -48,8 +53,8 @@ public class FormResponseController {
     }
 
     @GetMapping(path = "{formId}/form-response-summary")
-    @Cacheable(cacheNames = {"responseSummary"}, key = "#formId")
-    public FormResponseSummaryResDto getFormResponseSummary(
+    @Cacheable(cacheNames = {"formResponseSummaryShort"}, key = "#formId")
+    public FormResponseSummaryShortDto getFormResponseSummary(
             @PathVariable("formId") UUID formId
     ) {
         return formResponseService.getFormResponseSummary(formId);
@@ -64,6 +69,19 @@ public class FormResponseController {
     }
 
     @GetMapping(path = "{formId}/questions/{questionId}/response-summary")
+    @Cacheable(
+            cacheNames = {"responseSummary"},
+            key = "{#formId, #questionId, #pageable.pageNumber, #pageable.pageSize}"
+    )
+    public ResponseSummaryDto<?> getResponseSummary(
+            @PathVariable("formId") UUID formId,
+            @PathVariable("questionId") Long questionId,
+            Pageable pageable
+    ) {
+        return formResponseService.getResponseSummary(formId, questionId, pageable);
+    }
+
+    @GetMapping(path = "{formId}/questions/{questionId}/response-summary-by-question")
     @Cacheable(cacheNames = {"responseByQuestionSummary"}, key = "{#formId, #questionId}")
     public ResponseByQuestionSummary getResponseByQuestionSummary(
             @PathVariable("formId") UUID formId,
@@ -86,6 +104,20 @@ public class FormResponseController {
         return formResponseService.getResponseByQuestion(formId, questionId, extraParams, pageable);
     }
 
+    @GetMapping(path = "{formId}/questions/{questionId}/form-response-summaries", params = {"formResponsesIdentifier"})
+    @Cacheable(
+            cacheNames = {"formResponseSummaries"},
+            key = "{#formId, #questionId, #formResponsesIdentifier, #pageable.pageNumber, #pageable.pageSize}"
+    )
+    public FormResponseSummariesDto getFormResponseSummaries(
+            @PathVariable("formId") UUID formId,
+            @PathVariable("questionId") Long questionId,
+            @RequestParam("formResponsesIdentifier") String formResponsesIdentifier,
+            Pageable pageable
+    ) {
+        return formResponseService.getFormResponseSummaries(formId, questionId, formResponsesIdentifier, pageable);
+    }
+
     @GetMapping(path = "{formId}/is-response-already-submitted", params = "userId")
     // TODO: Enable caching when delete form response endpoint is created
     public boolean getIsResponseAlreadySubmitted(
@@ -95,24 +127,19 @@ public class FormResponseController {
         return formResponseService.getIsResponseAlreadySubmitted(formId, userId);
     }
 
-    @PostMapping(path = "{formId}")
+    @DeleteMapping(path = "{formId}/questions/{questionId}/responses")
     @Caching(evict = {
-            @CacheEvict(cacheNames = {"responseSummary", "responseSummaries"}, key = "#formId"),
-            @CacheEvict(cacheNames = {"responseByQuestionSummary", "responseByQuestion"}, allEntries = true)
+            @CacheEvict(cacheNames = {"formResponseSummaryShort", "responseSummaries"}, key = "#formId"),
+            @CacheEvict(
+                    cacheNames = {"responseByQuestionSummary", "responseByQuestion", "formResponseSummaries", "responseSummary"},
+                    allEntries = true
+            )
     })
     public void deleteQuestionResponses(
             @PathVariable("formId") UUID formId,
-            @RequestBody QuestionSummaryDto body
+            @PathVariable("questionId") Long questionId
     ) {
-        formResponseService.deleteResponses(formId, body);
-    }
-
-    @GetMapping(path = "{formId}/all-response-count-and-ids")
-    @Cacheable(cacheNames = {"responseCountAndIds"}, key = "#formId")
-    public AllResponseCountAndIdsResDto allResponseCountAndIds(
-            @PathVariable("formId") UUID formId
-    ) {
-        return formResponseService.getAllResponseCountAndIds(formId);
+        formResponseService.deleteResponses(formId, questionId);
     }
 
 }

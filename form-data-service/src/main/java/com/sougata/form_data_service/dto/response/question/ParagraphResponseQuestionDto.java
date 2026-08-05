@@ -1,5 +1,6 @@
 package com.sougata.form_data_service.dto.response.question;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -20,6 +21,14 @@ public class ParagraphResponseQuestionDto extends ResponseQuestionDto<ParagraphR
 
     @NoArgsConstructor
     public static class Summary extends ResponseByQuestionSummary {
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FormResponsesReqDto {
+        private String text;
     }
 
 }

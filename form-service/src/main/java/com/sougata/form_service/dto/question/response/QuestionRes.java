@@ -1,5 +1,6 @@
 package com.sougata.form_service.dto.question.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.sougata.form_service.constant.QuestionType;
@@ -36,7 +37,7 @@ import tools.jackson.databind.ser.std.ToStringSerializer;
 @AllArgsConstructor
 @Getter
 @Setter
-public abstract class QuestionRes {
+public class QuestionRes {
     @JsonSerialize(using = ToStringSerializer.class)
     private Long id;
 
@@ -45,4 +46,7 @@ public abstract class QuestionRes {
     private Boolean required;
     private Integer orderIndex;
     private QuestionType questionType;
+
+    @JsonProperty(value = "@class")
+    private String cls = getClass().getName();
 }

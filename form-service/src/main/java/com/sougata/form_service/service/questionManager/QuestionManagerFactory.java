@@ -3,7 +3,6 @@ package com.sougata.form_service.service.questionManager;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.QuestionAddUpdateReq;
 import com.sougata.form_service.dto.question.response.QuestionRes;
-import com.sougata.form_service.dto.validation.request.ValidationRequest;
 import com.sougata.form_service.exception.NoQuestionManagerFoundException;
 import com.sougata.form_service.model.questionSchema.AnyTypeQuestion;
 import com.sougata.form_service.service.QuestionManager;
@@ -24,8 +23,8 @@ public class QuestionManagerFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public <Q extends AnyTypeQuestion, QAUR extends QuestionAddUpdateReq, QR extends QuestionRes, V extends ValidationRequest>
-    QuestionManager<Q, QAUR, QR, V> get(QuestionType questionType) {
+    public <Q extends AnyTypeQuestion, QAUR extends QuestionAddUpdateReq, QR extends QuestionRes>
+    QuestionManager<Q, QAUR, QR> get(QuestionType questionType) {
         try {
             return applicationContext.getBean(
                     String.format("%s_QUESTION_MANAGER", questionType.name()),
@@ -37,10 +36,10 @@ public class QuestionManagerFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public <Q extends AnyTypeQuestion, QAUR extends QuestionAddUpdateReq, QR extends QuestionRes, V extends ValidationRequest>
-    List<QuestionManager<Q, QAUR, QR, V>> getAll() {
+    public <Q extends AnyTypeQuestion, QAUR extends QuestionAddUpdateReq, QR extends QuestionRes>
+    List<QuestionManager<Q, QAUR, QR>> getAll() {
 
-        List<QuestionManager<Q, QAUR, QR, V>> repos = new ArrayList<>();
+        List<QuestionManager<Q, QAUR, QR>> repos = new ArrayList<>();
 
         for (QuestionType questionType : QuestionType.values()) {
             var repo = applicationContext.getBean(

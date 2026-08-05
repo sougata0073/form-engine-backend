@@ -5,10 +5,14 @@ import com.sougata.form_data_service.dto.question.request.MultipleChoiceResponse
 import com.sougata.form_data_service.dto.question.response.MultipleChoiceResDto;
 import com.sougata.form_data_service.dto.response.question.MultipleChoiceResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.MultipleChoiceResponseSummaryDto;
+import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.MultipleChoice;
+import com.sougata.form_data_service.repository.FormResponseRepository;
 import com.sougata.form_data_service.repository.MultipleChoiceRepository;
 import com.sougata.form_data_service.repository.QuestionResponseRepository;
+import com.sougata.form_data_service.util.IdUtil;
+import jakarta.persistence.Tuple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,13 +28,14 @@ public class MultipleChoiceManager extends ResponseManager<
         MultipleChoiceResDto,
         MultipleChoiceResponseQuestionDto,
         MultipleChoiceResponseQuestionDto.Response,
-        MultipleChoiceResponseQuestionDto.Summary
+        MultipleChoiceResponseQuestionDto.Summary,
+        MultipleChoiceResponseQuestionDto.FormResponsesReqDto
         > {
 
     private final MultipleChoiceRepository multipleChoiceRepository;
 
     @Autowired
-    public MultipleChoiceManager(MultipleChoiceRepository multipleChoiceRepository, QuestionResponseRepository questionResponseRepository) {
+    public MultipleChoiceManager(MultipleChoiceRepository multipleChoiceRepository, QuestionResponseRepository questionResponseRepository, FormResponseRepository formResponseRepository, AuthServiceFeignClient authServiceFeignClient) {
         super(questionResponseRepository);
         this.multipleChoiceRepository = multipleChoiceRepository;
     }
@@ -107,6 +112,11 @@ public class MultipleChoiceManager extends ResponseManager<
     }
 
     @Override
+    public MultipleChoiceResponseSummaryDto getResponseSummary(UUID formId, Long questionId, MultipleChoiceResDto questionRes, Pageable pageable) {
+        return null;
+    }
+
+    @Override
     public MultipleChoiceResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, MultipleChoiceResDto questionResponse) {
         var sum = new MultipleChoiceResponseQuestionDto.Summary();
 
@@ -129,16 +139,31 @@ public class MultipleChoiceManager extends ResponseManager<
         var responses = grouped.stream().map(g -> {
             var res = new MultipleChoiceResponseQuestionDto.Response();
 
+            res.setQuestionId(questionId);
+            res.setQuestionType(getQuestionType());
             res.setOptionId(g.get("optionId", Long.class));
             res.setResponseCount(g.get("responseCount", Long.class));
-            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+
+            var map = new HashMap<String, List<String>>();
+
+            map.put("optionId", List.of(res.getOptionId() == null ? "" : res.getOptionId().toString()));
+
+            res.setFormResponsesIdentifier(IdUtil.generateCompressedEncodedId(map));
 
             return res;
         }).toList();
 
+
+        mc.setQuestionId(questionId);
+        mc.setQuestionType(getQuestionType());
         mc.setResponses(responses);
 
         return mc;
+    }
+
+    @Override
+    public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
+        return List.of();
     }
 
     @Override

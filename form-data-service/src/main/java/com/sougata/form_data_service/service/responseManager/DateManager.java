@@ -5,16 +5,20 @@ import com.sougata.form_data_service.dto.question.request.DateResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.DateResDto;
 import com.sougata.form_data_service.dto.response.question.DateResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.DateResponseSummaryDto;
+import com.sougata.form_data_service.dto.response.summary.DateTimeResponseSummaryDto;
 import com.sougata.form_data_service.model.Date;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.repository.DateRepository;
 import com.sougata.form_data_service.repository.QuestionResponseRepository;
+import com.sougata.form_data_service.util.IdUtil;
+import jakarta.persistence.Tuple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,15 +29,18 @@ public class DateManager extends ResponseManager<
         DateResDto,
         DateResponseQuestionDto,
         DateResponseQuestionDto.Response,
-        DateResponseQuestionDto.Summary
+        DateResponseQuestionDto.Summary,
+        DateResponseQuestionDto.FormResponsesReqDto
         > {
 
     private final DateRepository dateRepository;
+    private final QuestionResponseRepository questionResponseRepository;
 
     @Autowired
     public DateManager(DateRepository dateRepository, QuestionResponseRepository questionResponseRepository) {
         super(questionResponseRepository);
         this.dateRepository = dateRepository;
+        this.questionResponseRepository = questionResponseRepository;
     }
 
     @Override
@@ -53,7 +60,7 @@ public class DateManager extends ResponseManager<
         var responseSummaries = dateRepository.getResponseSummaries(formId);
         var result = new ArrayList<DateResponseSummaryDto>();
 
-        var responseDateMap = dateRepository.getResponseDates(formId)
+        var responseMap = dateRepository.getResponsesDates(formId, Pageable.ofSize(20))
                 .stream().collect(Collectors.groupingBy(e -> e.get("questionId", Long.class)));
 
         questionResponses.forEach(qr ->
@@ -69,10 +76,31 @@ public class DateManager extends ResponseManager<
                                     d.setNumberOfResponses(rs.numberOfResponses());
                                     d.setQuestionType(QuestionType.DATE);
 
-                                    d.setResponses(
-                                            responseDateMap.get(rs.questionId())
-                                                    .stream().map(tuple -> tuple.get("date", Instant.class)).toList()
-                                    );
+                                    var responses = responseMap.get(rs.questionId()).stream().map(tuple -> {
+                                        var res = new DateResponseSummaryDto.Response();
+
+                                        res.setYear(tuple.get("year", Integer.class));
+                                        res.setMonth(tuple.get("month", Integer.class));
+
+                                        var dates = tuple.get("dates", String[].class);
+                                        var dateCounts = tuple.get("dateCounts", Long[].class);
+
+                                        var dateCountPairs = new ArrayList<DateResponseSummaryDto.DateCountPair>();
+
+                                        for (int i = 0; i < dates.length; i++) {
+                                            dateCountPairs.add(
+                                                    new DateResponseSummaryDto.DateCountPair(
+                                                            Instant.parse(dates[i]), dateCounts[i]
+                                                    )
+                                            );
+                                        }
+
+                                        res.setDates(dateCountPairs);
+
+                                        return res;
+                                    }).toList();
+
+                                    d.setResponses(responses);
 
                                     return d;
                                 })
@@ -92,6 +120,48 @@ public class DateManager extends ResponseManager<
                 ));
 
         return result;
+    }
+
+    @Override
+    public DateResponseSummaryDto getResponseSummary(UUID formId, Long questionId, DateResDto questionRes, Pageable pageable) {
+        var responseSummary = dateRepository.getResponseSummary(formId, questionId);
+        var dateTimes = dateRepository.getResponseDates(formId, questionId, pageable);
+
+        var d = new DateResponseSummaryDto();
+
+        d.setQuestionId(questionRes.getId());
+        d.setQuestion(questionRes.getQuestion());
+        d.setOrderIndex(questionRes.getOrderIndex());
+        d.setNumberOfResponses(responseSummary.numberOfResponses());
+        d.setQuestionType(getQuestionType());
+
+        var responses = dateTimes.stream().map(tuple -> {
+            var res = new DateResponseSummaryDto.Response();
+
+            res.setYear(tuple.get("year", Integer.class));
+            res.setMonth(tuple.get("month", Integer.class));
+
+            var dates = tuple.get("dates", String[].class);
+            var dateCounts = tuple.get("dateCounts", Long[].class);
+
+            var dateCountPairs = new ArrayList<DateResponseSummaryDto.DateCountPair>();
+
+            for (int i = 0; i < dates.length; i++) {
+                dateCountPairs.add(
+                        new DateResponseSummaryDto.DateCountPair(
+                                Instant.parse(dates[i]), dateCounts[i]
+                        )
+                );
+            }
+
+            res.setDates(dateCountPairs);
+
+            return res;
+        }).toList();
+
+        d.setResponses(responses);
+
+        return d;
     }
 
     @Override
@@ -116,17 +186,31 @@ public class DateManager extends ResponseManager<
         var responses = grouped.stream().map(g -> {
             var res = new DateResponseQuestionDto.Response();
 
+            res.setQuestionId(questionId);
+            res.setQuestionType(getQuestionType());
             res.setDate(g.get("date", Instant.class));
             res.setResponseCount(g.get("responseCount", Long.class));
-            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
-            
+
+            var map = new HashMap<String, List<String>>();
+
+            map.put("date", List.of(res.getDate() == null ? "" : res.getDate().toString()));
+
+            res.setFormResponsesIdentifier(IdUtil.generateCompressedEncodedId(map));
+
             return res;
 
         }).toList();
 
+        d.setQuestionId(questionId);
+        d.setQuestionType(getQuestionType());
         d.setResponses(responses);
 
         return d;
+    }
+
+    @Override
+    public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
+        return List.of();
     }
 
     @Override

@@ -4,17 +4,23 @@ import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.TimeResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.TimeResDto;
 import com.sougata.form_data_service.dto.response.question.TimeResponseQuestionDto;
+import com.sougata.form_data_service.dto.response.summary.DateTimeResponseSummaryDto;
 import com.sougata.form_data_service.dto.response.summary.TimeResponseSummaryDto;
+import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.Time;
+import com.sougata.form_data_service.repository.FormResponseRepository;
 import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import com.sougata.form_data_service.repository.TimeRepository;
+import com.sougata.form_data_service.util.IdUtil;
+import jakarta.persistence.Tuple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,13 +31,14 @@ public class TimeManager extends ResponseManager<
         TimeResDto,
         TimeResponseQuestionDto,
         TimeResponseQuestionDto.Response,
-        TimeResponseQuestionDto.Summary
+        TimeResponseQuestionDto.Summary,
+        TimeResponseQuestionDto.FormResponsesReqDto
         > {
 
     private final TimeRepository timeRepository;
 
     @Autowired
-    public TimeManager(TimeRepository timeRepository, QuestionResponseRepository questionResponseRepository) {
+    public TimeManager(TimeRepository timeRepository, QuestionResponseRepository questionResponseRepository, FormResponseRepository formResponseRepository, AuthServiceFeignClient authServiceFeignClient) {
         super(questionResponseRepository);
         this.timeRepository = timeRepository;
     }
@@ -54,7 +61,7 @@ public class TimeManager extends ResponseManager<
         var responseSummaries = timeRepository.getResponseSummaries(formId);
         var result = new ArrayList<TimeResponseSummaryDto>();
 
-        var responseTimeMap = timeRepository.getResponseTimes(formId)
+        var responseMap = timeRepository.getResponsesTimes(formId)
                 .stream().collect(Collectors.groupingBy(e -> e.get("questionId", Long.class)));
 
         questionResponses.forEach(qr ->
@@ -68,12 +75,32 @@ public class TimeManager extends ResponseManager<
                                     t.setQuestion(qr.getQuestion());
                                     t.setOrderIndex(qr.getOrderIndex());
                                     t.setNumberOfResponses(rs.numberOfResponses());
-                                    t.setQuestionType(QuestionType.TIME);
+                                    t.setQuestionType(getQuestionType());
 
-                                    t.setResponses(
-                                            responseTimeMap.get(rs.questionId())
-                                                    .stream().map(tuple -> tuple.get("time", Instant.class)).toList()
-                                    );
+                                    var responses = responseMap.get(rs.questionId()).stream()
+                                            .map(tuple -> {
+                                                var res = new TimeResponseSummaryDto.Response();
+
+                                                var times = tuple.get("times", String[].class);
+                                                var timeCounts = tuple.get("timeCounts", Long[].class);
+
+                                                var timeCountPairs = new ArrayList<TimeResponseSummaryDto.TimeCountPair>();
+
+                                                for (int i = 0; i < times.length; i++) {
+                                                    timeCountPairs.add(
+                                                            new TimeResponseSummaryDto.TimeCountPair(
+                                                                    Instant.parse(times[i]), timeCounts[i]
+                                                            )
+                                                    );
+                                                }
+
+                                                res.setHour(tuple.get("hour", Integer.class));
+                                                res.setTimes(timeCountPairs);
+
+                                                return res;
+                                            }).toList();
+
+                                    t.setResponses(responses);
 
                                     return t;
                                 })
@@ -93,6 +120,46 @@ public class TimeManager extends ResponseManager<
                 ));
 
         return result;
+    }
+
+    @Override
+    public TimeResponseSummaryDto getResponseSummary(UUID formId, Long questionId, TimeResDto questionRes, Pageable pageable) {
+        return null;
+//        var responseSummary = timeRepository.getResponseSummary(formId, questionId);
+//        var timeResponses = timeRepository.getResponseTimes(formId, questionId, pageable);
+//
+//        var t = new TimeResponseSummaryDto();
+//
+//        t.setQuestionId(questionRes.getId());
+//        t.setQuestion(questionRes.getQuestion());
+//        t.setOrderIndex(questionRes.getOrderIndex());
+//        t.setNumberOfResponses(responseSummary.numberOfResponses());
+//        t.setQuestionType(getQuestionType());
+//
+//        var responses = timeResponses.stream()
+//                .map(tuple -> {
+//                    var res = new TimeResponseSummaryDto.Response();
+//
+//                    var times = Arrays.asList(tuple.get("times", String[].class));
+//                    var timeCounts = Arrays.asList(tuple.get("timeCounts", Long[].class));
+//
+//                    var timeCountPairs = new ArrayList<TimeResponseSummaryDto.TimeCountPair>();
+//
+//                    for (int i = 0; i < times.size(); i++) {
+//                        timeCountPairs.add(
+//                                new TimeResponseSummaryDto.TimeCountPair(Instant.parse(times.get(i)), timeCounts.get(i))
+//                        );
+//                    }
+//
+//                    res.setHour(tuple.get("hour", Integer.class));
+//                    res.setTimes(timeCountPairs);
+//
+//                    return res;
+//                }).toList();
+//
+//        t.setResponses(responses);
+//
+//        return t;
     }
 
     @Override
@@ -117,17 +184,31 @@ public class TimeManager extends ResponseManager<
         var responses = grouped.stream().map(g -> {
             var res = new TimeResponseQuestionDto.Response();
 
+            res.setQuestionId(questionId);
+            res.setQuestionType(getQuestionType());
             res.setTime(g.get("time", Instant.class));
             res.setResponseCount(g.get("responseCount", Long.class));
-            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+
+            var map = new HashMap<String, List<String>>();
+
+            map.put("time", List.of(res.getTime() == null ? "" : res.getTime().toString()));
+
+            res.setFormResponsesIdentifier(IdUtil.generateCompressedEncodedId(map));
 
             return res;
 
         }).toList();
 
+        t.setQuestionId(questionId);
+        t.setQuestionType(getQuestionType());
         t.setResponses(responses);
 
         return t;
+    }
+
+    @Override
+    public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
+        return List.of();
     }
 
     @Override

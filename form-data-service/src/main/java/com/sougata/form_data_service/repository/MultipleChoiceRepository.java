@@ -23,28 +23,31 @@ public interface MultipleChoiceRepository extends AnyTypeQuestionResponseReposit
             """)
     List<Tuple> getResponseOptionCount(UUID formId);
 
-    @Query("""
+    @Query(value = """
             select
-            count(distinct mc.responseOptionId)
-            from MultipleChoice mc
-            where mc.questionResponse.questionId = :questionId and mc.questionResponse.formResponse.formId = :formId
-            """)
+            count(distinct coalesce(mc.response_option_id, -1))
+            from form_responses fr
+            left join question_responses qr
+            on fr.id = qr.form_response_id and qr.question_id = :questionId
+            left join multiple_choices mc
+            on qr.id = mc.question_response_id
+            where fr.form_id = :formId
+            """, nativeQuery = true)
     Long getDistinctResponseCount(UUID formId, Long questionId);
 
     @Query(value = """
             select
-                mc.response_option_id as optionId,
-                count(*) as responseCount,
-                array_agg(fr.id order by fr.created_at) as responseIds
-            from multiple_choices mc
-            join question_responses qr
-                on qr.id = mc.question_response_id
-            join form_responses fr
-                on fr.id = qr.form_response_id
-            where qr.question_id = :questionId
-              and fr.form_id = :formId
+            mc.response_option_id optionId,
+            count(*) responseCount
+            from form_responses fr
+            left join question_responses qr
+            on fr.id = qr.form_response_id
+            and qr.question_id = :questionId
+            left join multiple_choices mc
+            on qr.id = mc.question_response_id
+            where fr.form_id = :formId
             group by mc.response_option_id
-            order by responseCount desc
+            order by responseCount desc, min(fr.created_at) asc
             """, nativeQuery = true)
     List<Tuple> groupedByResponseOption(UUID formId, long questionId, Pageable pageable);
 }

@@ -44,12 +44,9 @@ public class QuestionServiceImpl implements QuestionService {
     @Transactional
     public QuestionRes updateQuestion(UUID formId, Long questionId, QuestionAddUpdateReq dto) {
 
-        var prevQType = questionRepository.findQuestionTypeById(questionId)
+        var prevQType = questionRepository.findQuestionTypeByFormIdAndId(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(questionId))
                 .getQuestionType();
-
-        System.out.println("Prev question type: " + prevQType);
-        System.out.println("Current question type: " + dto.getQuestionType());
 
         if (prevQType == dto.getQuestionType()) {
             var manager = questionManagerFactory.get(prevQType);
@@ -59,7 +56,7 @@ public class QuestionServiceImpl implements QuestionService {
             var prevManager = questionManagerFactory.get(prevQType);
             var newManager = questionManagerFactory.get(dto.getQuestionType());
 
-            prevManager.delete(questionId);
+            prevManager.delete(formId, questionId);
 
             return newManager.create(formId, questionId, dto);
         }
@@ -69,22 +66,15 @@ public class QuestionServiceImpl implements QuestionService {
     @Transactional
     public SuccessMessageDto deleteQuestion(UUID formId, Long questionId) {
 
-        var questionSummaryProjection = questionRepository.findQuestionSummaryByFormIdAndId(formId, questionId)
-                .orElseThrow(() -> new QuestionNotFoundException(questionId));
+        var questionType = questionRepository.findQuestionTypeByFormIdAndId(formId, questionId)
+                .orElseThrow(() -> new QuestionNotFoundException(questionId)).getQuestionType();
 
-        var questionSummary = new QuestionSummaryDto(
-                questionSummaryProjection.getId(),
-                questionSummaryProjection.getQuestion(),
-                questionSummaryProjection.getQuestionType(),
-                questionSummaryProjection.getOrderIndex()
-        );
+        formDataServiceFeignClient.deleteResponses(formId, questionId);
 
-        formDataServiceFeignClient.deleteResponses(formId, questionSummary);
+        var manager = questionManagerFactory.get(questionType);
 
-        var manager = questionManagerFactory.get(questionSummary.questionType());
-
-        manager.delete(questionId);
-        questionRepository.deleteById(questionId);
+        manager.delete(formId, questionId);
+        questionRepository.deleteQuestion(questionId);
 
         return SuccessMessageDto.create("Question deleted successfully with question ID: " + questionId);
     }
@@ -92,7 +82,7 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public QuestionRes getQuestion(UUID formId, Long questionId) {
 
-        var qType = questionRepository.findQuestionTypeById(questionId)
+        var qType = questionRepository.findQuestionTypeByFormIdAndId(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(questionId))
                 .getQuestionType();
 

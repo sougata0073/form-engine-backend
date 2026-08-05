@@ -25,27 +25,31 @@ public interface RatingRepository extends AnyTypeQuestionResponseRepository<Rati
             """)
     List<Tuple> getResponseRatingCount(UUID formId);
 
-    @Query("""
+    @Query(value = """
             select
-            count(distinct r.rating)
-            from Rating r
-            where r.questionResponse.questionId = :questionId and r.questionResponse.formResponse.formId = :formId
-            """)
+            count(distinct coalesce(r.rating, -1))
+            from form_responses fr
+            left join question_responses qr
+            on fr.id = qr.form_response_id and qr.question_id = :questionId
+            left join ratings r
+            on qr.id = r.question_response_id
+            where fr.form_id = :formId
+            """, nativeQuery = true)
     Long getDistinctResponseCount(UUID formId, Long questionId);
 
     @Query(value = """
             select
             r.rating rating,
-            count(r.question_response_id) responseCount,
-            array_agg(fr.id order by fr.created_at) responseIds
-            from ratings r
-            join question_responses qr
+            count(*) responseCount
+            from form_responses fr
+            left join question_responses qr
+            on fr.id = qr.form_response_id
+            and qr.question_id = :questionId
+            left join ratings r
             on qr.id = r.question_response_id
-            join form_responses fr
-            on qr.form_response_id = fr.id
-            where fr.form_id = :formId and qr.question_id = :questionId
+            where fr.form_id = :formId
             group by r.rating
-            order by responseCount desc
+            order by responseCount desc, min(fr.created_at) asc
             """, nativeQuery = true)
     List<Tuple> groupedByRating(UUID formId, long questionId, Pageable pageable);
 }

@@ -8,8 +8,11 @@ import com.sougata.form_data_service.dto.response.summary.CheckboxResponseSummar
 import com.sougata.form_data_service.model.Checkbox;
 import com.sougata.form_data_service.model.CheckboxOption;
 import com.sougata.form_data_service.model.FormResponse;
+import com.sougata.form_data_service.repository.CheckboxOptionRepository;
 import com.sougata.form_data_service.repository.CheckboxRepository;
 import com.sougata.form_data_service.repository.QuestionResponseRepository;
+import com.sougata.form_data_service.util.IdUtil;
+import jakarta.persistence.Tuple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,15 +28,20 @@ public class CheckboxManager extends ResponseManager<
         CheckboxResDto,
         CheckboxResponseQuestionDto,
         CheckboxResponseQuestionDto.Response,
-        CheckboxResponseQuestionDto.Summary
+        CheckboxResponseQuestionDto.Summary,
+        CheckboxResponseQuestionDto.FormResponsesReqDto
         > {
 
     private final CheckboxRepository checkboxRepository;
+    private final CheckboxOptionRepository checkboxOptionRepository;
+    private final QuestionResponseRepository questionResponseRepository;
 
     @Autowired
-    public CheckboxManager(CheckboxRepository checkboxRepository, QuestionResponseRepository questionResponseRepository) {
+    public CheckboxManager(CheckboxRepository checkboxRepository, CheckboxOptionRepository checkboxOptionRepository, QuestionResponseRepository questionResponseRepository) {
         super(questionResponseRepository);
         this.checkboxRepository = checkboxRepository;
+        this.checkboxOptionRepository = checkboxOptionRepository;
+        this.questionResponseRepository = questionResponseRepository;
     }
 
     @Override
@@ -118,6 +126,11 @@ public class CheckboxManager extends ResponseManager<
     }
 
     @Override
+    public CheckboxResponseSummaryDto getResponseSummary(UUID formId, Long questionId, CheckboxResDto questionRes, Pageable pageable) {
+        return null;
+    }
+
+    @Override
     public CheckboxResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, CheckboxResDto questionResponse) {
         var sum = new CheckboxResponseQuestionDto.Summary();
 
@@ -140,16 +153,33 @@ public class CheckboxManager extends ResponseManager<
         var responses = grouped.stream().map(g -> {
             var res = new CheckboxResponseQuestionDto.Response();
 
-            res.setOptionIds(Arrays.stream(g.get("optionIds", Long[].class)).map(Object::toString).toList());
+            res.setQuestionId(questionId);
+            res.setQuestionType(getQuestionType());
             res.setResponseCount(g.get("responseCount", Long.class));
-            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+
+            var opIdArray = g.get("optionIds", Long[].class);
+
+            res.setOptionIds(opIdArray == null ? null : Arrays.stream(opIdArray).map(Object::toString).toList());
+
+            var map = new HashMap<String, List<String>>();
+
+            map.put("optionIds", res.getOptionIds() == null ? List.of() : res.getOptionIds());
+
+            res.setFormResponsesIdentifier(IdUtil.generateCompressedEncodedId(map));
 
             return res;
         }).toList();
 
+        cb.setQuestionId(questionId);
+        cb.setQuestionType(getQuestionType());
         cb.setResponses(responses);
 
         return cb;
+    }
+
+    @Override
+    public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
+        return List.of();
     }
 
     @Override
@@ -158,7 +188,9 @@ public class CheckboxManager extends ResponseManager<
     }
 
     @Override
+    @Transactional
     public void deleteResponses(UUID formId, Long questionId) {
+        checkboxOptionRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
         checkboxRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
     }
 }

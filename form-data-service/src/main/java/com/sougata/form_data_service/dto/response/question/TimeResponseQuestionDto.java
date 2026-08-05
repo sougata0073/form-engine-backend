@@ -1,5 +1,6 @@
 package com.sougata.form_data_service.dto.response.question;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,13 +16,19 @@ public class TimeResponseQuestionDto extends ResponseQuestionDto<TimeResponseQue
     @Setter
     @NoArgsConstructor
     public static class Response extends ResponseByQuestionResponse {
-
         private Instant time;
-
     }
 
     @NoArgsConstructor
     public static class Summary extends ResponseByQuestionSummary {
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FormResponsesReqDto {
+        private Instant time;
     }
 
 }

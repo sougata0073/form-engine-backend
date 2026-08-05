@@ -3,7 +3,6 @@ package com.sougata.form_service.service.questionManager;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.DateTimeAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.DateTimeResDto;
-import com.sougata.form_service.dto.validation.request.DateTimeValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.questionSchema.DateTime;
 import com.sougata.form_service.repository.DateTimeRepository;
@@ -16,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service("DATE_TIME_QUESTION_MANAGER")
-public class DateTimeManager extends QuestionManager<DateTime, DateTimeAddUpdateReqDto, DateTimeResDto, DateTimeValidationRequestDto> {
+public class DateTimeManager extends QuestionManager<DateTime, DateTimeAddUpdateReqDto, DateTimeResDto> {
 
     private final DateTimeRepository dateTimeRepository;
 
@@ -71,18 +70,13 @@ public class DateTimeManager extends QuestionManager<DateTime, DateTimeAddUpdate
     }
 
     @Override
-    public boolean validateResponse(DateTimeValidationRequestDto validationDto) {
-        return true;
-    }
-
-    @Override
     public QuestionType getQuestionType() {
         return QuestionType.DATE_TIME;
     }
 
     @Override
-    public void delete(Long questionId) {
-        dateTimeRepository.deleteById(questionId);
+    public void delete(UUID formId, Long questionId) {
+        dateTimeRepository.deleteQuestion(formId, questionId);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.sougata.form_data_service.dto.question.response;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.sougata.form_data_service.constant.QuestionType;
@@ -45,4 +46,7 @@ public class QuestionRes {
     private Boolean required;
     private Integer orderIndex;
     private QuestionType questionType;
+
+    @JsonProperty(value = "@class")
+    private String cls = getClass().getName();
 }

@@ -15,7 +15,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @Getter
 @Setter
-public class TickBoxGridColumn extends Auditable {
+public class TickBoxGridColumn {
 
     @Id
     private Long id = TsidCreator.getTsid().toLong();

@@ -18,7 +18,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-public class TickBoxGridRow extends Auditable {
+public class TickBoxGridRow {
 
     @Id
     private Long id = TsidCreator.getTsid().toLong();

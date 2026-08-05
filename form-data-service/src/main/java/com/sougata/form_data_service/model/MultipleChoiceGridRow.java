@@ -15,7 +15,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @Getter
 @Setter
-public class MultipleChoiceGridRow extends Auditable {
+public class MultipleChoiceGridRow {
 
     @Id
     private Long id = TsidCreator.getTsid().toLong();

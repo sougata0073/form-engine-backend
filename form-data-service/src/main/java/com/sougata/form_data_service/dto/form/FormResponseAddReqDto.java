@@ -2,13 +2,17 @@ package com.sougata.form_data_service.dto.form;
 
 import com.sougata.form_data_service.dto.question.request.QuestionResponseAddReq;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 
-public record FormResponseAddReqDto(
-
-        @NotNull
-        List<@Valid QuestionResponseAddReq> responses
-) {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class FormResponseAddReqDto {
+    private List<@Valid QuestionResponseAddReq> responses;
 }

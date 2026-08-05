@@ -10,5 +10,4 @@ import lombok.Setter;
 public class LinearScaleResDto extends QuestionRes {
     private Integer fromNumber;
     private Integer toNumber;
-
 }

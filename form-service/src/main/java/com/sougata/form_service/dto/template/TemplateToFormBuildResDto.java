@@ -1,8 +1,16 @@
 package com.sougata.form_service.dto.template;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.util.UUID;
 
-public record TemplateToFormBuildResDto(
-        UUID formId
-) {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class TemplateToFormBuildResDto {
+    private UUID formId;
 }

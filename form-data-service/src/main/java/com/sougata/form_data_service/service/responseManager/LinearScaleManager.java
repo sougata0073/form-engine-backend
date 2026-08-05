@@ -5,10 +5,14 @@ import com.sougata.form_data_service.dto.question.request.LinearScaleResponseAdd
 import com.sougata.form_data_service.dto.question.response.LinearScaleResDto;
 import com.sougata.form_data_service.dto.response.question.LinearScaleResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.LinearScaleResponseSummaryDto;
+import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.LinearScale;
+import com.sougata.form_data_service.repository.FormResponseRepository;
 import com.sougata.form_data_service.repository.LinearScaleRepository;
 import com.sougata.form_data_service.repository.QuestionResponseRepository;
+import com.sougata.form_data_service.util.IdUtil;
+import jakarta.persistence.Tuple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,13 +29,14 @@ public class LinearScaleManager extends ResponseManager<
         LinearScaleResDto,
         LinearScaleResponseQuestionDto,
         LinearScaleResponseQuestionDto.Response,
-        LinearScaleResponseQuestionDto.Summary
+        LinearScaleResponseQuestionDto.Summary,
+        LinearScaleResponseQuestionDto.FormResponsesReqDto
         > {
 
     private final LinearScaleRepository linearScaleRepository;
 
     @Autowired
-    public LinearScaleManager(LinearScaleRepository linearScaleRepository, QuestionResponseRepository questionResponseRepository) {
+    public LinearScaleManager(LinearScaleRepository linearScaleRepository, QuestionResponseRepository questionResponseRepository, FormResponseRepository formResponseRepository, AuthServiceFeignClient authServiceFeignClient) {
         super(questionResponseRepository);
         this.linearScaleRepository = linearScaleRepository;
     }
@@ -109,6 +114,11 @@ public class LinearScaleManager extends ResponseManager<
     }
 
     @Override
+    public LinearScaleResponseSummaryDto getResponseSummary(UUID formId, Long questionId, LinearScaleResDto questionRes, Pageable pageable) {
+        return null;
+    }
+
+    @Override
     public LinearScaleResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, LinearScaleResDto questionResponse) {
         var sum = new LinearScaleResponseQuestionDto.Summary();
 
@@ -132,16 +142,31 @@ public class LinearScaleManager extends ResponseManager<
         var responses = grouped.stream().map(g -> {
             var res = new LinearScaleResponseQuestionDto.Response();
 
+            res.setQuestionId(questionId);
+            res.setQuestionType(getQuestionType());
             res.setScale(g.get("scale", Integer.class));
             res.setResponseCount(g.get("responseCount", Long.class));
-            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
-            
+
+            var map = new HashMap<String, List<String>>();
+
+            map.put("scale", List.of(res.getScale() == null ? "" : res.getScale().toString()));
+
+            res.setFormResponsesIdentifier(IdUtil.generateCompressedEncodedId(map));
+
             return res;
         }).toList();
 
+
+        ls.setQuestionId(questionId);
+        ls.setQuestionType(getQuestionType());
         ls.setResponses(responses);
 
         return ls;
+    }
+
+    @Override
+    public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
+        return List.of();
     }
 
     @Override

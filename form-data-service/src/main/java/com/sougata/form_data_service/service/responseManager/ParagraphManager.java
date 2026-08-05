@@ -5,10 +5,16 @@ import com.sougata.form_data_service.dto.question.request.ParagraphResponseAddRe
 import com.sougata.form_data_service.dto.question.response.ParagraphResDto;
 import com.sougata.form_data_service.dto.response.question.ParagraphResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.ParagraphResponseSummaryDto;
+import com.sougata.form_data_service.dto.response.summary.ShortAnswerResponseSummaryDto;
+import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.Paragraph;
+import com.sougata.form_data_service.repository.FormResponseRepository;
 import com.sougata.form_data_service.repository.ParagraphRepository;
 import com.sougata.form_data_service.repository.QuestionResponseRepository;
+import com.sougata.form_data_service.util.IdUtil;
+import com.sougata.form_data_service.util.StringUtil;
+import jakarta.persistence.Tuple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,14 +30,15 @@ public class ParagraphManager extends ResponseManager<
         ParagraphResDto,
         ParagraphResponseQuestionDto,
         ParagraphResponseQuestionDto.Response,
-        ParagraphResponseQuestionDto.Summary
+        ParagraphResponseQuestionDto.Summary,
+        ParagraphResponseQuestionDto.FormResponsesReqDto
         > {
 
     private final ParagraphRepository paragraphRepository;
 
     @Autowired
-    public ParagraphManager(ParagraphRepository paragraphRepository, QuestionResponseRepository questionResponseRepository) {
-        super(questionResponseRepository);
+    public ParagraphManager(ParagraphRepository paragraphRepository, QuestionResponseRepository questionResponseRepositor, FormResponseRepository formResponseRepository, AuthServiceFeignClient authServiceFeignClient) {
+        super(questionResponseRepositor);
         this.paragraphRepository = paragraphRepository;
     }
 
@@ -53,7 +60,7 @@ public class ParagraphManager extends ResponseManager<
         var responseSummaries = paragraphRepository.getResponseSummaries(formId);
         var result = new ArrayList<ParagraphResponseSummaryDto>();
 
-        var responseTextMap = paragraphRepository.getResponseTexts(formId)
+        var responseTextMap = paragraphRepository.getResponsesTexts(formId, Pageable.ofSize(20))
                 .stream().collect(Collectors.groupingBy(e -> e.get("questionId", Long.class)));
 
         questionResponses.forEach(qr ->
@@ -94,6 +101,23 @@ public class ParagraphManager extends ResponseManager<
     }
 
     @Override
+    public ParagraphResponseSummaryDto getResponseSummary(UUID formId, Long questionId, ParagraphResDto questionRes, Pageable pageable) {
+        var responseSummary = paragraphRepository.getResponseSummary(formId, questionId);
+        var texts = paragraphRepository.getResponseTexts(formId, questionId, pageable);
+
+        var p = new ParagraphResponseSummaryDto();
+
+        p.setQuestionId(questionRes.getId());
+        p.setQuestion(questionRes.getQuestion());
+        p.setOrderIndex(questionRes.getOrderIndex());
+        p.setNumberOfResponses(responseSummary.numberOfResponses());
+        p.setQuestionType(getQuestionType());
+        p.setResponses(texts);
+
+        return p;
+    }
+
+    @Override
     public ParagraphResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, ParagraphResDto questionResponse) {
         var sum = new ParagraphResponseQuestionDto.Summary();
 
@@ -115,16 +139,40 @@ public class ParagraphManager extends ResponseManager<
         var responses = grouped.stream().map(g -> {
             var res = new ParagraphResponseQuestionDto.Response();
 
+            res.setQuestionId(questionId);
+            res.setQuestionType(getQuestionType());
             res.setText(g.get("text", String.class));
             res.setResponseCount(g.get("responseCount", Long.class));
-            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+
+            var map = new HashMap<String, List<String>>();
+
+            map.put("text", List.of(StringUtil.emptyIfNull(res.getText())));
+
+            res.setFormResponsesIdentifier(IdUtil.generateCompressedEncodedId(map));
 
             return res;
         }).toList();
 
+        p.setQuestionId(questionId);
+        p.setQuestionType(getQuestionType());
         p.setResponses(responses);
 
         return p;
+    }
+
+    @Override
+    public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
+        var map = IdUtil.reconstructCompressedEncodedId(formResponsesIdentifier);
+
+        var text = map.get("text");
+
+        if (text.isEmpty()) {
+            throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
+        }
+
+        var groupedResponse = text.getFirst();
+
+        return paragraphRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse);
     }
 
     @Override

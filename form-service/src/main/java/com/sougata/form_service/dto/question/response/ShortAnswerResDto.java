@@ -1,6 +1,6 @@
 package com.sougata.form_service.dto.question.response;
 
-import com.sougata.form_service.dto.validationConfig.ValidationConfig;
+import com.sougata.form_service.validation.configuration.ValidationConfig;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;

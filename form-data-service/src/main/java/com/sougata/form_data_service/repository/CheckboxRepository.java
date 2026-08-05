@@ -25,51 +25,53 @@ public interface CheckboxRepository extends AnyTypeQuestionResponseRepository<Ch
     List<Tuple> getResponseOptionCount(UUID formId);
 
     @Query(value = """
-        select count(*)
-        from (
-            select option_ids
+            select count(*)
             from (
-                select
-                    array_agg(co.response_option_id order by co.response_option_id) as option_ids
-                from checkboxes c
-                left join checkbox_options co
-                    on co.checkbox_id = c.question_response_id
-                join question_responses qr
+                select option_ids
+                from (
+                    select
+                    array_agg(co.response_option_id order by co.response_option_id) option_ids
+                    from form_responses fr
+                    left join question_responses qr
+                    on qr.form_response_id = fr.id
+                    and qr.question_id = :questionId
+                    left join checkboxes c
                     on qr.id = c.question_response_id
-                join form_responses fr
-                    on fr.id = qr.form_response_id
-                where qr.question_id = :questionId
-                  and fr.form_id = :formId
-                group by c.question_response_id
-            ) responses
-            group by option_ids
-        ) t
-        """, nativeQuery = true)
+                    left join checkbox_options co
+                    on co.checkbox_id = c.question_response_id
+                    where fr.form_id = :formId
+                    group by c.question_response_id
+                ) responses
+                group by option_ids
+            ) t
+            """, nativeQuery = true)
     long getDistinctResponseCount(UUID formId, long questionId);
 
-    @Query(value = """
+    @Query(value = """            
             select
-                optionIds,
-                count(*) as responseCount,
-                array_agg(responseId order by createdAt) as responseIds
+            case
+                when array_position(optionIds, null) = 1 and array_length(optionIds, 1) = 1 then null
+                else optionIds
+            end optionIds,
+            count(*) as responsecount
             from (
                 select
-                    fr.id as responseId,
-                    fr.created_at as createdAt,
-                    array_agg(co.response_option_id order by co.response_option_id) as optionIds
-                from checkboxes c
-                left join checkbox_options co
-                    on co.checkbox_id = c.question_response_id
-                join question_responses qr
-                    on qr.id = c.question_response_id
-                join form_responses fr
-                    on fr.id = qr.form_response_id
-                where qr.question_id = :questionId
-                  and fr.form_id = :formId
+                array_agg(co.response_option_id order by co.response_option_id) as optionIds,
+                fr.created_at fr_created_at
+                from fe_form_data.form_responses fr
+                left join fe_form_data.question_responses qr
+                on qr.form_response_id = fr.id
+                and qr.question_id = :questionId
+                left join fe_form_data.checkboxes c
+                on qr.id = c.question_response_id
+                left join fe_form_data.checkbox_options co
+                on co.checkbox_id = c.question_response_id
+                where fr.form_id = :formId
                 group by c.question_response_id, fr.id, fr.created_at
+                order by optionIds
             ) responses
             group by optionIds
-            order by responseCount desc
+            order by responsecount desc, min(fr_created_at) asc;
             """, nativeQuery = true)
     List<Tuple> groupedByResponseOptions(UUID formId, long questionId, Pageable pageable);
 

@@ -1,5 +1,6 @@
 package com.sougata.form_service.dto.question.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,19 +17,25 @@ public class MultipleChoiceGridResDto extends QuestionRes {
     private List<MultipleChoiceGridRowResDto> rows;
     private List<MultipleChoiceGridColumnResDto> columns;
 
-    public record MultipleChoiceGridRowResDto(
-            @JsonSerialize(using = ToStringSerializer.class)
-            Long id,
-            String row,
-            Integer orderIndex
-    ) {
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MultipleChoiceGridRowResDto {
+        @JsonSerialize(using = ToStringSerializer.class)
+        private Long id;
+        private String row;
+        private Integer orderIndex;
     }
 
-    public record MultipleChoiceGridColumnResDto(
-            @JsonSerialize(using = ToStringSerializer.class)
-            Long id,
-            String column,
-            Integer orderIndex
-    ) {
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MultipleChoiceGridColumnResDto {
+        @JsonSerialize(using = ToStringSerializer.class)
+        private Long id;
+        private String column;
+        private Integer orderIndex;
     }
 }

@@ -27,13 +27,14 @@ public class ResponseManagerFactory {
     @SuppressWarnings("unchecked")
     public <
             QR extends QuestionResponseAddReq,
-            RS extends ResponseSummaryDto,
+            RS extends ResponseSummaryDto<?>,
             QRes extends QuestionRes,
             ResByQ extends ResponseQuestionDto<ResByQRes>,
             ResByQRes extends ResponseByQuestionResponse,
-            ResByQSumm extends ResponseByQuestionSummary
+            ResByQSumm extends ResponseByQuestionSummary,
+            FResponsesReq
             >
-    ResponseManager<QR, RS, QRes, ResByQ, ResByQRes, ResByQSumm> get(QuestionType questionType) {
+    ResponseManager<QR, RS, QRes, ResByQ, ResByQRes, ResByQSumm, FResponsesReq> get(QuestionType questionType) {
         try {
             return applicationContext.getBean(
                     String.format("%s_RESPONSE_MANAGER", questionType.name()),
@@ -47,14 +48,15 @@ public class ResponseManagerFactory {
     @SuppressWarnings("unchecked")
     public <
             QR extends QuestionResponseAddReq,
-            RS extends ResponseSummaryDto,
+            RS extends ResponseSummaryDto<?>,
             QRes extends QuestionRes,
             ResByQ extends ResponseQuestionDto<ResByQRes>,
             ResByQRes extends ResponseByQuestionResponse,
-            ResByQSumm extends ResponseByQuestionSummary
+            ResByQSumm extends ResponseByQuestionSummary,
+            FResponsesReq
             >
-    List<ResponseManager<QR, RS, QRes, ResByQ, ResByQRes, ResByQSumm>> getAll() {
-        List<ResponseManager<QR, RS, QRes, ResByQ, ResByQRes, ResByQSumm>> repos = new ArrayList<>();
+    List<ResponseManager<QR, RS, QRes, ResByQ, ResByQRes, ResByQSumm, FResponsesReq>> getAll() {
+        List<ResponseManager<QR, RS, QRes, ResByQ, ResByQRes, ResByQSumm, FResponsesReq>> repos = new ArrayList<>();
 
         for (QuestionType questionType : QuestionType.values()) {
             var repo = applicationContext.getBean(

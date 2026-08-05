@@ -1,9 +1,10 @@
 package com.sougata.form_data_service.configuration;
 
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.SocketOptions;
 import io.lettuce.core.TimeoutOptions;
+import io.lettuce.core.api.StatefulConnection;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CachingConfigurer;
@@ -20,7 +21,10 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
-import io.lettuce.core.api.StatefulConnection;
+import tools.jackson.databind.DefaultTyping;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -30,28 +34,28 @@ import java.util.Map;
 @EnableCaching
 public class RedisConfiguration implements CachingConfigurer {
 
-    @Value("${spring.data.redis.host:localhost}")
+    @Value("${spring.data.redis.host}")
     private String redisHost;
 
-    @Value("${spring.data.redis.port:6379}")
+    @Value("${spring.data.redis.port}")
     private int redisPort;
 
-    @Value("${spring.data.redis.username:}")
+    @Value("${spring.data.redis.username}")
     private String redisUsername;
 
-    @Value("${spring.data.redis.password:}")
+    @Value("${spring.data.redis.password}")
     private String redisPassword;
 
-    @Value("${spring.data.redis.database:0}")
+    @Value("${spring.data.redis.database}")
     private int redisDatabase;
 
-    @Value("${spring.data.redis.ssl.enabled:false}")
+    @Value("${spring.data.redis.ssl.enabled}")
     private boolean sslEnabled;
 
-    @Value("${spring.data.redis.timeout:2000}")
+    @Value("${spring.data.redis.timeout}")
     private long commandTimeoutMs;
 
-    @Value("${app.cache.default-ttl-minutes:10}")
+    @Value("${app.cache.default-ttl-minutes}")
     private long defaultTtlMinutes;
 
     @Bean
@@ -98,34 +102,29 @@ public class RedisConfiguration implements CachingConfigurer {
         return new LettuceConnectionFactory(standaloneConfig, clientConfigBuilder.build());
     }
 
-//    private ObjectMapper redisObjectMapper() {
-//
-//        PolymorphicTypeValidator typeValidator = BasicPolymorphicTypeValidator.builder()
-//                .allowIfSubType("com.example.demo")
-//                .allowIfSubType("java.util")
-//                .build();
-//
-//        ObjectMapper mapper = JsonMapper.builder()
-//                .addModule(new JavaTimeModule())
-//                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-//                .activateDefaultTyping(typeValidator,
-//                        ObjectMapper.DefaultTyping.NON_FINAL,
-//                        JsonTypeInfo.As.PROPERTY)
-//                .build();
-//
-//        return mapper;
-//    }
+    @Bean
+    public GenericJacksonJsonRedisSerializer redisSerializer() {
+        var typeValidator = BasicPolymorphicTypeValidator.builder()
+                .allowIfBaseType(Object.class)
+                .allowIfSubType("com.sougata.form_data_service")
+                .allowIfSubType("java.util")
+                .build();
+
+        ObjectMapper mapper = JsonMapper.builder()
+                .activateDefaultTyping(typeValidator, DefaultTyping.NON_FINAL, JsonTypeInfo.As.PROPERTY)
+                .build();
+
+        return new GenericJacksonJsonRedisSerializer(mapper);
+    }
 
     @Bean
-    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
-        GenericJacksonJsonRedisSerializer jsonSerializer = new GenericJacksonJsonRedisSerializer(objectMapper);
-
+    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory, GenericJacksonJsonRedisSerializer redisSerializer) {
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .entryTtl(Duration.ofMinutes(defaultTtlMinutes))
                 .disableCachingNullValues()
-                .prefixCacheNameWith("myapp::")
+                .prefixCacheNameWith("form-data::")
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(jsonSerializer));
+                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(redisSerializer));
 
         Map<String, RedisCacheConfiguration> perCacheConfig = new HashMap<>();
 //        perCacheConfig.put(CacheNames.USERS, defaultConfig.entryTtl(Duration.ofMinutes(30)));
@@ -136,7 +135,7 @@ public class RedisConfiguration implements CachingConfigurer {
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaultConfig)
                 .withInitialCacheConfigurations(perCacheConfig)
-                .transactionAware() // cache writes only commit if the surrounding @Transactional does
+                .transactionAware()
                 .build();
     }
 
@@ -147,13 +146,13 @@ public class RedisConfiguration implements CachingConfigurer {
 //    }
 
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory, GenericJacksonJsonRedisSerializer redisSerializer) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new GenericJacksonJsonRedisSerializer(objectMapper));
+        template.setValueSerializer(redisSerializer);
         template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(new GenericJacksonJsonRedisSerializer(objectMapper));
+        template.setHashValueSerializer(redisSerializer);
         template.afterPropertiesSet();
         return template;
     }

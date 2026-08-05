@@ -26,22 +26,21 @@ public interface MultipleChoiceGridRepository extends AnyTypeQuestionResponseRep
     List<Tuple> getResponseOptionCount(UUID formId);
 
     @Query(value = """
-        select
-            mcgr.response_column_id as columnId,
-            count(*) as responseCount,
-            array_agg(fr.id order by fr.created_at) as responseIds
-        from multiple_choice_grids mcg
-        join multiple_choice_grid_rows mcgr
+            select
+            mcgr.response_column_id columnId,
+            count(*) responseCount
+            from form_responses fr
+            left join question_responses qr
+            on qr.form_response_id = fr.id
+            and qr.question_id = :questionId
+            left join multiple_choice_grids mcg
+            on mcg.question_response_id = qr.id
+            left join multiple_choice_grid_rows mcgr
             on mcg.question_response_id = mcgr.multiple_choice_grid_id
-        join question_responses qr
-            on qr.id = mcg.question_response_id
-        join form_responses fr
-            on fr.id = qr.form_response_id
-        where qr.question_id = :questionId
-          and fr.form_id = :formId
-          and mcgr.row_id = :rowId
-        group by mcgr.response_column_id
-        order by responseCount desc
-        """, nativeQuery = true)
+            and mcgr.row_id = :rowId
+            where fr.form_id = :formId
+            group by mcgr.response_column_id
+            order by responseCount desc, min(fr.created_at) asc
+            """, nativeQuery = true)
     List<Tuple> groupedByResponseRowColumn(UUID formId, long questionId, long rowId, Pageable pageable);
 }

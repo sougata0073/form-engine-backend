@@ -33,31 +33,32 @@ public interface TickBoxGridRepository extends AnyTypeQuestionResponseRepository
     List<Tuple> getResponseOptionCount(UUID formId);
 
     @Query(value = """
-        select
-            columnIds,
-            count(*) as responseCount,
-            array_agg(responseId order by createdAt) as responseIds
-        from (
             select
-                fr.id as responseId,
-                fr.created_at as createdAt,
-                array_agg(tbgc.response_option_id order by tbgc.response_option_id) as columnIds
-            from tick_box_grids tbg
-            join tick_box_grid_rows tbgr
-                on tbgr.tick_box_grid_id = tbg.question_response_id
-            join tick_box_grid_columns tbgc
-                on tbgc.tick_box_grid_row_id = tbgr.id
-            join question_responses qr
+            case
+                when array_position(columnIds, null) = 1 and array_length(columnIds, 1) = 1 then null
+                else columnIds
+            end columnIds,
+            count(*) as responseCount
+            from (
+                select
+                array_agg(tbgc.response_option_id order by tbgc.response_option_id) as columnIds,
+                fr.created_at fr_created_at
+                from form_responses fr
+                left join question_responses qr
+                on qr.form_response_id = fr.id
+                and qr.question_id = :questionId
+                left join tick_box_grids tbg
                 on qr.id = tbg.question_response_id
-            join form_responses fr
-                on fr.id = qr.form_response_id
-            where qr.question_id = :questionId
-              and fr.form_id = :formId
-              and tbgr.row_id = :rowId
-            group by fr.id, fr.created_at
-        ) x
-        group by columnIds
-        order by responseCount desc
-        """, nativeQuery = true)
+                left join tick_box_grid_rows tbgr
+                on tbg.question_response_id = tbgr.tick_box_grid_Id
+                and tbgr.row_id = :rowId
+                left join tick_box_grid_columns tbgc
+                on tbgc.tick_box_grid_row_id = tbgr.id
+                where fr.form_id = :formId
+                group by fr.id, fr.created_at
+            ) x
+            group by columnIds
+            order by responseCount desc, min(fr_created_at) asc
+            """, nativeQuery = true)
     List<Tuple> groupedByResponseRowColumn(UUID formId, long questionId, long rowId, Pageable pageable);
 }

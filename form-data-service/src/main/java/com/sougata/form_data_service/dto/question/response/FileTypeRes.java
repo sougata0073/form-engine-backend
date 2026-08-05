@@ -1,10 +1,17 @@
 package com.sougata.form_data_service.dto.question.response;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.util.List;
 
-public record FileTypeRes(
-        String category,
-        List<String> mimeTypes
-) {
-
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class FileTypeRes {
+    private String category;
+    private List<String> mimeTypes;
 }

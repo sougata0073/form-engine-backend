@@ -15,7 +15,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @Getter
 @Setter
-public class CheckboxOption extends Auditable {
+public class CheckboxOption {
 
     @Id
     private Long id = TsidCreator.getTsid().toLong();

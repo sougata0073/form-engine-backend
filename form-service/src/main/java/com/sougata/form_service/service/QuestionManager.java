@@ -3,7 +3,6 @@ package com.sougata.form_service.service;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.QuestionAddUpdateReq;
 import com.sougata.form_service.dto.question.response.QuestionRes;
-import com.sougata.form_service.dto.validation.request.ValidationRequest;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.questionSchema.AnyTypeQuestion;
 import com.sougata.form_service.model.questionSchema.Question;
@@ -12,7 +11,7 @@ import com.sougata.form_service.repository.QuestionRepository;
 import java.util.UUID;
 
 public abstract class
-QuestionManager<Q extends AnyTypeQuestion, QAUR extends QuestionAddUpdateReq, QR extends QuestionRes, V extends ValidationRequest> {
+QuestionManager<Q extends AnyTypeQuestion, QAUR extends QuestionAddUpdateReq, QR extends QuestionRes> {
 
     private final QuestionRepository questionRepository;
     private final FormService formService;
@@ -30,11 +29,9 @@ QuestionManager<Q extends AnyTypeQuestion, QAUR extends QuestionAddUpdateReq, QR
 
     public abstract QR update(Long questionId, QAUR crudDto);
 
-    public abstract boolean validateResponse(V validationDto);
-
     public abstract QuestionType getQuestionType();
 
-    public abstract void delete(Long questionId);
+    public abstract void delete(UUID formId, Long questionId);
 
     public boolean exists(Long questionId) {
         return questionRepository.existsById(questionId);

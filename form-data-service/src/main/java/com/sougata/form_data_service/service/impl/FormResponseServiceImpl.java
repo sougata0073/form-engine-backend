@@ -1,11 +1,7 @@
 package com.sougata.form_data_service.service.impl;
 
-import com.sougata.form_data_service.dto.form.FormResponseAddReqDto;
-import com.sougata.form_data_service.dto.form.FormResponseAddResDto;
-import com.sougata.form_data_service.dto.form.FormResponseSummaryResDto;
+import com.sougata.form_data_service.dto.form.*;
 import com.sougata.form_data_service.dto.question.QuestionSummaryDto;
-import com.sougata.form_data_service.dto.response.FormResponseSummaryDto;
-import com.sougata.form_data_service.dto.response.question.AllResponseCountAndIdsResDto;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionResponse;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionSummary;
 import com.sougata.form_data_service.dto.response.question.ResponseQuestionDto;
@@ -28,30 +24,33 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class FormResponseServiceImpl implements FormResponseService {
 
     private final FormResponseRepository formResponseRepository;
     private final ResponseManagerFactory responseManagerFactory;
-    private final AuthServiceFeignClient authServiceFeignClient;
     private final FormServiceFeignClient formServiceFeignClient;
     private final QuestionResponseRepository questionResponseRepository;
     private final FormSchemaService formSchemaService;
+    private final AuthServiceFeignClient authServiceFeignClient;
 
     @Autowired
     public FormResponseServiceImpl(
             FormResponseRepository formResponseRepository,
             ResponseManagerFactory responseManagerFactory,
-            AuthServiceFeignClient authServiceFeignClient, FormServiceFeignClient formServiceFeignClient,
-            QuestionResponseRepository questionResponseRepository, FormSchemaService formSchemaService) {
+            FormServiceFeignClient formServiceFeignClient,
+            QuestionResponseRepository questionResponseRepository, FormSchemaService formSchemaService, AuthServiceFeignClient authServiceFeignClient) {
         this.formResponseRepository = formResponseRepository;
         this.responseManagerFactory = responseManagerFactory;
-        this.authServiceFeignClient = authServiceFeignClient;
         this.formServiceFeignClient = formServiceFeignClient;
         this.questionResponseRepository = questionResponseRepository;
         this.formSchemaService = formSchemaService;
+        this.authServiceFeignClient = authServiceFeignClient;
     }
 
     @Override
@@ -64,22 +63,22 @@ public class FormResponseServiceImpl implements FormResponseService {
 
         var formInfo = formServiceFeignClient.getFormInfo(formId);
 
-        if (!formInfo.published()) {
+        if (!formInfo.getPublished()) {
             throw new FormSubmitException("This form is not published yet. FOrm ID: " + formId);
         }
 
         boolean isAcceptingDateExceeded =
-                formInfo.stopAcceptingResponseOn() != null &&
-                        Instant.now().isAfter(formInfo.stopAcceptingResponseOn());
+                formInfo.getStopAcceptingResponseOn() != null &&
+                        Instant.now().isAfter(formInfo.getStopAcceptingResponseOn());
 
-        boolean isNumberOfResponseExceeded = formInfo.stopAcceptingResponseAfterResponse() != null &&
-                getFormResponseSummary(formId).responseCount() >= Integer.toUnsignedLong(formInfo.stopAcceptingResponseAfterResponse());
+        boolean isNumberOfResponseExceeded = formInfo.getStopAcceptingResponseAfterResponse() != null &&
+                getFormResponseSummary(formId).getResponseCount() >= Integer.toUnsignedLong(formInfo.getStopAcceptingResponseAfterResponse());
 
-        if (!formInfo.acceptingResponse() || isAcceptingDateExceeded || isNumberOfResponseExceeded) {
+        if (!formInfo.getAcceptingResponse() || isAcceptingDateExceeded || isNumberOfResponseExceeded) {
             throw new FormSubmitException("This form is not accepting response. Form ID: " + formId);
         }
 
-        var validationBody = new ResponseValidationRequestDto(req.responses());
+        var validationBody = new ResponseValidationRequestDto(req.getResponses());
 
         var validationResponse = formSchemaService.validateResponse(formId, validationBody);
 
@@ -90,7 +89,7 @@ public class FormResponseServiceImpl implements FormResponseService {
 
         var savedFormResponse = formResponseRepository.save(formResponse);
 
-        req.responses().forEach(response -> {
+        req.getResponses().forEach(response -> {
             var responseManager = responseManagerFactory.get(
                     response.getQuestionType()
             );
@@ -101,20 +100,20 @@ public class FormResponseServiceImpl implements FormResponseService {
     }
 
     @Override
-    public FormResponseSummaryResDto getFormResponseSummary(UUID formId) {
+    public FormResponseSummaryShortDto getFormResponseSummary(UUID formId) {
         return formResponseRepository.getFormResponseSummary(formId);
     }
 
     @Override
     public ResponseSummaryResDto getResponseSummaries(UUID formId) {
 
-        var questions = formServiceFeignClient.getFormDetails(formId).questions();
+        var questions = formServiceFeignClient.getFormDetails(formId).getQuestions();
 
-        var result = new ArrayList<ResponseSummaryDto>();
+        var result = new ArrayList<ResponseSummaryDto<?>>();
 
         responseManagerFactory.getAll().forEach(manager -> {
             var filteredQuestions = questions.stream().filter(q ->
-                    q.getQuestionType().name().equals(manager.getQuestionType().name())
+                    q.getQuestionType() == manager.getQuestionType()
             ).toList();
 
             var summaries = manager.getResponseSummaries(formId, filteredQuestions);
@@ -128,6 +127,14 @@ public class FormResponseServiceImpl implements FormResponseService {
     }
 
     @Override
+    public ResponseSummaryDto<?> getResponseSummary(UUID formId, Long questionId, Pageable pageable) {
+        var question = formServiceFeignClient.getQuestion(formId, questionId);
+        var manager = responseManagerFactory.get(question.getQuestionType());
+
+        return manager.getResponseSummary(formId, questionId, question, pageable);
+    }
+
+    @Override
     public ResponseByQuestionSummary getResponseByQuestionSummary(UUID formId, Long questionId) {
         var qRes = formServiceFeignClient.getQuestion(formId, questionId);
         var manager = responseManagerFactory.get(qRes.getQuestionType());
@@ -136,11 +143,48 @@ public class FormResponseServiceImpl implements FormResponseService {
     }
 
     @Override
+    public FormResponseSummariesDto getFormResponseSummaries(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
+        var questionSummary = formServiceFeignClient.getQuestionSummary(formId, questionId);
+        var manager = responseManagerFactory.get(questionSummary.getQuestionType());
+
+        var resAndUserIds = manager.getFormResponseAndUserIds(formId, questionId, formResponsesIdentifier, pageable);
+
+        var userIds = resAndUserIds.stream().map(tuple -> tuple.get("userId", UUID.class)).toList();
+
+        var userSummaryRes = authServiceFeignClient.userSummaries(userIds);
+
+        var formResponseSummaries = new ArrayList<FormResponseSummaryDto>();
+
+        resAndUserIds.forEach(tuple -> {
+            var resId = tuple.get("responseId", Long.class);
+            var userId = tuple.get("userId", UUID.class);
+
+            var user = userSummaryRes.getUsers().stream()
+                    .filter(u -> u.getUserId().equals(userId))
+                    .findFirst()
+//                    .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
+                    .orElse(new UserSummaryDto(UUID.randomUUID(), "User name", "Email", "https://picsum.photos/200/300"));
+
+            formResponseSummaries.add(
+                    new FormResponseSummaryDto(
+                            resId,
+                            user.getUserId(),
+                            user.getUserName(),
+                            user.getEmail(),
+                            user.getAvatarUrl()
+                    )
+            );
+        });
+
+        return new FormResponseSummariesDto(formResponseSummaries);
+    }
+
+    @Override
     public ResponseQuestionDto<? extends ResponseByQuestionResponse> getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
         var qSummary = formServiceFeignClient.getQuestionSummary(formId, questionId);
-        var manager = responseManagerFactory.get(qSummary.questionType());
+        var manager = responseManagerFactory.get(qSummary.getQuestionType());
 
-        return manager.getResponseByQuestion(formId, qSummary.id(), extraParams, pageable);
+        return manager.getResponseByQuestion(formId, qSummary.getId(), extraParams, pageable);
     }
 
     @Override
@@ -150,47 +194,14 @@ public class FormResponseServiceImpl implements FormResponseService {
 
     @Override
     @Transactional
-    public void deleteResponses(UUID formId, QuestionSummaryDto questionSummary) {
+    public void deleteResponses(UUID formId, Long questionId) {
 
-        var manager = responseManagerFactory.get(questionSummary.questionType());
+        var questionSummary = formServiceFeignClient.getQuestionSummary(formId, questionId);
 
-        manager.deleteResponses(formId, questionSummary.id());
-        questionResponseRepository.deleteAllByFormIdAndQuestionId(formId, questionSummary.id());
-    }
+        var manager = responseManagerFactory.get(questionSummary.getQuestionType());
 
-    @Override
-    public AllResponseCountAndIdsResDto getAllResponseCountAndIds(UUID formId) {
-        var resCountAndIds = formResponseRepository.getAllResponseCountAndIds(formId);
-
-        if (resCountAndIds == null) {
-            return new AllResponseCountAndIdsResDto(0L, Collections.emptyList());
-        }
-
-        var responseIds = Arrays.asList(resCountAndIds.get("responseIds", Long[].class));
-        var userIds = Arrays.asList(resCountAndIds.get("userIds", UUID[].class));
-
-        var users = authServiceFeignClient.userSummaries(userIds);
-
-        var responseIdUserIdMap = new HashMap<Long, UUID>();
-
-        for (int i = 0; i < responseIds.size(); i++) {
-            responseIdUserIdMap.put(responseIds.get(i), userIds.get(i));
-        }
-
-        // TODO
-        var responses = responseIds.stream().map(resId -> {
-            var userId = responseIdUserIdMap.get(resId);
-            var user = users.users().stream().filter(u -> u.userId().equals(userId))
-                    .findFirst()
-                    .orElse(new UserSummaryDto(UUID.randomUUID(), "User name", "Email", "https://picsum.photos/200/300"));
-//                    .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
-
-            return new FormResponseSummaryDto(resId, user.userId(), user.userName(), user.email(), user.avatarUrl());
-        }).toList();
-
-        return new AllResponseCountAndIdsResDto(
-                resCountAndIds.get("totalResponseCount", Long.class), responses
-        );
+        manager.deleteResponses(formId, questionSummary.getId());
+        questionResponseRepository.deleteAllByFormIdAndQuestionId(formId, questionSummary.getId());
     }
 
 }

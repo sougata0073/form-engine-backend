@@ -5,22 +5,19 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.List;
-
-@NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-public class FileUploadResponseSummaryDto extends ResponseSummaryDto {
+public class FileUploadResponseSummaryDto extends ResponseSummaryDto<FileUploadResponseSummaryDto.Response> {
 
-    private List<Response> responses;
-
-    public record Response(
-            String fileName,
-            String fileUrl,
-            String fileMimeType
-    ) {
-
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Response {
+        private String fileName;
+        private String fileUrl;
+        private String fileMimeType;
     }
 
 }

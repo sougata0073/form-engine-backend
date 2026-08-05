@@ -23,27 +23,31 @@ public interface LinearScaleRepository extends AnyTypeQuestionResponseRepository
             """)
     List<Tuple> getResponseScaleCount(UUID formId);
 
-    @Query("""
+    @Query(value = """
             select
-            count(distinct ls.scale)
-            from LinearScale ls
-            where ls.questionResponse.questionId = :questionId and ls.questionResponse.formResponse.formId = :formId
-            """)
+            count(distinct coalesce(ls.scale, -1))
+            from form_responses fr
+            left join question_responses qr
+            on fr.id = qr.form_response_id and qr.question_id = :questionId
+            left join linear_scales ls
+            on qr.id = ls.question_response_id
+            where fr.form_id = :formId
+            """, nativeQuery = true)
     Long getDistinctResponseCount(UUID formId, Long questionId);
 
     @Query(value = """
             select
             ls.scale scale,
-            count(ls.question_response_id) responseCount,
-            array_agg(fr.id order by fr.created_at) responseIds
-            from linear_scales ls
-            join question_responses qr
+            count(*) responseCount
+            from form_responses fr
+            left join question_responses  qr
+            on fr.id = qr.form_response_id
+            and qr.question_id = :questionId
+            left join linear_scales ls
             on qr.id = ls.question_response_id
-            join form_responses fr
-            on qr.form_response_id = fr.id
-            where fr.form_id = :formId and qr.question_id = :questionId
+            where fr.form_id = :formId
             group by ls.scale
-            order by responseCOunt desc
+            order by responseCount desc, min(fr.created_at) asc
             """, nativeQuery = true)
     List<Tuple> groupedByResponseScale(UUID formId, long questionId, Pageable pageable);
 

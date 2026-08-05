@@ -1,7 +1,7 @@
 package com.sougata.form_service.dto.question.request;
 
 import com.sougata.form_service.constant.ValidationMessages;
-import com.sougata.form_service.dto.validationConfig.ValidationConfig;
+import com.sougata.form_service.validation.configuration.ValidationConfig;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;

@@ -4,21 +4,23 @@ import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.response.QuestionRes;
 import com.sougata.form_service.model.questionSchema.AnyTypeQuestion;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.NoRepositoryBean;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
 
+@NoRepositoryBean
 public interface AnyTypeQuestionRepository<Q extends AnyTypeQuestion, ID, QRD extends QuestionRes> extends JpaRepository<Q, ID> {
-
-//    List<Q> findByFormId(UUID id);
 
     Optional<Q> findByQuestion_FormIdAndQuestion_Id(UUID formId, Long questionId);
 
-//    List<QuestionSummaryProjection> findQuestionSummariesByFormId(UUID formId);
-
-//    Optional<QuestionSummaryProjection> findQuestionSummaryByFormIdAndId(UUID formId, Long questionId);
-
-//    List<QuestionIdProjection> findByFormIdAndRequired(UUID formId, Boolean required);
+    @Modifying
+    @Transactional
+    @Query("delete from #{#entityName} e where e.question.form.id = :formId and e.questionId = :questionId")
+    void deleteQuestion(UUID formId, long questionId);
 
     default QuestionType getQuestionType() {
         throw new UnsupportedOperationException(

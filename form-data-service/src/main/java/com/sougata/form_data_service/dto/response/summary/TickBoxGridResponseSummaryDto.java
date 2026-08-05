@@ -9,35 +9,36 @@ import tools.jackson.databind.ser.std.ToStringSerializer;
 
 import java.util.List;
 
-@NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-public class TickBoxGridResponseSummaryDto extends ResponseSummaryDto {
+public class TickBoxGridResponseSummaryDto extends ResponseSummaryDto<TickBoxGridResponseSummaryDto.RowResponse> {
 
-    private List<RowResponse> responses;
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RowResponse {
+        @JsonSerialize(using = ToStringSerializer.class)
+        private Long rowId;
 
-    public record RowResponse(
-            @JsonSerialize(using = ToStringSerializer.class)
-            Long rowId,
+        private String row;
 
-            String row,
-
-            List<ColumnResponse> responses
-    ) {
-
+        private List<ColumnResponse> responses;
     }
 
-    public record ColumnResponse(
-            @JsonSerialize(using = ToStringSerializer.class)
-            Long columnId,
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ColumnResponse {
+        @JsonSerialize(using = ToStringSerializer.class)
+        private Long columnId;
 
-            String column,
+        private String column;
 
-            @JsonSerialize(using = ToStringSerializer.class)
-            Long responseCount
-    ) {
-
+        @JsonSerialize(using = ToStringSerializer.class)
+        private Long responseCount;
     }
 
 }

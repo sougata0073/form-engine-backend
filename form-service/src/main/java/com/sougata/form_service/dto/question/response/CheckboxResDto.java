@@ -1,6 +1,7 @@
 package com.sougata.form_service.dto.question.response;
 
-import com.sougata.form_service.dto.validationConfig.ValidationConfig;
+import com.sougata.form_service.validation.configuration.ValidationConfig;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,11 +17,14 @@ public class CheckboxResDto extends QuestionRes {
     private List<CheckboxOptionResDto> options;
     private ValidationConfig validationConfig;
 
-    public record CheckboxOptionResDto(
-            @JsonSerialize(using = ToStringSerializer.class)
-            Long id,
-            String option,
-            Integer orderIndex
-    ) {
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class CheckboxOptionResDto {
+        @JsonSerialize(using = ToStringSerializer.class)
+        private Long id;
+        private String option;
+        private Integer orderIndex;
     }
 }

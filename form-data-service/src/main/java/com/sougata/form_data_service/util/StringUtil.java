@@ -30,4 +30,8 @@ public class StringUtil {
 
         return result;
     }
+
+    public static String emptyIfNull(String s) {
+        return s == null ? "" : s;
+    }
 }

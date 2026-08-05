@@ -1,12 +1,9 @@
 package com.sougata.form_service.service.questionManager;
 
-import com.sougata.form_service.constant.ExceptionMessages;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.LinearScaleAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.LinearScaleResDto;
-import com.sougata.form_service.dto.validation.request.LinearScaleValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.exception.ResponseValidationException;
 import com.sougata.form_service.model.questionSchema.LinearScale;
 import com.sougata.form_service.model.questionSchema.Question;
 import com.sougata.form_service.repository.LinearScaleRepository;
@@ -19,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service("LINEAR_SCALE_QUESTION_MANAGER")
-public class LinearScaleManager extends QuestionManager<LinearScale, LinearScaleAddUpdateReqDto, LinearScaleResDto, LinearScaleValidationRequestDto> {
+public class LinearScaleManager extends QuestionManager<LinearScale, LinearScaleAddUpdateReqDto, LinearScaleResDto> {
 
     private final LinearScaleRepository linearScaleRepository;
 
@@ -89,29 +86,13 @@ public class LinearScaleManager extends QuestionManager<LinearScale, LinearScale
     }
 
     @Override
-    public boolean validateResponse(LinearScaleValidationRequestDto validationDto) {
-        Integer toNumber = linearScaleRepository.getToNumber(validationDto.getQuestionId())
-                .orElseThrow(() -> new QuestionNotFoundException(QuestionType.LINEAR_SCALE, validationDto.getQuestionId()));
-
-        if (validationDto.getScale() > toNumber) {
-            throw new ResponseValidationException(
-                    String.format(
-                            ExceptionMessages.INVALID_SCALE, toNumber, validationDto.getScale()
-                    )
-            );
-        }
-
-        return true;
-    }
-
-    @Override
     public QuestionType getQuestionType() {
         return QuestionType.LINEAR_SCALE;
     }
 
     @Override
-    public void delete(Long questionId) {
-        linearScaleRepository.deleteById(questionId);
+    public void delete(UUID formId, Long questionId) {
+        linearScaleRepository.deleteQuestion(formId, questionId);
     }
 
     private void setPropertiesForNew(LinearScaleAddUpdateReqDto source, LinearScale target, Question question) {

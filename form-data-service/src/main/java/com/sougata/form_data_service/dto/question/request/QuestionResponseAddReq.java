@@ -1,5 +1,6 @@
 package com.sougata.form_data_service.dto.question.request;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.sougata.form_data_service.constant.QuestionType;
@@ -40,5 +41,8 @@ public class QuestionResponseAddReq {
 
     @NotNull
     private QuestionType questionType;
+
+    @JsonProperty(value = "@class")
+    private String cls = getClass().getName();
 
 }

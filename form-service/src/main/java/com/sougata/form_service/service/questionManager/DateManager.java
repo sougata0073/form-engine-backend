@@ -3,7 +3,6 @@ package com.sougata.form_service.service.questionManager;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.DateAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.DateResDto;
-import com.sougata.form_service.dto.validation.request.DateValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.questionSchema.Date;
 import com.sougata.form_service.repository.DateRepository;
@@ -16,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service("DATE_QUESTION_MANAGER")
-public class DateManager extends QuestionManager<Date, DateAddUpdateReqDto, DateResDto, DateValidationRequestDto> {
+public class DateManager extends QuestionManager<Date, DateAddUpdateReqDto, DateResDto> {
 
     private final DateRepository dateRepository;
 
@@ -72,18 +71,13 @@ public class DateManager extends QuestionManager<Date, DateAddUpdateReqDto, Date
     }
 
     @Override
-    public boolean validateResponse(DateValidationRequestDto validationDto) {
-        return true;
-    }
-
-    @Override
     public QuestionType getQuestionType() {
         return QuestionType.DATE;
     }
 
     @Override
-    public void delete(Long questionId) {
-        dateRepository.deleteById(questionId);
+    public void delete(UUID formId, Long questionId) {
+        dateRepository.deleteQuestion(formId, questionId);
     }
 
     @Override

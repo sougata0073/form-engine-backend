@@ -3,7 +3,6 @@ package com.sougata.form_service.service.questionManager;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.TimeAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.TimeResDto;
-import com.sougata.form_service.dto.validation.request.TimeValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.questionSchema.Time;
 import com.sougata.form_service.repository.QuestionRepository;
@@ -16,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service("TIME_QUESTION_MANAGER")
-public class TimeManager extends QuestionManager<Time, TimeAddUpdateReqDto, TimeResDto, TimeValidationRequestDto> {
+public class TimeManager extends QuestionManager<Time, TimeAddUpdateReqDto, TimeResDto> {
 
     private final TimeRepository timeRepository;
 
@@ -80,17 +79,12 @@ public class TimeManager extends QuestionManager<Time, TimeAddUpdateReqDto, Time
     }
 
     @Override
-    public boolean validateResponse(TimeValidationRequestDto validationDto) {
-        return true;
-    }
-
-    @Override
     public QuestionType getQuestionType() {
         return QuestionType.TIME;
     }
 
     @Override
-    public void delete(Long questionId) {
-        timeRepository.deleteById(questionId);
+    public void delete(UUID formId, Long questionId) {
+        timeRepository.deleteQuestion(formId, questionId);
     }
 }

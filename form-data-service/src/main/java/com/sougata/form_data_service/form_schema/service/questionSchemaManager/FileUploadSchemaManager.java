@@ -23,12 +23,12 @@ public class FileUploadSchemaManager extends QuestionSchemaManager<FileUploadRes
         if (!fu.getAllowedFileTypes().isEmpty()) {
             List<String> mimeTypes = fu.getAllowedFileTypes()
                     .stream()
-                    .map(FileTypeRes::mimeTypes)
+                    .map(FileTypeRes::getMimeTypes)
                     .flatMap(List::stream)
                     .toList();
 
             if (!mimeTypes.contains(validationDto.getFileMimeType())) {
-                throw new InvalidFileTypeException(validationDto.getFileMimeType(), fu.getAllowedFileTypes().stream().map(FileTypeRes::category).toList());
+                throw new InvalidFileTypeException(validationDto.getFileMimeType(), fu.getAllowedFileTypes().stream().map(FileTypeRes::getCategory).toList());
             }
         }
 

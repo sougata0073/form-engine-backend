@@ -5,12 +5,17 @@ import com.sougata.form_data_service.dto.question.request.MultipleChoiceGridResp
 import com.sougata.form_data_service.dto.question.response.MultipleChoiceGridResDto;
 import com.sougata.form_data_service.dto.response.question.MultipleChoiceGridResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.MultipleChoiceGridResponseSummaryDto;
+import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.MultipleChoiceGrid;
 import com.sougata.form_data_service.model.MultipleChoiceGridRow;
 import com.sougata.form_data_service.projection.CommonResponseSummaryProjection;
+import com.sougata.form_data_service.repository.FormResponseRepository;
 import com.sougata.form_data_service.repository.MultipleChoiceGridRepository;
+import com.sougata.form_data_service.repository.MultipleChoiceGridRowRepository;
 import com.sougata.form_data_service.repository.QuestionResponseRepository;
+import com.sougata.form_data_service.util.IdUtil;
+import jakarta.persistence.Tuple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,15 +32,18 @@ public class MultipleChoiceGridManager extends ResponseManager<
         MultipleChoiceGridResDto,
         MultipleChoiceGridResponseQuestionDto,
         MultipleChoiceGridResponseQuestionDto.Response,
-        MultipleChoiceGridResponseQuestionDto.Summary
+        MultipleChoiceGridResponseQuestionDto.Summary,
+        MultipleChoiceGridResponseQuestionDto.FormResponsesReqDto
         > {
 
     private final MultipleChoiceGridRepository multipleChoiceGridRepository;
+    private final MultipleChoiceGridRowRepository multipleChoiceGridRowRepository;
 
     @Autowired
-    public MultipleChoiceGridManager(MultipleChoiceGridRepository multipleChoiceGridRepository, QuestionResponseRepository questionResponseRepository) {
+    public MultipleChoiceGridManager(MultipleChoiceGridRepository multipleChoiceGridRepository, QuestionResponseRepository questionResponseRepository, FormResponseRepository formResponseRepository, AuthServiceFeignClient authServiceFeignClient, MultipleChoiceGridRowRepository multipleChoiceGridRowRepository) {
         super(questionResponseRepository);
         this.multipleChoiceGridRepository = multipleChoiceGridRepository;
+        this.multipleChoiceGridRowRepository = multipleChoiceGridRowRepository;
     }
 
     @Override
@@ -137,6 +145,11 @@ public class MultipleChoiceGridManager extends ResponseManager<
     }
 
     @Override
+    public MultipleChoiceGridResponseSummaryDto getResponseSummary(UUID formId, Long questionId, MultipleChoiceGridResDto questionRes, Pageable pageable) {
+        return null;
+    }
+
+    @Override
     public MultipleChoiceGridResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, MultipleChoiceGridResDto questionResponse) {
         var sum = new MultipleChoiceGridResponseQuestionDto.Summary();
 
@@ -183,17 +196,32 @@ public class MultipleChoiceGridManager extends ResponseManager<
         var responses = grouped.stream().map(g -> {
             var res = new MultipleChoiceGridResponseQuestionDto.Response();
 
+            res.setQuestionId(questionId);
+            res.setQuestionType(getQuestionType());
             res.setColumnId(g.get("columnId", Long.class));
             res.setResponseCount(g.get("responseCount", Long.class));
-            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+
+            var map = new HashMap<String, List<String>>();
+
+            map.put("rowId", List.of(rowIdString));
+            map.put("columnId", List.of(res.getColumnId() == null ? "" : res.getColumnId().toString()));
+
+            res.setFormResponsesIdentifier(IdUtil.generateCompressedEncodedId(map));
 
             return res;
         }).toList();
 
+        mc.setQuestionId(questionId);
+        mc.setQuestionType(getQuestionType());
         mc.setRowId(rowId);
         mc.setResponses(responses);
 
         return mc;
+    }
+
+    @Override
+    public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
+        return List.of();
     }
 
     @Override
@@ -202,7 +230,9 @@ public class MultipleChoiceGridManager extends ResponseManager<
     }
 
     @Override
+    @Transactional
     public void deleteResponses(UUID formId, Long questionId) {
+        multipleChoiceGridRowRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
         multipleChoiceGridRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
     }
 }

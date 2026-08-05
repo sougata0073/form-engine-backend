@@ -1,6 +1,6 @@
 package com.sougata.form_data_service.repository;
 
-import com.sougata.form_data_service.dto.form.FormResponseSummaryResDto;
+import com.sougata.form_data_service.dto.form.FormResponseSummaryShortDto;
 import com.sougata.form_data_service.model.FormResponse;
 import jakarta.persistence.Tuple;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,13 +17,13 @@ public interface FormResponseRepository extends JpaRepository<FormResponse, Long
 
     @Query("""
             select
-            new com.sougata.form_data_service.dto.form.FormResponseSummaryResDto(
+            new com.sougata.form_data_service.dto.form.FormResponseSummaryShortDto(
                 count(fr.id)
             )
             from FormResponse fr
             where fr.formId = :formId
             """)
-    FormResponseSummaryResDto getFormResponseSummary(UUID formId);
+    FormResponseSummaryShortDto getFormResponseSummary(UUID formId);
 
     boolean existsByFormIdAndUserId(UUID formId, UUID userId);
 
@@ -36,5 +36,5 @@ public interface FormResponseRepository extends JpaRepository<FormResponse, Long
             where fr.form_id = :formId
             group by fr.form_id
             """, nativeQuery = true)
-    Tuple getAllResponseCountAndIds(UUID formId);
+    Tuple getAllResponseIdsAndUserIds(UUID formId);
 }

@@ -1,15 +1,21 @@
 package com.sougata.form_service.dto.question.response;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import tools.jackson.databind.annotation.JsonSerialize;
 import tools.jackson.databind.ser.std.ToStringSerializer;
 
-public record QuestionAddUpdateResDto(
-        @JsonSerialize(using = ToStringSerializer.class)
-        Long questionId,
-
-        String message,
-        Integer orderIndex
-) {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class QuestionAddUpdateResDto {
+    @JsonSerialize(using = ToStringSerializer.class)
+    private Long questionId;
+    private String message;
+    private Integer orderIndex;
 
     public static QuestionAddUpdateResDto create(Long questionId, String message, Integer orderIndex) {
         return new QuestionAddUpdateResDto(questionId, message, orderIndex);

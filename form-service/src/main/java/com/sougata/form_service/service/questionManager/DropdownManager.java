@@ -3,12 +3,11 @@ package com.sougata.form_service.service.questionManager;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.DropdownAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.DropdownResDto;
-import com.sougata.form_service.dto.validation.request.DropdownValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.exception.ResponseValidationException;
 import com.sougata.form_service.model.questionSchema.Dropdown;
 import com.sougata.form_service.model.questionSchema.DropdownOption;
 import com.sougata.form_service.model.questionSchema.Question;
+import com.sougata.form_service.repository.DropdownOptionRepository;
 import com.sougata.form_service.repository.DropdownRepository;
 import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormService;
@@ -20,13 +19,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("DROPDOWN_QUESTION_MANAGER")
-public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdateReqDto, DropdownResDto, DropdownValidationRequestDto> {
+public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdateReqDto, DropdownResDto> {
 
     private final DropdownRepository dropdownRepository;
+    private final DropdownOptionRepository dropdownOptionRepository;
 
-    public DropdownManager(DropdownRepository dropdownRepository, FormService formService, QuestionRepository questionRepository) {
+    public DropdownManager(DropdownRepository dropdownRepository, FormService formService, QuestionRepository questionRepository, DropdownOptionRepository dropdownOptionRepository) {
         super(questionRepository, formService);
         this.dropdownRepository = dropdownRepository;
+        this.dropdownOptionRepository = dropdownOptionRepository;
     }
 
     @Override
@@ -72,7 +73,7 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
         Map<Long, DropdownOption> existingOptions = dd.getOptions().stream()
                 .collect(Collectors.toMap(DropdownOption::getId, option -> option));
         Set<Long> requestOptionIds = crudDto.getOptions().stream()
-                .map(DropdownAddUpdateReqDto.Option::id)
+                .map(DropdownAddUpdateReqDto.Option::getId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
@@ -81,19 +82,19 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
         for (int i = 0; i < crudDto.getOptions().size(); i++) {
             var dto = crudDto.getOptions().get(i);
 
-            if (dto.id() == null) {
+            if (dto.getId() == null) {
                 DropdownOption option = new DropdownOption();
-                option.setOption(dto.option());
+                option.setOption(dto.getOption());
                 option.setOrderIndex(i);
                 option.setDropdown(dd);
 
                 dd.getOptions().add(option);
             } else {
-                DropdownOption option = existingOptions.get(dto.id());
+                DropdownOption option = existingOptions.get(dto.getId());
                 if (option == null) {
-                    throw new IllegalArgumentException("Invalid dropdown option id: " + dto.id());
+                    throw new IllegalArgumentException("Invalid dropdown option id: " + dto.getId());
                 }
-                option.setOption(dto.option());
+                option.setOption(dto.getOption());
                 option.setOrderIndex(i);
             }
         }
@@ -104,30 +105,15 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
     }
 
     @Override
-    public boolean validateResponse(DropdownValidationRequestDto validationDto) {
-        Dropdown dd = dropdownRepository.findById(validationDto.getQuestionId())
-                .orElseThrow(() -> new QuestionNotFoundException(QuestionType.DROPDOWN, validationDto.getQuestionId()));
-
-        var present = dd.getOptions()
-                .stream().anyMatch(op -> Objects.equals(op.getId(), validationDto.getResponseOptionId()));
-
-        if(!present) {
-            throw new ResponseValidationException(
-                    "Invalid dropdown option ID: " + validationDto.getResponseOptionId()
-            );
-        }
-
-        return true;
-    }
-
-    @Override
     public QuestionType getQuestionType() {
         return QuestionType.DROPDOWN;
     }
 
     @Override
-    public void delete(Long questionId) {
-        dropdownRepository.deleteById(questionId);
+    @Transactional
+    public void delete(UUID formId, Long questionId) {
+        dropdownOptionRepository.deleteAllByFormIdAndDropdownId(formId, questionId);
+        dropdownRepository.deleteQuestion(formId, questionId);
     }
 
     @Override
@@ -152,7 +138,7 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
             var op = source.getOptions().get(i);
             var ddOp = new DropdownOption();
 
-            ddOp.setOption(op.option());
+            ddOp.setOption(op.getOption());
             ddOp.setDropdown(target);
             ddOp.setOrderIndex(i);
 

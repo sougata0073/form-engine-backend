@@ -3,12 +3,11 @@ package com.sougata.form_service.service.questionManager;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.MultipleChoiceAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.MultipleChoiceResDto;
-import com.sougata.form_service.dto.validation.request.MultipleChoiceValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.exception.ResponseValidationException;
 import com.sougata.form_service.model.questionSchema.MultipleChoice;
 import com.sougata.form_service.model.questionSchema.MultipleChoiceOption;
 import com.sougata.form_service.model.questionSchema.Question;
+import com.sougata.form_service.repository.MultipleChoiceOptionRepository;
 import com.sougata.form_service.repository.MultipleChoiceRepository;
 import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormService;
@@ -20,13 +19,15 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("MULTIPLE_CHOICE_QUESTION_MANAGER")
-public class MultipleChoiceManager extends QuestionManager<MultipleChoice, MultipleChoiceAddUpdateReqDto, MultipleChoiceResDto, MultipleChoiceValidationRequestDto> {
+public class MultipleChoiceManager extends QuestionManager<MultipleChoice, MultipleChoiceAddUpdateReqDto, MultipleChoiceResDto> {
 
     private final MultipleChoiceRepository multipleChoiceRepository;
+    private final MultipleChoiceOptionRepository multipleChoiceOptionRepository;
 
-    public MultipleChoiceManager(MultipleChoiceRepository multipleChoiceRepository, FormService formService, QuestionRepository questionRepository) {
+    public MultipleChoiceManager(MultipleChoiceRepository multipleChoiceRepository, FormService formService, QuestionRepository questionRepository, MultipleChoiceOptionRepository multipleChoiceOptionRepository) {
         super(questionRepository, formService);
         this.multipleChoiceRepository = multipleChoiceRepository;
+        this.multipleChoiceOptionRepository = multipleChoiceOptionRepository;
     }
 
     @Override
@@ -73,7 +74,7 @@ public class MultipleChoiceManager extends QuestionManager<MultipleChoice, Multi
                 .collect(Collectors.toMap(MultipleChoiceOption::getId, option -> option));
 
         Set<Long> requestOptionIds = crudDto.getOptions().stream()
-                .map(MultipleChoiceAddUpdateReqDto.Option::id)
+                .map(MultipleChoiceAddUpdateReqDto.Option::getId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
@@ -82,21 +83,21 @@ public class MultipleChoiceManager extends QuestionManager<MultipleChoice, Multi
         for (int i = 0; i < crudDto.getOptions().size(); i++) {
             var dto = crudDto.getOptions().get(i);
 
-            if (dto.id() == null) {
+            if (dto.getId() == null) {
                 MultipleChoiceOption option = new MultipleChoiceOption();
-                option.setOption(dto.option());
+                option.setOption(dto.getOption());
                 option.setOrderIndex(i);
                 option.setMultipleChoice(mc);
 
                 mc.getOptions().add(option);
             } else {
-                MultipleChoiceOption option = existingOptions.get(dto.id());
+                MultipleChoiceOption option = existingOptions.get(dto.getId());
 
                 if (option == null) {
-                    throw new IllegalArgumentException("Invalid multiple choice option id: " + dto.id());
+                    throw new IllegalArgumentException("Invalid multiple choice option id: " + dto.getId());
                 }
 
-                option.setOption(dto.option());
+                option.setOption(dto.getOption());
                 option.setOrderIndex(i);
             }
         }
@@ -124,30 +125,15 @@ public class MultipleChoiceManager extends QuestionManager<MultipleChoice, Multi
     }
 
     @Override
-    public boolean validateResponse(MultipleChoiceValidationRequestDto validationDto) {
-        var mc = multipleChoiceRepository.findById(validationDto.getQuestionId())
-                .orElseThrow(() -> new QuestionNotFoundException(QuestionType.MULTIPLE_CHOICE, validationDto.getQuestionId()));
-
-        var present = mc.getOptions()
-                .stream().anyMatch(op -> Objects.equals(op.getId(), validationDto.getResponseOptionId()));
-
-        if (!present) {
-            throw new ResponseValidationException(
-                    "Invalid dropdown option ID: " + validationDto.getResponseOptionId()
-            );
-        }
-
-        return true;
-    }
-
-    @Override
     public QuestionType getQuestionType() {
         return QuestionType.MULTIPLE_CHOICE;
     }
 
     @Override
-    public void delete(Long questionId) {
-        multipleChoiceRepository.deleteById(questionId);
+    @Transactional
+    public void delete(UUID formId, Long questionId) {
+        multipleChoiceOptionRepository.deleteAllByFormIdAndMultipleChoiceId(formId, questionId);
+        multipleChoiceRepository.deleteQuestion(formId, questionId);
     }
 
     private void setPropertiesForNew(MultipleChoiceAddUpdateReqDto source, MultipleChoice target, Question question) {
@@ -157,7 +143,7 @@ public class MultipleChoiceManager extends QuestionManager<MultipleChoice, Multi
             var op = source.getOptions().get(i);
             var mcOp = new MultipleChoiceOption();
 
-            mcOp.setOption(op.option());
+            mcOp.setOption(op.getOption());
             mcOp.setMultipleChoice(target);
             mcOp.setOrderIndex(i);
 

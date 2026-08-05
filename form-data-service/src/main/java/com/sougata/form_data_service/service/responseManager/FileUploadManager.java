@@ -5,10 +5,15 @@ import com.sougata.form_data_service.dto.question.request.FileUploadResponseAddR
 import com.sougata.form_data_service.dto.question.response.FileUploadResDto;
 import com.sougata.form_data_service.dto.response.question.FileUploadResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.FileUploadResponseSummaryDto;
+import com.sougata.form_data_service.dto.response.summary.ParagraphResponseSummaryDto;
+import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.FileUpload;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.repository.FileUploadRepository;
+import com.sougata.form_data_service.repository.FormResponseRepository;
 import com.sougata.form_data_service.repository.QuestionResponseRepository;
+import com.sougata.form_data_service.util.IdUtil;
+import jakarta.persistence.Tuple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,13 +29,14 @@ public class FileUploadManager extends ResponseManager<
         FileUploadResDto,
         FileUploadResponseQuestionDto,
         FileUploadResponseQuestionDto.Response,
-        FileUploadResponseQuestionDto.Summary
+        FileUploadResponseQuestionDto.Summary,
+        FileUploadResponseQuestionDto.FormResponsesReqDto
         > {
 
     private final FileUploadRepository fileUploadRepository;
 
     @Autowired
-    public FileUploadManager(FileUploadRepository fileUploadRepository, QuestionResponseRepository questionResponseRepository) {
+    public FileUploadManager(FileUploadRepository fileUploadRepository, QuestionResponseRepository questionResponseRepository, FormResponseRepository formResponseRepository, AuthServiceFeignClient authServiceFeignClient) {
         super(questionResponseRepository);
         this.fileUploadRepository = fileUploadRepository;
     }
@@ -56,7 +62,7 @@ public class FileUploadManager extends ResponseManager<
         var responseSummaries = fileUploadRepository.getResponseSummaries(formId);
         var result = new ArrayList<FileUploadResponseSummaryDto>();
 
-        var responseTextMap = fileUploadRepository.getResponseFiles(formId)
+        var responseTextMap = fileUploadRepository.getResponsesFiles(formId, Pageable.ofSize(20))
                 .stream().collect(Collectors.groupingBy(e -> e.get("questionId", Long.class)));
 
         questionResponses.forEach(qr ->
@@ -103,6 +109,31 @@ public class FileUploadManager extends ResponseManager<
     }
 
     @Override
+    public FileUploadResponseSummaryDto getResponseSummary(UUID formId, Long questionId, FileUploadResDto questionRes, Pageable pageable) {
+        var responseSummary = fileUploadRepository.getResponseSummary(formId, questionId);
+        var files = fileUploadRepository.getResponseFiles(formId, questionId, pageable);
+
+        var f = new FileUploadResponseSummaryDto();
+
+        f.setQuestionId(questionRes.getId());
+        f.setQuestion(questionRes.getQuestion());
+        f.setOrderIndex(questionRes.getOrderIndex());
+        f.setNumberOfResponses(responseSummary.numberOfResponses());
+        f.setQuestionType(getQuestionType());
+        f.setResponses(
+                files.stream().map(tuple ->
+                        new FileUploadResponseSummaryDto.Response(
+                                tuple.get("fileName", String.class),
+                                tuple.get("fileUrl", String.class),
+                                tuple.get("fileMimeType", String.class)
+                        )
+                ).toList()
+        );
+
+        return f;
+    }
+
+    @Override
     public FileUploadResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, FileUploadResDto questionResponse) {
         var sum = new FileUploadResponseQuestionDto.Summary();
 
@@ -124,18 +155,34 @@ public class FileUploadManager extends ResponseManager<
         var responses = grouped.stream().map(g -> {
             var res = new FileUploadResponseQuestionDto.Response();
 
+            res.setQuestionId(questionId);
+            res.setQuestionType(getQuestionType());
             res.setFileName(g.get("fileName", String.class));
             res.setFileUrl(g.get("fileUrl", String.class));
             res.setFileMimeType(g.get("fileMimeType", String.class));
             res.setResponseCount(g.get("responseCount", Long.class));
-            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
-                            
+
+            var map = new HashMap<String, List<String>>();
+
+            map.put("fileName", List.of(res.getFileName() == null ? "" : res.getFileName()));
+            map.put("fileUrl", List.of(res.getFileUrl() == null ? "" : res.getFileUrl()));
+            map.put("fileMimeType", List.of(res.getFileMimeType() == null ? "" : res.getFileMimeType()));
+
+            res.setFormResponsesIdentifier(IdUtil.generateCompressedEncodedId(map));
+
             return res;
         }).toList();
 
+        fu.setQuestionId(questionId);
+        fu.setQuestionType(getQuestionType());
         fu.setResponses(responses);
 
         return fu;
+    }
+
+    @Override
+    public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
+        return List.of();
     }
 
     @Override

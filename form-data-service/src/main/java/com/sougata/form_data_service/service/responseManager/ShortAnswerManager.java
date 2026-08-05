@@ -5,10 +5,15 @@ import com.sougata.form_data_service.dto.question.request.ShortAnswerResponseAdd
 import com.sougata.form_data_service.dto.question.response.ShortAnswerResDto;
 import com.sougata.form_data_service.dto.response.question.ShortAnswerResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.ShortAnswerResponseSummaryDto;
+import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.ShortAnswer;
+import com.sougata.form_data_service.repository.FormResponseRepository;
 import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import com.sougata.form_data_service.repository.ShortAnswerRepository;
+import com.sougata.form_data_service.util.IdUtil;
+import com.sougata.form_data_service.util.StringUtil;
+import jakarta.persistence.Tuple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,15 +29,20 @@ public class ShortAnswerManager extends ResponseManager<
         ShortAnswerResDto,
         ShortAnswerResponseQuestionDto,
         ShortAnswerResponseQuestionDto.Response,
-        ShortAnswerResponseQuestionDto.Summary
+        ShortAnswerResponseQuestionDto.Summary,
+        ShortAnswerResponseQuestionDto.FormResponsesReqDto
         > {
 
     private final ShortAnswerRepository shortAnswerRepository;
+    private final AuthServiceFeignClient authServiceFeignClient;
+    private final QuestionResponseRepository questionResponseRepository;
 
     @Autowired
-    public ShortAnswerManager(ShortAnswerRepository shortAnswerRepository, QuestionResponseRepository questionResponseRepository) {
+    public ShortAnswerManager(ShortAnswerRepository shortAnswerRepository, QuestionResponseRepository questionResponseRepository, FormResponseRepository formResponseRepository, AuthServiceFeignClient authServiceFeignClient) {
         super(questionResponseRepository);
         this.shortAnswerRepository = shortAnswerRepository;
+        this.questionResponseRepository = questionResponseRepository;
+        this.authServiceFeignClient = authServiceFeignClient;
     }
 
     @Override
@@ -53,7 +63,7 @@ public class ShortAnswerManager extends ResponseManager<
         var responseSummaries = shortAnswerRepository.getResponseSummaries(formId);
         var result = new ArrayList<ShortAnswerResponseSummaryDto>();
 
-        var responseTextMap = shortAnswerRepository.getResponseTexts(formId)
+        var responseTextMap = shortAnswerRepository.getResponsesTexts(formId, Pageable.ofSize(20))
                 .stream().collect(Collectors.groupingBy(e -> e.get("questionId", Long.class)));
 
         questionResponses.forEach(qr ->
@@ -94,6 +104,23 @@ public class ShortAnswerManager extends ResponseManager<
     }
 
     @Override
+    public ShortAnswerResponseSummaryDto getResponseSummary(UUID formId, Long questionId, ShortAnswerResDto questionRes, Pageable pageable) {
+        var responseSummary = shortAnswerRepository.getResponseSummary(formId, questionId);
+        var texts = shortAnswerRepository.getResponseTexts(formId, questionId, pageable);
+
+        var sa = new ShortAnswerResponseSummaryDto();
+
+        sa.setQuestionId(questionRes.getId());
+        sa.setQuestion(questionRes.getQuestion());
+        sa.setOrderIndex(questionRes.getOrderIndex());
+        sa.setNumberOfResponses(responseSummary.numberOfResponses());
+        sa.setQuestionType(getQuestionType());
+        sa.setResponses(texts);
+
+        return sa;
+    }
+
+    @Override
     public ShortAnswerResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, ShortAnswerResDto questionResponse) {
         var sum = new ShortAnswerResponseQuestionDto.Summary();
 
@@ -116,16 +143,40 @@ public class ShortAnswerManager extends ResponseManager<
         var responses = grouped.stream().map(g -> {
             var res = new ShortAnswerResponseQuestionDto.Response();
 
+            res.setQuestionId(questionId);
+            res.setQuestionType(getQuestionType());
             res.setText(g.get("text", String.class));
             res.setResponseCount(g.get("responseCount", Long.class));
-            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+
+            var map = new HashMap<String, List<String>>();
+
+            map.put("text", List.of(StringUtil.emptyIfNull(res.getText())));
+
+            res.setFormResponsesIdentifier(IdUtil.generateCompressedEncodedId(map));
 
             return res;
         }).toList();
 
+        sa.setQuestionId(questionId);
+        sa.setQuestionType(getQuestionType());
         sa.setResponses(responses);
 
         return sa;
+    }
+
+    @Override
+    public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
+        var map = IdUtil.reconstructCompressedEncodedId(formResponsesIdentifier);
+
+        var text = map.get("text");
+
+        if (text.isEmpty()) {
+            throw new IllegalArgumentException("Invalid Form Responses Identifier");
+        }
+
+        var groupedResponse = text.getFirst();
+
+        return shortAnswerRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse);
     }
 
     @Override

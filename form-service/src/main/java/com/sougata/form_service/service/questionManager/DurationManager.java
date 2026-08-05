@@ -3,7 +3,6 @@ package com.sougata.form_service.service.questionManager;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.DurationAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.DurationResDto;
-import com.sougata.form_service.dto.validation.request.DurationValidationRequestDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.questionSchema.Duration;
 import com.sougata.form_service.repository.DurationRepository;
@@ -16,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service("DURATION_QUESTION_MANAGER")
-public class DurationManager extends QuestionManager<Duration, DurationAddUpdateReqDto, DurationResDto, DurationValidationRequestDto> {
+public class DurationManager extends QuestionManager<Duration, DurationAddUpdateReqDto, DurationResDto> {
 
     private final DurationRepository durationRepository;
 
@@ -71,18 +70,13 @@ public class DurationManager extends QuestionManager<Duration, DurationAddUpdate
     }
 
     @Override
-    public boolean validateResponse(DurationValidationRequestDto validationDto) {
-        return true;
-    }
-
-    @Override
     public QuestionType getQuestionType() {
         return QuestionType.DURATION;
     }
 
     @Override
-    public void delete(Long questionId) {
-        durationRepository.deleteById(questionId);
+    public void delete(UUID formId, Long questionId) {
+        durationRepository.deleteQuestion(formId, questionId);
     }
 
     @Override

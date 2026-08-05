@@ -2,27 +2,24 @@ package com.sougata.form_service.dto.form;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.Instant;
 
-public record FormAddUpdateReqDto(
-        String title,
-
-        String description,
-
-        String name,
-
-        @NotNull
-        Boolean published,
-
-        @NotNull
-        Boolean acceptingResponse,
-
-        String notAcceptingResponseMessage,
-
-        Instant stopAcceptingResponseOn,
-
-        @Max(value = 1000)
-        Integer stopAcceptingResponseAfterResponse
-) {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class FormAddUpdateReqDto {
+    private String title;
+    private String description;
+    private String name;
+    private @NotNull Boolean published;
+    private @NotNull Boolean acceptingResponse;
+    private String notAcceptingResponseMessage;
+    private Instant stopAcceptingResponseOn;
+    private @Max(value = 1000) Integer stopAcceptingResponseAfterResponse;
 }

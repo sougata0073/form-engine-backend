@@ -5,10 +5,14 @@ import com.sougata.form_data_service.dto.question.request.DropdownResponseAddReq
 import com.sougata.form_data_service.dto.question.response.DropdownResDto;
 import com.sougata.form_data_service.dto.response.question.DropdownResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.DropdownResponseSummaryDto;
+import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.Dropdown;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.repository.DropdownRepository;
+import com.sougata.form_data_service.repository.FormResponseRepository;
 import com.sougata.form_data_service.repository.QuestionResponseRepository;
+import com.sougata.form_data_service.util.IdUtil;
+import jakarta.persistence.Tuple;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,13 +28,14 @@ public class DropdownManager extends ResponseManager<
         DropdownResDto,
         DropdownResponseQuestionDto,
         DropdownResponseQuestionDto.Response,
-        DropdownResponseQuestionDto.Summary
+        DropdownResponseQuestionDto.Summary,
+        DropdownResponseQuestionDto.FormResponsesReqDto
         > {
 
     private final DropdownRepository dropdownRepository;
 
     @Autowired
-    public DropdownManager(DropdownRepository dropdownRepository, QuestionResponseRepository questionResponseRepository) {
+    public DropdownManager(DropdownRepository dropdownRepository, QuestionResponseRepository questionResponseRepository, FormResponseRepository formResponseRepository, AuthServiceFeignClient authServiceFeignClient) {
         super(questionResponseRepository);
         this.dropdownRepository = dropdownRepository;
     }
@@ -107,6 +112,11 @@ public class DropdownManager extends ResponseManager<
     }
 
     @Override
+    public DropdownResponseSummaryDto getResponseSummary(UUID formId, Long questionId, DropdownResDto questionRes, Pageable pageable) {
+        return null;
+    }
+
+    @Override
     public DropdownResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, DropdownResDto questionResponse) {
         var sum = new DropdownResponseQuestionDto.Summary();
 
@@ -129,16 +139,30 @@ public class DropdownManager extends ResponseManager<
         var responses = grouped.stream().map(g -> {
             var res = new DropdownResponseQuestionDto.Response();
 
+            res.setQuestionId(questionId);
+            res.setQuestionType(getQuestionType());
             res.setOptionId(g.get("optionId", Long.class));
             res.setResponseCount(g.get("responseCount", Long.class));
-            res.setResponseIds(Arrays.stream(g.get("responseIds", Long[].class)).map(Object::toString).toList());
+
+            var map = new HashMap<String, List<String>>();
+
+            map.put("optionId", List.of(res.getOptionId() == null ? "" : res.getOptionId().toString()));
+
+            res.setFormResponsesIdentifier(IdUtil.generateCompressedEncodedId(map));
 
             return res;
         }).toList();
 
+        d.setQuestionId(questionId);
+        d.setQuestionType(getQuestionType());
         d.setResponses(responses);
 
         return d;
+    }
+
+    @Override
+    public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
+        return List.of();
     }
 
     @Override

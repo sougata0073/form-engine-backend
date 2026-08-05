@@ -1,5 +1,6 @@
 package com.sougata.form_service.dto.question.response;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,19 +17,25 @@ public class TickBoxGridResDto extends QuestionRes {
     private List<TickBoxGridRowResDto> rows;
     private List<TickBoxGridColumnResDto> columns;
 
-    public record TickBoxGridRowResDto(
-            @JsonSerialize(using = ToStringSerializer.class)
-            Long id,
-            String row,
-            Integer orderIndex
-    ) {
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TickBoxGridRowResDto {
+        @JsonSerialize(using = ToStringSerializer.class)
+        private Long id;
+        private String row;
+        private Integer orderIndex;
     }
 
-    public record TickBoxGridColumnResDto(
-            @JsonSerialize(using = ToStringSerializer.class)
-            Long id,
-            String column,
-            Integer orderIndex
-    ) {
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TickBoxGridColumnResDto {
+        @JsonSerialize(using = ToStringSerializer.class)
+        private Long id;
+        private String column;
+        private Integer orderIndex;
     }
 }

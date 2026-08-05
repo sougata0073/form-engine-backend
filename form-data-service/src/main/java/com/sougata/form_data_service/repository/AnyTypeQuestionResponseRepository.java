@@ -25,6 +25,16 @@ public interface AnyTypeQuestionResponseRepository<Q extends AnyTypeQuestionResp
             """)
     List<CommonResponseSummaryProjection> getResponseSummaries(UUID formId);
 
+    @Query("""
+            select
+            new com.sougata.form_data_service.projection.CommonResponseSummaryProjection(
+                        :questionId, count(qr.questionResponseId)
+            )
+            from #{#entityName} qr
+            where qr.questionResponse.formResponse.formId = :formId and qr.questionResponse.questionId = :questionId
+            """)
+    CommonResponseSummaryProjection getResponseSummary(UUID formId, long questionId);
+
     @Query("select qr from #{#entityName} qr where qr.questionResponse.formResponse.formId = :formId and qr.questionResponse.questionId = :questionId")
     List<Q> findByFormIdAndQuestionId(UUID formId, Long questionId);
 

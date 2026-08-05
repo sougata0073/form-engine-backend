@@ -4,6 +4,7 @@ import com.sougata.form_service.constant.ValidationMessages;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -27,20 +28,21 @@ public class MultipleChoiceGridAddUpdateReqDto extends QuestionAddUpdateReq {
     @Size(min = 1, max = 20, message = ValidationMessages.COLUMNS_COUNT_RANGE)
     private List<@Valid Column> columns;
 
-    public record Row(
-            Long id,
-
-            @Length(min = 1)
-            String row
-    ) {
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Row {
+        private Long id;
+        private @Length(min = 1) String row;
     }
 
-    public record Column(
-            Long id,
-
-            @Length(min = 1)
-            String column
-    ) {
-
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Column {
+        private Long id;
+        private @Length(min = 1) String column;
     }
 }

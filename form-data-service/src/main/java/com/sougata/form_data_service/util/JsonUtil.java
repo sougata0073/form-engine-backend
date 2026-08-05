@@ -1,7 +1,5 @@
 package com.sougata.form_data_service.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-
 public class JsonUtil {
 
     private static final com.fasterxml.jackson.databind.ObjectMapper oldMapper =
@@ -12,7 +10,7 @@ public class JsonUtil {
     public static String oldJsonNodeToString(com.fasterxml.jackson.databind.JsonNode jsonNode) {
         try {
             return oldMapper.writeValueAsString(jsonNode);
-        } catch (JsonProcessingException e) {
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             return null;
         }
     }
@@ -21,16 +19,31 @@ public class JsonUtil {
         return oldMapper.valueToTree(obj);
     }
 
-    public static <T> T oldJsonNodeToObject(com.fasterxml.jackson.databind.JsonNode jsonNode, Class<T> returnType) throws JsonProcessingException {
+    public static <T> T oldJsonNodeToObject(com.fasterxml.jackson.databind.JsonNode jsonNode, Class<T> returnType) throws com.fasterxml.jackson.core.JsonProcessingException {
         return oldMapper.treeToValue(jsonNode, returnType);
     }
 
-    public static String getValueFromOldJsonNode(com.fasterxml.jackson.databind.JsonNode jsonNode, String fieldName) throws JsonProcessingException {
+    public static String getValueFromOldJsonNode(com.fasterxml.jackson.databind.JsonNode jsonNode, String fieldName) throws com.fasterxml.jackson.core.JsonProcessingException {
         return jsonNode.get(fieldName).asText();
     }
 
-    public static String getValueFromNewJsonNode(tools.jackson.databind.JsonNode jsonNode, String fieldName) throws JsonProcessingException {
+    public static String getValueFromNewJsonNode(tools.jackson.databind.JsonNode jsonNode, String fieldName) throws tools.jackson.databind.exc.JsonNodeException {
         return jsonNode.get(fieldName).asString();
+    }
+
+    public static void removeFieldRecursiveNewJsonNode(tools.jackson.databind.JsonNode node, String field) {
+        if (node.isObject()) {
+            var objectNode = (tools.jackson.databind.node.ObjectNode) node;
+            objectNode.remove(field);
+
+            for (tools.jackson.databind.JsonNode child : objectNode) {
+                removeFieldRecursiveNewJsonNode(child, field);
+            }
+        } else if (node.isArray()) {
+            for (tools.jackson.databind.JsonNode child : node) {
+                removeFieldRecursiveNewJsonNode(child, field);
+            }
+        }
     }
 
 }

@@ -1,10 +1,18 @@
 package com.sougata.form_service.dto.template;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.util.UUID;
 
-public record TemplateSummaryResDto(
-        UUID id,
-        String name,
-        String categoryName
-) {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class TemplateSummaryResDto {
+    private UUID id;
+    private String name;
+    private String categoryName;
 }

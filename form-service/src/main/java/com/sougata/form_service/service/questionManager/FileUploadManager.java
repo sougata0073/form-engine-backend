@@ -4,10 +4,7 @@ import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.FileUploadAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.FileTypeRes;
 import com.sougata.form_service.dto.question.response.FileUploadResDto;
-import com.sougata.form_service.dto.validation.request.FileUploadValidationRequestDto;
 import com.sougata.form_service.exception.FileTypeNotFoundException;
-import com.sougata.form_service.exception.InvalidFileSizeException;
-import com.sougata.form_service.exception.InvalidFileTypeException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.FileType;
 import com.sougata.form_service.model.questionSchema.FileUpload;
@@ -26,7 +23,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service("FILE_UPLOAD_QUESTION_MANAGER")
-public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAddUpdateReqDto, FileUploadResDto, FileUploadValidationRequestDto> {
+public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAddUpdateReqDto, FileUploadResDto> {
 
     private final FileUploadRepository fileUploadRepository;
     private final FileTypeRepository fileTypeRepository;
@@ -110,37 +107,14 @@ public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAdd
     }
 
     @Override
-    public boolean validateResponse(FileUploadValidationRequestDto validationDto) {
-        FileUpload fu = fileUploadRepository.findById(validationDto.getQuestionId())
-                .orElseThrow(() -> new QuestionNotFoundException(QuestionType.FILE_UPLOAD, validationDto.getQuestionId()));
-
-        if (validationDto.getFileSize() > fu.getMaxFileSize()) {
-            throw new InvalidFileSizeException(validationDto.getFileSize(), fu.getMaxFileSize());
-        }
-
-        if (!fu.getAllowedFileTypes().isEmpty()) {
-            List<String> mimeTypes = fu.getAllowedFileTypes()
-                    .stream()
-                    .map(FileType::getMimeTypes)
-                    .flatMap(Arrays::stream)
-                    .toList();
-
-            if (!mimeTypes.contains(validationDto.getFileMimeType())) {
-                throw new InvalidFileTypeException(validationDto.getFileMimeType(), fu.getAllowedFileTypes());
-            }
-        }
-
-        return true;
-    }
-
-    @Override
     public QuestionType getQuestionType() {
         return QuestionType.FILE_UPLOAD;
     }
 
     @Override
-    public void delete(Long questionId) {
-        fileUploadRepository.deleteById(questionId);
+    public void delete(UUID formId, Long questionId) {
+        fileUploadRepository.deleteAllFileUploadFileTypeByFileUploadId(questionId);
+        fileUploadRepository.deleteQuestion(formId, questionId);
     }
 
     private void setPropertiesForNew(FileUploadAddUpdateReqDto source, FileUpload target, Question question) {

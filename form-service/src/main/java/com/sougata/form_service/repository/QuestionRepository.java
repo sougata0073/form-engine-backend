@@ -5,7 +5,10 @@ import com.sougata.form_service.projection.QuestionIdProjection;
 import com.sougata.form_service.projection.QuestionSummaryProjection;
 import com.sougata.form_service.projection.QuestionTypeProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,5 +27,10 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
 
     List<QuestionIdProjection> findByFormIdAndRequired(UUID formId, Boolean required);
 
-    Optional<QuestionTypeProjection> findQuestionTypeById(Long questionId);
+    Optional<QuestionTypeProjection> findQuestionTypeByFormIdAndId(UUID formId, Long questionId);
+
+    @Modifying
+    @Transactional
+    @Query("delete from Question q where q.id = :questionId")
+    void deleteQuestion(long questionId);
 }

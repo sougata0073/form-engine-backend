@@ -1,5 +1,6 @@
 package com.sougata.form_data_service.dto.response.summary;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.sougata.form_data_service.constant.QuestionType;
@@ -8,6 +9,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import tools.jackson.databind.annotation.JsonSerialize;
 import tools.jackson.databind.ser.std.ToStringSerializer;
+
+import java.util.List;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -34,7 +37,7 @@ import tools.jackson.databind.ser.std.ToStringSerializer;
 @Getter
 @Setter
 @NoArgsConstructor
-public class ResponseSummaryDto {
+public class ResponseSummaryDto<TResponse> {
 
     @JsonSerialize(using = ToStringSerializer.class)
     private Long questionId;
@@ -48,4 +51,8 @@ public class ResponseSummaryDto {
     @JsonSerialize(using = ToStringSerializer.class)
     private Long numberOfResponses;
 
+    private List<TResponse> responses;
+
+    @JsonProperty(value = "@class")
+    private String cls = getClass().getName();
 }

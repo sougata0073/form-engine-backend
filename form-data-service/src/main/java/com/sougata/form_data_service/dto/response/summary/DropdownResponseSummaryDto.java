@@ -7,26 +7,24 @@ import lombok.Setter;
 import tools.jackson.databind.annotation.JsonSerialize;
 import tools.jackson.databind.ser.std.ToStringSerializer;
 
-import java.util.List;
-
-@NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-public class DropdownResponseSummaryDto extends ResponseSummaryDto {
+public class DropdownResponseSummaryDto extends ResponseSummaryDto<DropdownResponseSummaryDto.Response> {
 
-    private List<Response> responses;
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class Response {
+        @JsonSerialize(using = ToStringSerializer.class)
+        private Long optionId;
 
-    public record Response(
-            @JsonSerialize(using = ToStringSerializer.class)
-            Long optionId,
+        private String option;
 
-            String option,
-
-            @JsonSerialize(using = ToStringSerializer.class)
-            Long responseCount
-    ) {
-
+        @JsonSerialize(using = ToStringSerializer.class)
+        private Long responseCount;
     }
+
 
 }

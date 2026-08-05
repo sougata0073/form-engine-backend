@@ -12,23 +12,69 @@ import java.util.UUID;
 @Repository("DURATION_RESPONSE_REPOSITORY")
 public interface DurationRepository extends AnyTypeQuestionResponseRepository<Duration, Long> {
 
-    @Query("""
+    @Query(value = """
             select
-            d.questionResponse.questionId questionId,
-            d.hours hours,
-            d.minutes minutes,
-            d.seconds seconds
-            from Duration d
-            where d.questionResponse.formResponse.formId = :formId
-            """)
-    List<Tuple> getResponseDurations(UUID formId);
+            x.questionId questionId,
+            x.hours as hours,
+            array_agg(x.minutes order by x.minutes, x.seconds) minutes,
+            array_agg(x.seconds order by x.minutes, x.seconds) seconds,
+            array_agg(x.minSecCount order by x.minutes, x.seconds) minSecCounts
+            from (
+                select
+                qr.question_id questionId,
+                d.hours hours,
+                d.minutes minutes,
+                d.seconds seconds,
+                count((d.minutes, d.seconds)) minSecCount
+                from durations d
+                join question_responses qr
+                on d.question_response_id = qr.id
+                join form_responses fr
+                on fr.id = qr.form_response_id
+                where fr.form_id = :formId
+                group by qr.question_id, d.hours, d.minutes, d.seconds
+            ) x
+            group by x.questionId, x.hours
+            order by x.hours
+            """, nativeQuery = true)
+    List<Tuple> getResponsesDurations(UUID formId, Pageable pageable);
 
-    @Query("""
+    @Query(value = """
             select
-            count(distinct (d.hours, d.minutes, d.seconds))
-            from Duration d
-            where d.questionResponse.questionId = :questionId and d.questionResponse.formResponse.formId = :formId
-            """)
+            x.hours as hours,
+            array_agg(x.minutes order by x.minutes, x.seconds) minutes,
+            array_agg(x.seconds order by x.minutes, x.seconds) seconds,
+            array_agg(x.minSecCount order by x.minutes, x.seconds) minSecCounts
+            from (
+                select
+                d.hours hours,
+                d.minutes minutes,
+                d.seconds seconds,
+                count((d.minutes, d.seconds)) minSecCount
+                from durations d
+                join question_responses qr
+                on d.question_response_id = qr.id
+                join form_responses fr
+                on fr.id = qr.form_response_id
+                where fr.form_id = :formId
+                and qr.question_id = :questionId
+                group by d.hours, d.minutes, d.seconds
+            ) x
+            group by x.hours
+            order by x.hours
+            """, nativeQuery = true)
+    List<Tuple> getResponseDurations(UUID formId, long questionId, Pageable pageable);
+
+    @Query(value = """
+            select
+            count(distinct (coalesce(d.hours, -1), coalesce(d.minutes, -1), coalesce(d.seconds, -1)))
+            from form_responses fr
+            left join question_responses qr
+            on fr.id = qr.form_response_id and qr.question_id = :questionId
+            left join durations d
+            on qr.id = d.question_response_id
+            where fr.form_id = :formId
+            """, nativeQuery = true)
     Long getDistinctResponseCount(UUID formId, Long questionId);
 
     @Query(value = """
@@ -36,16 +82,16 @@ public interface DurationRepository extends AnyTypeQuestionResponseRepository<Du
             d.hours hours,
             d.minutes minutes,
             d.seconds seconds,
-            count(d.question_response_id) responseCount,
-            array_agg(fr.id order by fr.created_at) responseIds
-            from durations d
-            join question_responses qr
+            count(*) responseCount
+            from form_responses fr
+            left join question_responses  qr
+            on fr.id = qr.form_response_id
+            and qr.question_id = :questionId
+            left join durations d
             on qr.id = d.question_response_id
-            join form_responses fr
-            on qr.form_response_id = fr.id
-            where fr.form_id = :formId and qr.question_id = :questionId
+            where fr.form_id = :formId
             group by d.hours, d.minutes, d.seconds
-            order by responseCount desc
+            order by responseCount desc, min(fr.created_at) asc
             """, nativeQuery = true)
     List<Tuple> groupedByDuration(UUID formId, long questionId, Pageable pageable);
 

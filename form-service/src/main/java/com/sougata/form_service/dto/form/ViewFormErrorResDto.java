@@ -1,10 +1,17 @@
 package com.sougata.form_service.dto.form;
 
 import com.sougata.form_service.constant.ViewFormErrorReason;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-public record ViewFormErrorResDto(
-        String formTitle,
-        ViewFormErrorReason reason,
-        String message
-) {
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class ViewFormErrorResDto {
+    private String formTitle;
+    private ViewFormErrorReason reason;
+    private String message;
 }
