@@ -51,7 +51,7 @@ public class QuestionServiceImpl implements QuestionService {
         if (prevQType == dto.getQuestionType()) {
             var manager = questionManagerFactory.get(prevQType);
 
-            return manager.update(questionId, dto);
+            return manager.update(formId, questionId, dto);
         } else {
             var prevManager = questionManagerFactory.get(prevQType);
             var newManager = questionManagerFactory.get(dto.getQuestionType());
@@ -69,6 +69,7 @@ public class QuestionServiceImpl implements QuestionService {
         var questionType = questionRepository.findQuestionTypeByFormIdAndId(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(questionId)).getQuestionType();
 
+        // TODO: Message broker will handle this
         formDataServiceFeignClient.deleteResponses(formId, questionId);
 
         var manager = questionManagerFactory.get(questionType);

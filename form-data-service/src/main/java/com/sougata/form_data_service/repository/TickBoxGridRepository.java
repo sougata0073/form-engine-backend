@@ -61,4 +61,24 @@ public interface TickBoxGridRepository extends AnyTypeQuestionResponseRepository
             order by responseCount desc, min(fr_created_at) asc
             """, nativeQuery = true)
     List<Tuple> groupedByResponseRowColumn(UUID formId, long questionId, long rowId, Pageable pageable);
+
+    @Query(value = """
+                select
+            	qr.question_id questionId,
+            	tbgr.row_id rowId,
+            	array_agg(tbgc.response_option_id) columnIds
+            	from tick_box_grids tbg
+            	join tick_box_grid_rows tbgr
+            	on tbg.question_response_id = tbgr.tick_box_grid_id
+            	join tick_box_grid_columns tbgc
+            	on tbgc.tick_box_grid_row_id = tbgr.id
+            	join question_responses qr
+            	on tbg.question_response_id = qr.id
+            	join form_responses fr
+            	on fr.id = qr.form_response_id
+            	where fr.form_id = :formId
+                and fr.id = :formResponseId
+            	group by qr.question_id, tbgr.row_id
+            """, nativeQuery = true)
+    List<Tuple> getRowColumnIdsByFormResponse(UUID formId, long formResponseId);
 }

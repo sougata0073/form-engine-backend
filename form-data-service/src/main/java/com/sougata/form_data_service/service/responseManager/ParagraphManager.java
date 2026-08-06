@@ -3,9 +3,11 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.ParagraphResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.ParagraphResDto;
+import com.sougata.form_data_service.dto.response.individual.LinearScaleResponseIndividualDto;
+import com.sougata.form_data_service.dto.response.individual.ParagraphResponseIndividualDto;
+import com.sougata.form_data_service.dto.response.individual.ResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.ParagraphResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.ParagraphResponseSummaryDto;
-import com.sougata.form_data_service.dto.response.summary.ShortAnswerResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.Paragraph;
@@ -31,7 +33,7 @@ public class ParagraphManager extends ResponseManager<
         ParagraphResponseQuestionDto,
         ParagraphResponseQuestionDto.Response,
         ParagraphResponseQuestionDto.Summary,
-        ParagraphResponseQuestionDto.FormResponsesReqDto
+        ParagraphResponseIndividualDto
         > {
 
     private final ParagraphRepository paragraphRepository;
@@ -158,6 +160,24 @@ public class ParagraphManager extends ResponseManager<
         p.setResponses(responses);
 
         return p;
+    }
+
+    @Override
+    public List<ParagraphResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
+        var responses = paragraphRepository.getTextsByFormResponse(formId, formResponseId);
+
+        return responses.stream().map(tuple -> {
+            var qId = tuple.get("questionId", Long.class);
+            var text = tuple.get("text", String.class);
+
+            var res = new ParagraphResponseIndividualDto();
+
+            res.setQuestionId(qId);
+            res.setQuestionType(getQuestionType());
+            res.setText(text);
+
+            return res;
+        }).toList();
     }
 
     @Override

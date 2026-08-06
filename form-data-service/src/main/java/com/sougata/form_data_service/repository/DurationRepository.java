@@ -95,4 +95,16 @@ public interface DurationRepository extends AnyTypeQuestionResponseRepository<Du
             """, nativeQuery = true)
     List<Tuple> groupedByDuration(UUID formId, long questionId, Pageable pageable);
 
+
+    @Query("""
+            select
+            d.questionResponse.questionId questionId,
+            d.hours hours,
+            d.minutes minutes,
+            d.seconds seconds
+            from Duration d
+            where d.questionResponse.formResponse.formId = :formId
+            and d.questionResponse.formResponse.id = :formResponseId
+            """)
+    List<Tuple> getDurationsByFormResponse(UUID formId, long formResponseId);
 }

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.ShortAnswerAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.ShortAnswerResDto;
-import com.sougata.form_service.validation.configuration.ValidationConfig;
 import com.sougata.form_service.exception.JsonParsingException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.questionSchema.Question;
@@ -14,6 +13,7 @@ import com.sougata.form_service.repository.ShortAnswerRepository;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.QuestionManager;
 import com.sougata.form_service.util.JsonUtil;
+import com.sougata.form_service.validation.configuration.ValidationConfig;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,7 +52,7 @@ public class ShortAnswerManager extends QuestionManager<ShortAnswer, ShortAnswer
     public ShortAnswerResDto create(UUID formId, Long questionId, ShortAnswerAddUpdateReqDto crudDto) {
         var newS = new ShortAnswer();
 
-        var question = updateQuestion(questionId, crudDto);
+        var question = updateQuestion(formId, questionId, crudDto);
 
         setPropertiesForNew(crudDto, newS, question);
 
@@ -63,11 +63,11 @@ public class ShortAnswerManager extends QuestionManager<ShortAnswer, ShortAnswer
 
     @Override
     @Transactional
-    public ShortAnswerResDto update(Long questionId, ShortAnswerAddUpdateReqDto crudDto) {
-        ShortAnswer sa = shortAnswerRepository.findById(questionId)
+    public ShortAnswerResDto update(UUID formId, Long questionId, ShortAnswerAddUpdateReqDto crudDto) {
+        ShortAnswer sa = shortAnswerRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.SHORT_ANSWER, questionId));
 
-        updateQuestion(questionId, crudDto);
+        updateQuestion(formId, questionId, crudDto);
         sa.setValidationConfig(JsonUtil.objectToOldJsonNode(crudDto.getValidationConfig()));
 
         shortAnswerRepository.save(sa);

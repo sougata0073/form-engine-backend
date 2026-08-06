@@ -48,7 +48,7 @@ public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto
     public RatingResDto create(UUID formId, Long questionId, RatingAddUpdateReqDto crudDto) {
         var newR = new Rating();
 
-        var question = updateQuestion(questionId, crudDto);
+        var question = updateQuestion(formId, questionId, crudDto);
 
         setPropertiesForNew(crudDto, newR, question);
 
@@ -59,10 +59,10 @@ public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto
 
     @Override
     @Transactional
-    public RatingResDto update(Long questionId, RatingAddUpdateReqDto crudDto) {
-        Rating r = ratingRepository.findById(questionId)
+    public RatingResDto update(UUID formId, Long questionId, RatingAddUpdateReqDto crudDto) {
+        Rating r = ratingRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.RATING, questionId));
-        updateQuestion(questionId, crudDto);
+        updateQuestion(formId, questionId, crudDto);
 
         r.setMaxRatingNumber(crudDto.getMaxRatingNumber());
         r.setRatingIcon(crudDto.getRatingIcon());

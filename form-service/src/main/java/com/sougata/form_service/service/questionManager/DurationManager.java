@@ -47,7 +47,7 @@ public class DurationManager extends QuestionManager<Duration, DurationAddUpdate
     public DurationResDto create(UUID formId, Long questionId, DurationAddUpdateReqDto crudDto) {
         var newD = new Duration();
 
-        var question = updateQuestion(questionId, crudDto);
+        var question = updateQuestion(formId, questionId, crudDto);
 
         newD.setQuestion(question);
 
@@ -58,11 +58,11 @@ public class DurationManager extends QuestionManager<Duration, DurationAddUpdate
 
     @Override
     @Transactional
-    public DurationResDto update(Long questionId, DurationAddUpdateReqDto crudDto) {
-        Duration dur = durationRepository.findById(questionId)
+    public DurationResDto update(UUID formId, Long questionId, DurationAddUpdateReqDto crudDto) {
+        Duration dur = durationRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.DURATION, questionId));
 
-        updateQuestion(questionId, crudDto);
+        updateQuestion(formId, questionId, crudDto);
 
         durationRepository.save(dur);
 

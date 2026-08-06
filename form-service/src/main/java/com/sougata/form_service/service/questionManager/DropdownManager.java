@@ -53,7 +53,7 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
     public DropdownResDto create(UUID formId, Long questionId, DropdownAddUpdateReqDto crudDto) {
         var newDd = new Dropdown();
 
-        var question = updateQuestion(questionId, crudDto);
+        var question = updateQuestion(formId, questionId, crudDto);
 
         setPropertiesForNew(crudDto, newDd, question);
 
@@ -64,11 +64,11 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
 
     @Override
     @Transactional
-    public DropdownResDto update(Long questionId, DropdownAddUpdateReqDto crudDto) {
-        Dropdown dd = dropdownRepository.findById(questionId)
+    public DropdownResDto update(UUID formId, Long questionId, DropdownAddUpdateReqDto crudDto) {
+        Dropdown dd = dropdownRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.DROPDOWN, questionId));
 
-        updateQuestion(questionId, crudDto);
+        updateQuestion(formId, questionId, crudDto);
 
         Map<Long, DropdownOption> existingOptions = dd.getOptions().stream()
                 .collect(Collectors.toMap(DropdownOption::getId, option -> option));

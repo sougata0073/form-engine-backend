@@ -43,4 +43,22 @@ public interface MultipleChoiceGridRepository extends AnyTypeQuestionResponseRep
             order by responseCount desc, min(fr.created_at) asc
             """, nativeQuery = true)
     List<Tuple> groupedByResponseRowColumn(UUID formId, long questionId, long rowId, Pageable pageable);
+
+    @Query(value = """
+            select
+            qr.question_id questionId,
+            array_agg(mcgr.row_id order by mcgr.row_id) rowIds,
+            array_agg(mcgr.response_column_id order by mcgr.row_id) columnIds
+            from multiple_choice_grids mcg
+            join multiple_choice_grid_rows mcgr
+            on mcg.question_response_id = mcgr.multiple_choice_grid_id
+            join question_responses qr
+            on mcg.question_response_id = qr.id
+            join form_responses fr
+            on fr.id = qr.form_response_id
+            where fr.form_id = :formId
+            and fr.id = :formResponseId
+            group by qr.question_id
+            """, nativeQuery = true)
+    List<Tuple> getRowColumnIdsByFormResponse(UUID formId, long formResponseId);
 }

@@ -48,7 +48,7 @@ public class LinearScaleManager extends QuestionManager<LinearScale, LinearScale
     public LinearScaleResDto create(UUID formId, Long questionId, LinearScaleAddUpdateReqDto crudDto) {
         var newCb = new LinearScale();
 
-        var question = updateQuestion(questionId, crudDto);
+        var question = updateQuestion(formId, questionId, crudDto);
 
         setPropertiesForNew(crudDto, newCb, question);
 
@@ -59,11 +59,11 @@ public class LinearScaleManager extends QuestionManager<LinearScale, LinearScale
 
     @Override
     @Transactional
-    public LinearScaleResDto update(Long questionId, LinearScaleAddUpdateReqDto crudDto) {
-        LinearScale ls = linearScaleRepository.findById(questionId)
+    public LinearScaleResDto update(UUID formId, Long questionId, LinearScaleAddUpdateReqDto crudDto) {
+        LinearScale ls = linearScaleRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.LINEAR_SCALE, questionId));
 
-        updateQuestion(questionId, crudDto);
+        updateQuestion(formId, questionId, crudDto);
 
         ls.setFromNumber(crudDto.getFromNumber());
         ls.setToNumber(crudDto.getToNumber());

@@ -47,7 +47,7 @@ public class TimeManager extends QuestionManager<Time, TimeAddUpdateReqDto, Time
     public TimeResDto create(UUID formId, Long questionId, TimeAddUpdateReqDto crudDto) {
         var newTime = new Time();
 
-        var question = updateQuestion(questionId, crudDto);
+        var question = updateQuestion(formId, questionId, crudDto);
 
         newTime.setQuestion(question);
 
@@ -58,11 +58,11 @@ public class TimeManager extends QuestionManager<Time, TimeAddUpdateReqDto, Time
 
     @Override
     @Transactional
-    public TimeResDto update(Long questionId, TimeAddUpdateReqDto crudDto) {
-        Time t = timeRepository.findById(questionId)
+    public TimeResDto update(UUID formId, Long questionId, TimeAddUpdateReqDto crudDto) {
+        Time t = timeRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.TIME, questionId));
 
-        updateQuestion(questionId, crudDto);
+        updateQuestion(formId, questionId, crudDto);
 
         timeRepository.save(t);
 

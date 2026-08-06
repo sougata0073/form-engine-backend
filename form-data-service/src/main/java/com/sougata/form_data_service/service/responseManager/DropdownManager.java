@@ -3,6 +3,8 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.DropdownResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.DropdownResDto;
+import com.sougata.form_data_service.dto.response.individual.DateResponseIndividualDto;
+import com.sougata.form_data_service.dto.response.individual.DropdownResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.DropdownResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.DropdownResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
@@ -18,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -29,7 +32,7 @@ public class DropdownManager extends ResponseManager<
         DropdownResponseQuestionDto,
         DropdownResponseQuestionDto.Response,
         DropdownResponseQuestionDto.Summary,
-        DropdownResponseQuestionDto.FormResponsesReqDto
+        DropdownResponseIndividualDto
         > {
 
     private final DropdownRepository dropdownRepository;
@@ -158,6 +161,24 @@ public class DropdownManager extends ResponseManager<
         d.setResponses(responses);
 
         return d;
+    }
+
+    @Override
+    public List<DropdownResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
+        var responses = dropdownRepository.getOptionIdsByFormResponse(formId, formResponseId);
+
+        return responses.stream().map(tuple -> {
+            var qId = tuple.get("questionId", Long.class);
+            var optionId = tuple.get("optionId", Long.class);
+
+            var res = new DropdownResponseIndividualDto();
+
+            res.setQuestionId(qId);
+            res.setQuestionType(getQuestionType());
+            res.setOptionId(optionId);
+
+            return res;
+        }).toList();
     }
 
     @Override

@@ -19,6 +19,8 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
 
     List<Question> findByFormId(UUID id);
 
+    List<QuestionTypeProjection> findQuestionTypesByFormId(UUID formId);
+
     Optional<Question> findByFormIdAndId(UUID formId, Long questionId);
 
     List<QuestionSummaryProjection> findQuestionSummariesByFormId(UUID formId);

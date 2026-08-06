@@ -52,4 +52,14 @@ public interface RatingRepository extends AnyTypeQuestionResponseRepository<Rati
             order by responseCount desc, min(fr.created_at) asc
             """, nativeQuery = true)
     List<Tuple> groupedByRating(UUID formId, long questionId, Pageable pageable);
+
+    @Query("""
+            select
+            r.questionResponse.questionId questionId,
+            r.rating rating
+            from Rating r
+            where r.questionResponse.formResponse.formId = :formId
+            and r.questionResponse.formResponse.id = :formResponseId
+            """)
+    List<Tuple> getRatingsByFormResponse(UUID formId, long formResponseId);
 }

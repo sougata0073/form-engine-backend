@@ -85,4 +85,16 @@ public interface FileUploadRepository extends AnyTypeQuestionResponseRepository<
             """, nativeQuery = true)
     List<Tuple> groupedByFile(UUID formId, long questionId, Pageable pageable);
 
+    @Query("""
+            select
+            f.questionResponse.questionId questionId,
+            f.fileName fileName,
+            f.fileUrl fileUrl,
+            f.fileMimeType fileMimeType
+            from FileUpload f
+            where f.questionResponse.formResponse.formId = :formId
+            and f.questionResponse.formResponse.id = :formResponseId
+            """)
+    List<Tuple> getFileUploadsByFormResponse(UUID formId, long formResponseId);
+
 }

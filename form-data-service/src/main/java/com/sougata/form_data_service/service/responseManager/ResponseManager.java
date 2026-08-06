@@ -3,6 +3,8 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.QuestionResponseAddReq;
 import com.sougata.form_data_service.dto.question.response.QuestionRes;
+import com.sougata.form_data_service.dto.response.individual.ResponseIndividualDto;
+import com.sougata.form_data_service.dto.response.individual.ResponseIndividualResDto;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionResponse;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionSummary;
 import com.sougata.form_data_service.dto.response.question.ResponseQuestionDto;
@@ -24,7 +26,7 @@ public abstract class ResponseManager<
         ResByQ extends ResponseQuestionDto<ResByQRes>,
         ResByQRes extends ResponseByQuestionResponse,
         ResByQSumm extends ResponseByQuestionSummary,
-        FResponsesReq
+        ResIndi extends ResponseIndividualDto
         > {
 
     private final QuestionResponseRepository questionResponseRepository;
@@ -42,6 +44,8 @@ public abstract class ResponseManager<
     public abstract ResByQSumm getResponseByQuestionSummary(UUID formId, QRes questionResponse);
 
     public abstract ResByQ getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable);
+
+    public abstract List<ResIndi> getIndividualResponses(UUID formId, Long formResponseId);
 
     public abstract List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable);
 

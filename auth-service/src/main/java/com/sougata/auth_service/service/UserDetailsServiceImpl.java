@@ -1,7 +1,6 @@
 package com.sougata.auth_service.service;
 
 import com.sougata.auth_service.constant.AuthProvider;
-import com.sougata.auth_service.exception.WrongUsernameException;
 import com.sougata.auth_service.model.UserPrincipal;
 import com.sougata.auth_service.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetailsService;

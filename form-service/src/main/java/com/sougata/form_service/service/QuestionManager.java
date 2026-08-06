@@ -27,22 +27,13 @@ QuestionManager<Q extends AnyTypeQuestion, QAUR extends QuestionAddUpdateReq, QR
 
     public abstract QR create(UUID formId, Long questionId, QAUR crudDto);
 
-    public abstract QR update(Long questionId, QAUR crudDto);
+    public abstract QR update(UUID formId, Long questionId, QAUR crudDto);
 
     public abstract QuestionType getQuestionType();
 
     public abstract void delete(UUID formId, Long questionId);
 
-    public boolean exists(Long questionId) {
-        return questionRepository.existsById(questionId);
-    }
-
     public abstract QR toQuestionResDto(Q questionSchema);
-
-    public Question findQuestionById(Long questionId) {
-        return questionRepository.findById(questionId)
-                .orElseThrow(() -> new QuestionNotFoundException(questionId));
-    }
 
     public void populateCommonFields(Q question, QR questionRes) {
         questionRes.setId(question.getQuestionId());
@@ -66,8 +57,9 @@ QuestionManager<Q extends AnyTypeQuestion, QAUR extends QuestionAddUpdateReq, QR
         return questionRepository.save(newQ);
     }
 
-    public Question updateQuestion(Long questionId, QAUR source) {
-        var q = findQuestionById(questionId);
+    public Question updateQuestion(UUID formId, Long questionId, QAUR source) {
+        var q = questionRepository.findByFormIdAndId(formId, questionId)
+                .orElseThrow(() -> new QuestionNotFoundException(getQuestionType(), questionId));
 
         q.setQuestion(source.getQuestion());
         q.setDescription(source.getDescription());

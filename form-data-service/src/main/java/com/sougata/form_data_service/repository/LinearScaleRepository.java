@@ -51,4 +51,14 @@ public interface LinearScaleRepository extends AnyTypeQuestionResponseRepository
             """, nativeQuery = true)
     List<Tuple> groupedByResponseScale(UUID formId, long questionId, Pageable pageable);
 
+    @Query("""
+            select
+            ls.questionResponse.questionId questionId,
+            ls.scale scale
+            from LinearScale ls
+            where ls.questionResponse.formResponse.formId = :formId
+            and ls.questionResponse.formResponse.id = :formResponseId
+            """)
+    List<Tuple> getScalesByFormResponse(UUID formId, long formResponseId);
+
 }

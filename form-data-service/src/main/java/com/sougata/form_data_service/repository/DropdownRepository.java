@@ -50,4 +50,14 @@ public interface DropdownRepository extends AnyTypeQuestionResponseRepository<Dr
             order by responseCount desc, min(fr.created_at) asc
             """, nativeQuery = true)
     List<Tuple> groupedByResponseOption(UUID formId, long questionId, Pageable pageable);
+
+    @Query("""
+            select
+            d.questionResponse.questionId questionId,
+            d.responseOptionId optionId
+            from Dropdown d
+            where d.questionResponse.formResponse.formId = :formId
+            and d.questionResponse.formResponse.id = :formResponseId
+            """)
+    List<Tuple> getOptionIdsByFormResponse(UUID formId, long formResponseId);
 }

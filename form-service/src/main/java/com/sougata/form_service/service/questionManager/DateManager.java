@@ -48,7 +48,7 @@ public class DateManager extends QuestionManager<Date, DateAddUpdateReqDto, Date
     public DateResDto create(UUID formId, Long questionId, DateAddUpdateReqDto crudDto) {
         var newDate = new Date();
 
-        var question = updateQuestion(questionId, crudDto);
+        var question = updateQuestion(formId, questionId, crudDto);
 
         newDate.setQuestion(question);
 
@@ -59,11 +59,11 @@ public class DateManager extends QuestionManager<Date, DateAddUpdateReqDto, Date
 
     @Override
     @Transactional
-    public DateResDto update(Long questionId, DateAddUpdateReqDto crudDto) {
-        Date date = dateRepository.findById(questionId)
+    public DateResDto update(UUID formId, Long questionId, DateAddUpdateReqDto crudDto) {
+        Date date = dateRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.DATE, questionId));
 
-        updateQuestion(questionId, crudDto);
+        updateQuestion(formId, questionId, crudDto);
 
         dateRepository.save(date);
 

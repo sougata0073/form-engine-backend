@@ -93,4 +93,13 @@ public interface DateRepository extends AnyTypeQuestionResponseRepository<Date, 
             """, nativeQuery = true)
     List<Tuple> groupedByDate(UUID formId, long questionId, Pageable pageable);
 
+    @Query("""
+            select
+            d.questionResponse.questionId questionId,
+            d.date date
+            from Date d
+            where d.questionResponse.formResponse.formId = :formId
+            and d.questionResponse.formResponse.id = :formResponseId
+            """)
+    List<Tuple> getDatesByFormResponse(UUID formId, long formResponseId);
 }

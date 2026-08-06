@@ -89,4 +89,14 @@ public interface ShortAnswerRepository extends AnyTypeQuestionResponseRepository
             order by fr.created_at
             """, nativeQuery = true)
     List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, String response);
+
+    @Query("""
+            select
+            sa.questionResponse.questionId questionId,
+            sa.text text
+            from ShortAnswer sa
+            where sa.questionResponse.formResponse.formId = :formId
+            and sa.questionResponse.formResponse.id = :formResponseId
+            """)
+    List<Tuple> getTextsByFormResponse(UUID formId, long formResponseId);
 }

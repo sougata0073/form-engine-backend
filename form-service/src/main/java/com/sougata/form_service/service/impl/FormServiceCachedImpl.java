@@ -35,8 +35,8 @@ public class FormServiceCachedImpl implements FormServiceCached {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     @Cacheable(cacheNames = "formDetails", key = "#id")
+    @SuppressWarnings("unchecked")
     public FormResponseDto getFormDetails(UUID id) {
         Form f = formRepository.findById(id).orElseThrow(() -> new FormNotFoundException(id));
 

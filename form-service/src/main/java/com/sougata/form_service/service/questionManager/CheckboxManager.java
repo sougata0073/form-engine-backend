@@ -4,18 +4,18 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.CheckboxAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.CheckboxResDto;
-import com.sougata.form_service.repository.CheckboxOptionRepository;
-import com.sougata.form_service.validation.configuration.ValidationConfig;
 import com.sougata.form_service.exception.JsonParsingException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.questionSchema.Checkbox;
 import com.sougata.form_service.model.questionSchema.CheckboxOption;
 import com.sougata.form_service.model.questionSchema.Question;
+import com.sougata.form_service.repository.CheckboxOptionRepository;
 import com.sougata.form_service.repository.CheckboxRepository;
 import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.QuestionManager;
 import com.sougata.form_service.util.JsonUtil;
+import com.sougata.form_service.validation.configuration.ValidationConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,7 +62,7 @@ public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdate
     public CheckboxResDto create(UUID formId, Long questionId, CheckboxAddUpdateReqDto crudDto) {
         var newCb = new Checkbox();
 
-        var question = updateQuestion(questionId, crudDto);
+        var question = updateQuestion(formId, questionId, crudDto);
 
         setPropertiesForNew(crudDto, newCb, question);
 
@@ -73,11 +73,11 @@ public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdate
 
     @Override
     @Transactional
-    public CheckboxResDto update(Long questionId, CheckboxAddUpdateReqDto crudDto) {
-        Checkbox cb = checkboxRepository.findById(questionId)
+    public CheckboxResDto update(UUID formId, Long questionId, CheckboxAddUpdateReqDto crudDto) {
+        Checkbox cb = checkboxRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.CHECKBOX, questionId));
 
-        updateQuestion(questionId, crudDto);
+        updateQuestion(formId, questionId, crudDto);
         cb.setValidationConfig(JsonUtil.objectToOldJsonNode(crudDto.getValidationConfig()));
 
         Map<Long, CheckboxOption> existingOptions = cb.getOptions().stream()

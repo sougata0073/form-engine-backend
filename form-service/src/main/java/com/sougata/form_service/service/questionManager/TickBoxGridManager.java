@@ -57,7 +57,7 @@ public class TickBoxGridManager extends QuestionManager<TickBoxGrid, TickBoxGrid
     public TickBoxGridResDto create(UUID formId, Long questionId, TickBoxGridAddUpdateReqDto crudDto) {
         var newTbg = new TickBoxGrid();
 
-        var question = updateQuestion(questionId, crudDto);
+        var question = updateQuestion(formId, questionId, crudDto);
 
         setPropertiesForNew(crudDto, newTbg, question);
 
@@ -68,11 +68,11 @@ public class TickBoxGridManager extends QuestionManager<TickBoxGrid, TickBoxGrid
 
     @Override
     @Transactional
-    public TickBoxGridResDto update(Long questionId, TickBoxGridAddUpdateReqDto crudDto) {
-        TickBoxGrid tbg = tickBoxGridRepository.findById(questionId)
+    public TickBoxGridResDto update(UUID formId, Long questionId, TickBoxGridAddUpdateReqDto crudDto) {
+        TickBoxGrid tbg = tickBoxGridRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.TICK_BOX_GRID, questionId));
 
-        updateQuestion(questionId, crudDto);
+        updateQuestion(formId, questionId, crudDto);
         tbg.setEachRowRequired(crudDto.getEachRowRequired());
 
         Map<Long, TickBoxGridRow> existingRows = tbg.getRows().stream()

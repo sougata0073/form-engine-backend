@@ -89,4 +89,14 @@ public interface TimeRepository extends AnyTypeQuestionResponseRepository<Time, 
             """, nativeQuery = true)
     List<Tuple> groupedByTime(UUID formId, long questionId, Pageable pageable);
 
+    @Query("""
+            select
+            t.questionResponse.questionId questionId,
+            t.time time
+            from Time t
+            where t.questionResponse.formResponse.formId = :formId
+            and t.questionResponse.formResponse.id = :formResponseId
+            """)
+    List<Tuple> getTimesByFormResponse(UUID formId, long formResponseId);
+
 }

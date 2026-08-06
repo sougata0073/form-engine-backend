@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.ParagraphAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.ParagraphResDto;
-import com.sougata.form_service.validation.configuration.ValidationConfig;
 import com.sougata.form_service.exception.JsonParsingException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.questionSchema.Paragraph;
@@ -14,6 +13,7 @@ import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.QuestionManager;
 import com.sougata.form_service.util.JsonUtil;
+import com.sougata.form_service.validation.configuration.ValidationConfig;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -52,7 +52,7 @@ public class ParagraphManager extends QuestionManager<Paragraph, ParagraphAddUpd
     public ParagraphResDto create(UUID formId, Long questionId, ParagraphAddUpdateReqDto crudDto) {
         var newP = new Paragraph();
 
-        var question = updateQuestion(questionId, crudDto);
+        var question = updateQuestion(formId, questionId, crudDto);
 
         setPropertiesForNew(crudDto, newP, question);
 
@@ -63,11 +63,11 @@ public class ParagraphManager extends QuestionManager<Paragraph, ParagraphAddUpd
 
     @Override
     @Transactional
-    public ParagraphResDto update(Long questionId, ParagraphAddUpdateReqDto crudDto) {
-        Paragraph p = paragraphRepository.findById(questionId)
+    public ParagraphResDto update(UUID formId, Long questionId, ParagraphAddUpdateReqDto crudDto) {
+        Paragraph p = paragraphRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.PARAGRAPH, questionId));
 
-        updateQuestion(questionId, crudDto);
+        updateQuestion(formId, questionId, crudDto);
         p.setValidationConfig(JsonUtil.objectToOldJsonNode(crudDto.getValidationConfig()));
 
         paragraphRepository.save(p);

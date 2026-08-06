@@ -3,9 +3,10 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.DateTimeResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.DateTimeResDto;
+import com.sougata.form_data_service.dto.response.individual.DateResponseIndividualDto;
+import com.sougata.form_data_service.dto.response.individual.DateTimeResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.DateTimeResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.DateTimeResponseSummaryDto;
-import com.sougata.form_data_service.dto.response.summary.ShortAnswerResponseSummaryDto;
 import com.sougata.form_data_service.model.DateTime;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.repository.DateTimeRepository;
@@ -30,7 +31,7 @@ public class DateTimeManager extends ResponseManager<
         DateTimeResponseQuestionDto,
         DateTimeResponseQuestionDto.Response,
         DateTimeResponseQuestionDto.Summary,
-        DateTimeResponseQuestionDto.FormResponsesReqDto
+        DateTimeResponseIndividualDto
         > {
 
     private final DateTimeRepository dateTimeRepository;
@@ -179,6 +180,24 @@ public class DateTimeManager extends ResponseManager<
         dt.setResponses(responses);
 
         return dt;
+    }
+
+    @Override
+    public List<DateTimeResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
+        var responses = dateTimeRepository.getDateTimesByFormResponse(formId, formResponseId);
+
+        return responses.stream().map(tuple -> {
+            var qId = tuple.get("questionId", Long.class);
+            var dateTime = tuple.get("dateTime", Instant.class);
+
+            var res = new DateTimeResponseIndividualDto();
+
+            res.setQuestionId(qId);
+            res.setQuestionType(getQuestionType());
+            res.setDateTime(dateTime);
+
+            return res;
+        }).toList();
     }
 
     @Override

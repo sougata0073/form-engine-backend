@@ -50,4 +50,14 @@ public interface MultipleChoiceRepository extends AnyTypeQuestionResponseReposit
             order by responseCount desc, min(fr.created_at) asc
             """, nativeQuery = true)
     List<Tuple> groupedByResponseOption(UUID formId, long questionId, Pageable pageable);
+
+    @Query("""
+            select
+            mc.questionResponse.questionId questionId,
+            mc.responseOptionId optionId
+            from MultipleChoice mc
+            where mc.questionResponse.formResponse.formId = :formId
+            and mc.questionResponse.formResponse.id = :formResponseId
+            """)
+    List<Tuple> getOptionIdsByFormResponse(UUID formId, long formResponseId);
 }

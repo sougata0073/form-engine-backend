@@ -3,6 +3,7 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.CheckboxResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.CheckboxResDto;
+import com.sougata.form_data_service.dto.response.individual.CheckboxResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.CheckboxResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.CheckboxResponseSummaryDto;
 import com.sougata.form_data_service.model.Checkbox;
@@ -29,7 +30,7 @@ public class CheckboxManager extends ResponseManager<
         CheckboxResponseQuestionDto,
         CheckboxResponseQuestionDto.Response,
         CheckboxResponseQuestionDto.Summary,
-        CheckboxResponseQuestionDto.FormResponsesReqDto
+        CheckboxResponseIndividualDto
         > {
 
     private final CheckboxRepository checkboxRepository;
@@ -175,6 +176,24 @@ public class CheckboxManager extends ResponseManager<
         cb.setResponses(responses);
 
         return cb;
+    }
+
+    @Override
+    public List<CheckboxResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
+        var responses = checkboxRepository.getOptionIdsByFormResponse(formId, formResponseId);
+
+        return responses.stream().map(tuple -> {
+            var qId = tuple.get("questionId", Long.class);
+            var optionIds = Arrays.stream(tuple.get("optionIds", Long[].class)).map(Object::toString).toList();
+
+            var res = new CheckboxResponseIndividualDto();
+
+            res.setQuestionId(qId);
+            res.setQuestionType(getQuestionType());
+            res.setOptionIds(optionIds);
+
+            return res;
+        }).toList();
     }
 
     @Override

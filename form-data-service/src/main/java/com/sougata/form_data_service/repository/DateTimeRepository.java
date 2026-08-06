@@ -73,4 +73,14 @@ public interface DateTimeRepository extends AnyTypeQuestionResponseRepository<Da
             order by responseCount desc, min(fr.created_at) asc
             """, nativeQuery = true)
     List<Tuple> groupedByDateTimes(UUID formId, long questionId, Pageable pageable);
+
+    @Query("""
+            select
+            d.questionResponse.questionId questionId,
+            d.dateTime dateTime
+            from DateTime d
+            where d.questionResponse.formResponse.formId = :formId
+            and d.questionResponse.formResponse.id = :formResponseId
+            """)
+    List<Tuple> getDateTimesByFormResponse(UUID formId, long formResponseId);
 }

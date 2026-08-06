@@ -3,9 +3,10 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.DateResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.DateResDto;
+import com.sougata.form_data_service.dto.response.individual.CheckboxResponseIndividualDto;
+import com.sougata.form_data_service.dto.response.individual.DateResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.DateResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.DateResponseSummaryDto;
-import com.sougata.form_data_service.dto.response.summary.DateTimeResponseSummaryDto;
 import com.sougata.form_data_service.model.Date;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.repository.DateRepository;
@@ -18,7 +19,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,7 +30,7 @@ public class DateManager extends ResponseManager<
         DateResponseQuestionDto,
         DateResponseQuestionDto.Response,
         DateResponseQuestionDto.Summary,
-        DateResponseQuestionDto.FormResponsesReqDto
+        DateResponseIndividualDto
         > {
 
     private final DateRepository dateRepository;
@@ -206,6 +206,24 @@ public class DateManager extends ResponseManager<
         d.setResponses(responses);
 
         return d;
+    }
+
+    @Override
+    public List<DateResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
+        var responses = dateRepository.getDatesByFormResponse(formId, formResponseId);
+
+        return responses.stream().map(tuple -> {
+            var qId = tuple.get("questionId", Long.class);
+            var date = tuple.get("date", Instant.class);
+
+            var res = new DateResponseIndividualDto();
+
+            res.setQuestionId(qId);
+            res.setQuestionType(getQuestionType());
+            res.setDate(date);
+
+            return res;
+        }).toList();
     }
 
     @Override

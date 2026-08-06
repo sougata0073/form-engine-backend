@@ -57,7 +57,7 @@ public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAdd
     public FileUploadResDto create(UUID formId, Long questionId, FileUploadAddUpdateReqDto crudDto) {
         var newFu = new FileUpload();
 
-        var question = updateQuestion(questionId, crudDto);
+        var question = updateQuestion(formId, questionId, crudDto);
 
         setPropertiesForNew(crudDto, newFu, question);
 
@@ -68,11 +68,11 @@ public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAdd
 
     @Override
     @Transactional
-    public FileUploadResDto update(Long questionId, FileUploadAddUpdateReqDto crudDto) {
-        FileUpload fu = fileUploadRepository.findById(questionId)
+    public FileUploadResDto update(UUID formId, Long questionId, FileUploadAddUpdateReqDto crudDto) {
+        FileUpload fu = fileUploadRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.FILE_UPLOAD, questionId));
 
-        updateQuestion(questionId, crudDto);
+        updateQuestion(formId, questionId, crudDto);
 
         List<String> categories = crudDto.getAllowedFileCategories();
         List<FileType> fileTypes = categories.stream()

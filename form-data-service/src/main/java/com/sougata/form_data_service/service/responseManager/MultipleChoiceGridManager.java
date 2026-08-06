@@ -3,6 +3,8 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.MultipleChoiceGridResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.MultipleChoiceGridResDto;
+import com.sougata.form_data_service.dto.response.individual.DropdownResponseIndividualDto;
+import com.sougata.form_data_service.dto.response.individual.MultipleChoiceGridResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.MultipleChoiceGridResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.MultipleChoiceGridResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
@@ -33,7 +35,7 @@ public class MultipleChoiceGridManager extends ResponseManager<
         MultipleChoiceGridResponseQuestionDto,
         MultipleChoiceGridResponseQuestionDto.Response,
         MultipleChoiceGridResponseQuestionDto.Summary,
-        MultipleChoiceGridResponseQuestionDto.FormResponsesReqDto
+        MultipleChoiceGridResponseIndividualDto
         > {
 
     private final MultipleChoiceGridRepository multipleChoiceGridRepository;
@@ -217,6 +219,36 @@ public class MultipleChoiceGridManager extends ResponseManager<
         mc.setResponses(responses);
 
         return mc;
+    }
+
+    @Override
+    public List<MultipleChoiceGridResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
+        var responses = multipleChoiceGridRepository.getRowColumnIdsByFormResponse(formId, formResponseId);
+
+        return responses.stream().map(tuple -> {
+            var qId = tuple.get("questionId", Long.class);
+            var rowIds = tuple.get("rowIds", Long[].class);
+            var columnIds = tuple.get("columnIds", Long[].class);
+
+            var res = new MultipleChoiceGridResponseIndividualDto();
+
+            res.setQuestionId(qId);
+            res.setQuestionType(getQuestionType());
+
+            var rows = new ArrayList<MultipleChoiceGridResponseIndividualDto.MultipleChoiceGridResponseIndividualDtoRow>();
+
+            for (int i = 0; i < rowIds.length; i++) {
+                rows.add(
+                        new MultipleChoiceGridResponseIndividualDto.MultipleChoiceGridResponseIndividualDtoRow(
+                                rowIds[i], columnIds[i]
+                        )
+                );
+            }
+
+            res.setRows(rows);
+
+            return res;
+        }).toList();
     }
 
     @Override

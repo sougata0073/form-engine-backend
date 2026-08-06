@@ -3,6 +3,9 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.MultipleChoiceResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.MultipleChoiceResDto;
+import com.sougata.form_data_service.dto.response.individual.LinearScaleResponseIndividualDto;
+import com.sougata.form_data_service.dto.response.individual.MultipleChoiceResponseIndividualDto;
+import com.sougata.form_data_service.dto.response.individual.ResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.MultipleChoiceResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.MultipleChoiceResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
@@ -29,7 +32,7 @@ public class MultipleChoiceManager extends ResponseManager<
         MultipleChoiceResponseQuestionDto,
         MultipleChoiceResponseQuestionDto.Response,
         MultipleChoiceResponseQuestionDto.Summary,
-        MultipleChoiceResponseQuestionDto.FormResponsesReqDto
+        MultipleChoiceResponseIndividualDto
         > {
 
     private final MultipleChoiceRepository multipleChoiceRepository;
@@ -159,6 +162,24 @@ public class MultipleChoiceManager extends ResponseManager<
         mc.setResponses(responses);
 
         return mc;
+    }
+
+    @Override
+    public List<MultipleChoiceResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
+        var responses = multipleChoiceRepository.getOptionIdsByFormResponse(formId, formResponseId);
+
+        return responses.stream().map(tuple -> {
+            var qId = tuple.get("questionId", Long.class);
+            var optionId = tuple.get("optionId", Long.class);
+
+            var res = new MultipleChoiceResponseIndividualDto();
+
+            res.setQuestionId(qId);
+            res.setQuestionType(getQuestionType());
+            res.setOptionId(optionId);
+
+            return res;
+        }).toList();
     }
 
     @Override

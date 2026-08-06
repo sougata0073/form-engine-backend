@@ -4,7 +4,7 @@ import com.sougata.form_data_service.dto.form.FormResponseAddReqDto;
 import com.sougata.form_data_service.dto.form.FormResponseAddResDto;
 import com.sougata.form_data_service.dto.form.FormResponseSummariesDto;
 import com.sougata.form_data_service.dto.form.FormResponseSummaryShortDto;
-import com.sougata.form_data_service.dto.question.QuestionSummaryDto;
+import com.sougata.form_data_service.dto.response.individual.ResponseIndividualResDto;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionResponse;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionSummary;
 import com.sougata.form_data_service.dto.response.question.ResponseQuestionDto;
@@ -12,7 +12,6 @@ import com.sougata.form_data_service.dto.response.summary.ResponseSummaryDto;
 import com.sougata.form_data_service.dto.response.summary.ResponseSummaryResDto;
 import com.sougata.form_data_service.service.FormResponseService;
 import jakarta.validation.Valid;
-import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -118,6 +117,31 @@ public class FormResponseController {
         return formResponseService.getFormResponseSummaries(formId, questionId, formResponsesIdentifier, pageable);
     }
 
+    @GetMapping(path = "{formId}/response/{formResponseId}")
+    @Cacheable(
+            cacheNames = {"individualFormResponse"},
+            key = "{#formId, #formResponseId}"
+    )
+    public ResponseIndividualResDto getIndividualFormResponse(
+            @PathVariable("formId") UUID formId,
+            @PathVariable("formResponseId") Long formResponseId
+    ) {
+        return formResponseService.getIndividualFormResponse(formId, formResponseId);
+    }
+
+    // Page number starts from 0
+    @GetMapping(path = "{formId}/response-by-page/{page}")
+    @Cacheable(
+            cacheNames = {"individualFormResponseByPage"},
+            key = "{#formId, #page}"
+    )
+    public ResponseIndividualResDto getIndividualFormResponseByPage(
+            @PathVariable("formId") UUID formId,
+            @PathVariable("page") Long page
+    ) {
+        return formResponseService.getIndividualFormResponseByOPage(formId, page);
+    }
+
     @GetMapping(path = "{formId}/is-response-already-submitted", params = "userId")
     // TODO: Enable caching when delete form response endpoint is created
     public boolean getIsResponseAlreadySubmitted(
@@ -131,7 +155,7 @@ public class FormResponseController {
     @Caching(evict = {
             @CacheEvict(cacheNames = {"formResponseSummaryShort", "responseSummaries"}, key = "#formId"),
             @CacheEvict(
-                    cacheNames = {"responseByQuestionSummary", "responseByQuestion", "formResponseSummaries", "responseSummary"},
+                    cacheNames = {"responseByQuestionSummary", "responseByQuestion", "formResponseSummaries", "responseSummary", "individualFormResponse"},
                     allEntries = true
             )
     })

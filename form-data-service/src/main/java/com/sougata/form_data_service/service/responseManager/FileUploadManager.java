@@ -3,9 +3,10 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.FileUploadResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.FileUploadResDto;
+import com.sougata.form_data_service.dto.response.individual.DropdownResponseIndividualDto;
+import com.sougata.form_data_service.dto.response.individual.FileUploadResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.FileUploadResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.FileUploadResponseSummaryDto;
-import com.sougata.form_data_service.dto.response.summary.ParagraphResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.FileUpload;
 import com.sougata.form_data_service.model.FormResponse;
@@ -30,7 +31,7 @@ public class FileUploadManager extends ResponseManager<
         FileUploadResponseQuestionDto,
         FileUploadResponseQuestionDto.Response,
         FileUploadResponseQuestionDto.Summary,
-        FileUploadResponseQuestionDto.FormResponsesReqDto
+        FileUploadResponseIndividualDto
         > {
 
     private final FileUploadRepository fileUploadRepository;
@@ -178,6 +179,28 @@ public class FileUploadManager extends ResponseManager<
         fu.setResponses(responses);
 
         return fu;
+    }
+
+    @Override
+    public List<FileUploadResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
+        var responses = fileUploadRepository.getFileUploadsByFormResponse(formId, formResponseId);
+
+        return responses.stream().map(tuple -> {
+            var qId = tuple.get("questionId", Long.class);
+            var fileName = tuple.get("fileName", String.class);
+            var fileUrl = tuple.get("fileUrl", String.class);
+            var fileMimeType = tuple.get("fileMimeType", String.class);
+
+            var res = new FileUploadResponseIndividualDto();
+
+            res.setQuestionId(qId);
+            res.setQuestionType(getQuestionType());
+            res.setFileName(fileName);
+            res.setFileUrl(fileUrl);
+            res.setFileMimeType(fileMimeType);
+
+            return res;
+        }).toList();
     }
 
     @Override

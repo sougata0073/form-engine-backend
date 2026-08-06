@@ -3,6 +3,8 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.ShortAnswerResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.ShortAnswerResDto;
+import com.sougata.form_data_service.dto.response.individual.ParagraphResponseIndividualDto;
+import com.sougata.form_data_service.dto.response.individual.ShortAnswerResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.ShortAnswerResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.ShortAnswerResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
@@ -30,7 +32,7 @@ public class ShortAnswerManager extends ResponseManager<
         ShortAnswerResponseQuestionDto,
         ShortAnswerResponseQuestionDto.Response,
         ShortAnswerResponseQuestionDto.Summary,
-        ShortAnswerResponseQuestionDto.FormResponsesReqDto
+        ShortAnswerResponseIndividualDto
         > {
 
     private final ShortAnswerRepository shortAnswerRepository;
@@ -162,6 +164,24 @@ public class ShortAnswerManager extends ResponseManager<
         sa.setResponses(responses);
 
         return sa;
+    }
+
+    @Override
+    public List<ShortAnswerResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
+        var responses = shortAnswerRepository.getTextsByFormResponse(formId, formResponseId);
+
+        return responses.stream().map(tuple -> {
+            var qId = tuple.get("questionId", Long.class);
+            var text = tuple.get("text", String.class);
+
+            var res = new ShortAnswerResponseIndividualDto();
+
+            res.setQuestionId(qId);
+            res.setQuestionType(getQuestionType());
+            res.setText(text);
+
+            return res;
+        }).toList();
     }
 
     @Override

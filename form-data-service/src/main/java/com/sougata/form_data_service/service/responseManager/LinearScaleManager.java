@@ -3,6 +3,8 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.LinearScaleResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.LinearScaleResDto;
+import com.sougata.form_data_service.dto.response.individual.DropdownResponseIndividualDto;
+import com.sougata.form_data_service.dto.response.individual.LinearScaleResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.LinearScaleResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.LinearScaleResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
@@ -30,7 +32,7 @@ public class LinearScaleManager extends ResponseManager<
         LinearScaleResponseQuestionDto,
         LinearScaleResponseQuestionDto.Response,
         LinearScaleResponseQuestionDto.Summary,
-        LinearScaleResponseQuestionDto.FormResponsesReqDto
+        LinearScaleResponseIndividualDto
         > {
 
     private final LinearScaleRepository linearScaleRepository;
@@ -162,6 +164,24 @@ public class LinearScaleManager extends ResponseManager<
         ls.setResponses(responses);
 
         return ls;
+    }
+
+    @Override
+    public List<LinearScaleResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
+        var responses = linearScaleRepository.getScalesByFormResponse(formId, formResponseId);
+
+        return responses.stream().map(tuple -> {
+            var qId = tuple.get("questionId", Long.class);
+            var scale = tuple.get("scale", Integer.class);
+
+            var res = new LinearScaleResponseIndividualDto();
+
+            res.setQuestionId(qId);
+            res.setQuestionType(getQuestionType());
+            res.setScale(scale);
+
+            return res;
+        }).toList();
     }
 
     @Override

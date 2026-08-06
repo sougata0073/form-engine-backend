@@ -3,6 +3,8 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.TickBoxGridResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.TickBoxGridResDto;
+import com.sougata.form_data_service.dto.response.individual.ParagraphResponseIndividualDto;
+import com.sougata.form_data_service.dto.response.individual.TickBoxGridResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.TickBoxGridResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.TickBoxGridResponseSummaryDto;
 import com.sougata.form_data_service.model.FormResponse;
@@ -10,7 +12,10 @@ import com.sougata.form_data_service.model.TickBoxGrid;
 import com.sougata.form_data_service.model.TickBoxGridColumn;
 import com.sougata.form_data_service.model.TickBoxGridRow;
 import com.sougata.form_data_service.projection.CommonResponseSummaryProjection;
-import com.sougata.form_data_service.repository.*;
+import com.sougata.form_data_service.repository.QuestionResponseRepository;
+import com.sougata.form_data_service.repository.TickBoxGridColumnRepository;
+import com.sougata.form_data_service.repository.TickBoxGridRepository;
+import com.sougata.form_data_service.repository.TickBoxGridRowRepository;
 import com.sougata.form_data_service.util.IdUtil;
 import jakarta.persistence.Tuple;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,7 +35,7 @@ public class TickBoxGridManager extends ResponseManager<
         TickBoxGridResponseQuestionDto,
         TickBoxGridResponseQuestionDto.Response,
         TickBoxGridResponseQuestionDto.Summary,
-        TickBoxGridResponseQuestionDto.FormResponsesReqDto
+        TickBoxGridResponseIndividualDto
         > {
 
     private final TickBoxGridRepository tickBoxGridRepository;
@@ -222,6 +227,42 @@ public class TickBoxGridManager extends ResponseManager<
         tb.setResponses(responses);
 
         return tb;
+    }
+
+    @Override
+    public List<TickBoxGridResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
+        var responses = tickBoxGridRepository.getRowColumnIdsByFormResponse(formId, formResponseId);
+
+        var questionIdMap = responses.stream().collect(
+                Collectors.groupingBy(tuple -> tuple.get("questionId", Long.class))
+        );
+
+        return questionIdMap.entrySet().stream().map(entry -> {
+            var qId = entry.getKey();
+            var rowIds = entry.getValue().stream().map(tuple -> tuple.get("rowId", Long.class)).toList();
+            var columnIds = entry.getValue().stream().map(tuple -> tuple.get("columnIds", Long[].class)).toList();
+
+            var res = new TickBoxGridResponseIndividualDto();
+
+            res.setQuestionId(qId);
+            res.setQuestionType(getQuestionType());
+
+            var rows = new ArrayList<TickBoxGridResponseIndividualDto.TickBoxGridResponseIndividualDtoRow>();
+
+            for (int i = 0; i < rowIds.size(); i++) {
+                var rowId = rowIds.get(i);
+                var colIds = columnIds.get(i);
+                rows.add(
+                        new TickBoxGridResponseIndividualDto.TickBoxGridResponseIndividualDtoRow(
+                                rowId, Arrays.stream(colIds).map(Object::toString).toList()
+                        )
+                );
+            }
+
+            res.setRows(rows);
+
+            return res;
+        }).toList();
     }
 
     @Override

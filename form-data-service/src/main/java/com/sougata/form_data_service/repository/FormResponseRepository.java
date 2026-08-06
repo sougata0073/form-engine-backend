@@ -37,4 +37,32 @@ public interface FormResponseRepository extends JpaRepository<FormResponse, Long
             group by fr.form_id
             """, nativeQuery = true)
     Tuple getAllResponseIdsAndUserIds(UUID formId);
+
+    @Query("""
+            select
+            x.rn - 1
+            from (
+                select
+                fr.id formResponseId,
+                row_number() over (order by fr.createdAt) rn
+                from FormResponse fr
+                where fr.formId = :formId
+            ) x
+            where x.formResponseId = :formResponseId
+            """)
+    Optional<Long> getPageNumberOfFormResponse(UUID formId, long formResponseId);
+
+    @Query("""
+            select
+            x.formResponseId
+            from (
+                select
+                fr.id formResponseId,
+                row_number() over (order by fr.createdAt) rn
+                from FormResponse fr
+                where fr.formId = :formId
+            ) x
+            where (x.rn - 1) = :page
+            """)
+    Optional<Long> getFormResponseIdFromPage(UUID formId, long page);
 }

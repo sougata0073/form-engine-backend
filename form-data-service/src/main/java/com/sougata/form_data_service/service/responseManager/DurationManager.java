@@ -3,8 +3,10 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.DurationResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.DurationResDto;
+import com.sougata.form_data_service.dto.response.individual.DropdownResponseIndividualDto;
+import com.sougata.form_data_service.dto.response.individual.DurationResponseIndividualDto;
+import com.sougata.form_data_service.dto.response.individual.ResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.DurationResponseQuestionDto;
-import com.sougata.form_data_service.dto.response.summary.DateTimeResponseSummaryDto;
 import com.sougata.form_data_service.dto.response.summary.DurationResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.Duration;
@@ -19,8 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -32,7 +32,7 @@ public class DurationManager extends ResponseManager<
         DurationResponseQuestionDto,
         DurationResponseQuestionDto.Response,
         DurationResponseQuestionDto.Summary,
-        DurationResponseQuestionDto.FormResponsesReqDto
+        DurationResponseIndividualDto
         > {
 
     private final DurationRepository durationRepository;
@@ -226,6 +226,28 @@ public class DurationManager extends ResponseManager<
         d.setResponses(responses);
 
         return d;
+    }
+
+    @Override
+    public List<DurationResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
+        var responses = durationRepository.getDurationsByFormResponse(formId, formResponseId);
+
+        return responses.stream().map(tuple -> {
+            var qId = tuple.get("questionId", Long.class);
+            var hours = tuple.get("hours", Integer.class);
+            var minutes = tuple.get("minutes", Integer.class);
+            var seconds = tuple.get("seconds", Integer.class);
+
+            var res = new DurationResponseIndividualDto();
+
+            res.setQuestionId(qId);
+            res.setQuestionType(getQuestionType());
+            res.setHours(hours);
+            res.setMinutes(minutes);
+            res.setSeconds(seconds);
+
+            return res;
+        }).toList();
     }
 
     @Override

@@ -89,4 +89,14 @@ public interface ParagraphRepository extends AnyTypeQuestionResponseRepository<P
             order by fr.created_at
             """, nativeQuery = true)
     List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, String response);
+
+    @Query("""
+            select
+            p.questionResponse.questionId questionId,
+            p.text text
+            from Paragraph p
+            where p.questionResponse.formResponse.formId = :formId
+            and p.questionResponse.formResponse.id = :formResponseId
+            """)
+    List<Tuple> getTextsByFormResponse(UUID formId, long formResponseId);
 }

@@ -75,4 +75,20 @@ public interface CheckboxRepository extends AnyTypeQuestionResponseRepository<Ch
             """, nativeQuery = true)
     List<Tuple> groupedByResponseOptions(UUID formId, long questionId, Pageable pageable);
 
+    @Query(value = """
+            select
+            qr.question_id questionId,
+            array_agg(cbo.response_option_id) optionIds
+            from checkboxes cb
+            join checkbox_options cbo
+            on cb.question_response_id = cbo.checkbox_id
+            join question_responses qr
+            on cb.question_response_id = qr.id
+            join form_responses fr
+            on fr.id = qr.form_response_id
+            where fr.form_id = :formId
+            and fr.id = :formResponseId
+            group by qr.question_id
+            """, nativeQuery = true)
+    List<Tuple> getOptionIdsByFormResponse(UUID formId, long formResponseId);
 }

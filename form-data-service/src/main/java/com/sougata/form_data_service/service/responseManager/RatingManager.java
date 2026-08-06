@@ -3,6 +3,8 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.RatingResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.RatingResDto;
+import com.sougata.form_data_service.dto.response.individual.ParagraphResponseIndividualDto;
+import com.sougata.form_data_service.dto.response.individual.RatingResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.RatingResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.RatingResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
@@ -30,7 +32,7 @@ public class RatingManager extends ResponseManager<
         RatingResponseQuestionDto,
         RatingResponseQuestionDto.Response,
         RatingResponseQuestionDto.Summary,
-        RatingResponseQuestionDto.FormResponsesReqDto
+        RatingResponseIndividualDto
         > {
 
     private final RatingRepository ratingRepository;
@@ -170,6 +172,24 @@ public class RatingManager extends ResponseManager<
         r.setResponses(responses);
 
         return r;
+    }
+
+    @Override
+    public List<RatingResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
+        var responses = ratingRepository.getRatingsByFormResponse(formId, formResponseId);
+
+        return responses.stream().map(tuple -> {
+            var qId = tuple.get("questionId", Long.class);
+            var rating = tuple.get("rating", Integer.class);
+
+            var res = new RatingResponseIndividualDto();
+
+            res.setQuestionId(qId);
+            res.setQuestionType(getQuestionType());
+            res.setRating(rating);
+
+            return res;
+        }).toList();
     }
 
     @Override

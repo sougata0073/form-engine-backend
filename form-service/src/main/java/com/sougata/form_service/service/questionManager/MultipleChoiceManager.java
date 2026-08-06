@@ -53,7 +53,7 @@ public class MultipleChoiceManager extends QuestionManager<MultipleChoice, Multi
     public MultipleChoiceResDto create(UUID formId, Long questionId, MultipleChoiceAddUpdateReqDto crudDto) {
         var newMc = new MultipleChoice();
 
-        var question = updateQuestion(questionId, crudDto);
+        var question = updateQuestion(formId, questionId, crudDto);
 
         setPropertiesForNew(crudDto, newMc, question);
 
@@ -64,11 +64,11 @@ public class MultipleChoiceManager extends QuestionManager<MultipleChoice, Multi
 
     @Override
     @Transactional
-    public MultipleChoiceResDto update(Long questionId, MultipleChoiceAddUpdateReqDto crudDto) {
-        MultipleChoice mc = multipleChoiceRepository.findById(questionId)
+    public MultipleChoiceResDto update(UUID formId, Long questionId, MultipleChoiceAddUpdateReqDto crudDto) {
+        MultipleChoice mc = multipleChoiceRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.MULTIPLE_CHOICE, questionId));
 
-        updateQuestion(questionId, crudDto);
+        updateQuestion(formId, questionId, crudDto);
 
         Map<Long, MultipleChoiceOption> existingOptions = mc.getOptions().stream()
                 .collect(Collectors.toMap(MultipleChoiceOption::getId, option -> option));

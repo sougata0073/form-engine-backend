@@ -3,6 +3,8 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.QuestionResponseAddReq;
 import com.sougata.form_data_service.dto.question.response.QuestionRes;
+import com.sougata.form_data_service.dto.response.individual.ResponseIndividualDto;
+import com.sougata.form_data_service.dto.response.individual.ResponseIndividualResDto;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionResponse;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionSummary;
 import com.sougata.form_data_service.dto.response.question.ResponseQuestionDto;
@@ -32,9 +34,9 @@ public class ResponseManagerFactory {
             ResByQ extends ResponseQuestionDto<ResByQRes>,
             ResByQRes extends ResponseByQuestionResponse,
             ResByQSumm extends ResponseByQuestionSummary,
-            FResponsesReq
+            ResIndi extends ResponseIndividualDto
             >
-    ResponseManager<QR, RS, QRes, ResByQ, ResByQRes, ResByQSumm, FResponsesReq> get(QuestionType questionType) {
+    ResponseManager<QR, RS, QRes, ResByQ, ResByQRes, ResByQSumm, ResIndi> get(QuestionType questionType) {
         try {
             return applicationContext.getBean(
                     String.format("%s_RESPONSE_MANAGER", questionType.name()),
@@ -53,10 +55,10 @@ public class ResponseManagerFactory {
             ResByQ extends ResponseQuestionDto<ResByQRes>,
             ResByQRes extends ResponseByQuestionResponse,
             ResByQSumm extends ResponseByQuestionSummary,
-            FResponsesReq
+            ResIndi extends ResponseIndividualDto
             >
-    List<ResponseManager<QR, RS, QRes, ResByQ, ResByQRes, ResByQSumm, FResponsesReq>> getAll() {
-        List<ResponseManager<QR, RS, QRes, ResByQ, ResByQRes, ResByQSumm, FResponsesReq>> repos = new ArrayList<>();
+    List<ResponseManager<QR, RS, QRes, ResByQ, ResByQRes, ResByQSumm, ResIndi>> getAll() {
+        List<ResponseManager<QR, RS, QRes, ResByQ, ResByQRes, ResByQSumm, ResIndi>> repos = new ArrayList<>();
 
         for (QuestionType questionType : QuestionType.values()) {
             var repo = applicationContext.getBean(

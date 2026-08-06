@@ -57,7 +57,7 @@ public class MultipleChoiceGridManager extends QuestionManager<MultipleChoiceGri
     public MultipleChoiceGridResDto create(UUID formId, Long questionId, MultipleChoiceGridAddUpdateReqDto crudDto) {
         var newMcg = new MultipleChoiceGrid();
 
-        var question = updateQuestion(questionId, crudDto);
+        var question = updateQuestion(formId, questionId, crudDto);
 
         setPropertiesForNew(crudDto, newMcg, question);
 
@@ -68,11 +68,11 @@ public class MultipleChoiceGridManager extends QuestionManager<MultipleChoiceGri
 
     @Override
     @Transactional
-    public MultipleChoiceGridResDto update(Long questionId, MultipleChoiceGridAddUpdateReqDto crudDto) {
-        MultipleChoiceGrid mcg = multipleChoiceGridRepository.findById(questionId)
+    public MultipleChoiceGridResDto update(UUID formId, Long questionId, MultipleChoiceGridAddUpdateReqDto crudDto) {
+        MultipleChoiceGrid mcg = multipleChoiceGridRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.MULTIPLE_CHOICE_GRID, questionId));
 
-        updateQuestion(questionId, crudDto);
+        updateQuestion(formId, questionId, crudDto);
         mcg.setEachRowRequired(crudDto.getEachRowRequired());
 
         Map<Long, MultipleChoiceGridRow> existingRows = mcg.getRows().stream()

@@ -2,6 +2,9 @@ package com.sougata.form_data_service.service.impl;
 
 import com.sougata.form_data_service.dto.form.*;
 import com.sougata.form_data_service.dto.question.QuestionSummaryDto;
+import com.sougata.form_data_service.dto.question.response.QuestionRes;
+import com.sougata.form_data_service.dto.response.individual.ResponseIndividualDto;
+import com.sougata.form_data_service.dto.response.individual.ResponseIndividualResDto;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionResponse;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionSummary;
 import com.sougata.form_data_service.dto.response.question.ResponseQuestionDto;
@@ -28,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class FormResponseServiceImpl implements FormResponseService {
@@ -109,13 +113,14 @@ public class FormResponseServiceImpl implements FormResponseService {
 
         var questions = formServiceFeignClient.getFormDetails(formId).getQuestions();
 
+        var questionTypeMap = questions.stream().collect(Collectors.groupingBy(QuestionRes::getQuestionType));
+
         var result = new ArrayList<ResponseSummaryDto<?>>();
 
-        responseManagerFactory.getAll().forEach(manager -> {
-            var filteredQuestions = questions.stream().filter(q ->
-                    q.getQuestionType() == manager.getQuestionType()
-            ).toList();
+        questionTypeMap.keySet().forEach(qType -> {
+            var filteredQuestions = questionTypeMap.get(qType);
 
+            var manager = responseManagerFactory.get(qType);
             var summaries = manager.getResponseSummaries(formId, filteredQuestions);
 
             result.addAll(summaries);
@@ -180,6 +185,36 @@ public class FormResponseServiceImpl implements FormResponseService {
     }
 
     @Override
+    public ResponseIndividualResDto getIndividualFormResponse(UUID formId, Long formResponseId) {
+        var questionSummaries = formServiceFeignClient.getQuestionSummaries(formId).getQuestions();
+
+        var questionTypeMap = questionSummaries.stream().collect(Collectors.groupingBy(QuestionSummaryDto::getQuestionType));
+
+        var result = new ArrayList<ResponseIndividualDto>();
+
+        questionTypeMap.keySet().forEach(qType -> {
+            var manager = responseManagerFactory.get(qType);
+
+            var indiResponses = manager.getIndividualResponses(formId, formResponseId);
+
+            result.addAll(indiResponses);
+        });
+
+        var formResponsePage = formResponseRepository.getPageNumberOfFormResponse(formId, formResponseId)
+                .orElseThrow(() -> new IllegalArgumentException("Form response not found with ID: " + formResponseId));
+
+        return new ResponseIndividualResDto(formResponseId, formResponsePage, result);
+    }
+
+    @Override
+    public ResponseIndividualResDto getIndividualFormResponseByOPage(UUID formId, Long page) {
+        var formResponseId = formResponseRepository.getFormResponseIdFromPage(formId, page)
+                .orElseThrow(() -> new IllegalArgumentException("Form response not found for page: " + page));
+
+        return getIndividualFormResponse(formId, formResponseId);
+    }
+
+    @Override
     public ResponseQuestionDto<? extends ResponseByQuestionResponse> getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
         var qSummary = formServiceFeignClient.getQuestionSummary(formId, questionId);
         var manager = responseManagerFactory.get(qSummary.getQuestionType());
@@ -203,5 +238,4 @@ public class FormResponseServiceImpl implements FormResponseService {
         manager.deleteResponses(formId, questionSummary.getId());
         questionResponseRepository.deleteAllByFormIdAndQuestionId(formId, questionSummary.getId());
     }
-
 }
