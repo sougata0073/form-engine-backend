@@ -18,6 +18,4 @@ public class FormResponseSummaryDto {
     private Long responseId;
     private UUID responderId;
     private String responderUserName;
-    private String responderEmail;
-    private String responderAvatarUrl;
 }

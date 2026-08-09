@@ -62,9 +62,6 @@ public class TimeManager extends ResponseManager<
         var responseSummaries = timeRepository.getResponseSummaries(formId);
         var result = new ArrayList<TimeResponseSummaryDto>();
 
-        var responseMap = timeRepository.getResponsesTimes(formId)
-                .stream().collect(Collectors.groupingBy(e -> e.get("questionId", Long.class)));
-
         questionResponses.forEach(qr ->
                 result.add(
                         responseSummaries.stream()
@@ -78,8 +75,9 @@ public class TimeManager extends ResponseManager<
                                     t.setNumberOfResponses(rs.numberOfResponses());
                                     t.setQuestionType(getQuestionType());
 
-                                    var responses = responseMap.get(rs.questionId()).stream()
-                                            .map(tuple -> {
+                                    var timeResponses = timeRepository.getResponseTimes(formId, rs.questionId(), Pageable.ofSize(20));
+
+                                    var responses = timeResponses.stream().map(tuple -> {
                                                 var res = new TimeResponseSummaryDto.Response();
 
                                                 var times = tuple.get("times", String[].class);
@@ -125,7 +123,7 @@ public class TimeManager extends ResponseManager<
 
     @Override
     public TimeResponseSummaryDto getResponseSummary(UUID formId, Long questionId, TimeResDto questionRes, Pageable pageable) {
-        return null;
+        return new TimeResponseSummaryDto();
         /*
         var responseSummary = timeRepository.getResponseSummary(formId, questionId);
         var timeResponses = timeRepository.getResponseTimes(formId, questionId, pageable);
@@ -167,15 +165,7 @@ public class TimeManager extends ResponseManager<
 
     @Override
     public TimeResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, TimeResDto questionResponse) {
-        var sum = new TimeResponseQuestionDto.Summary();
-
-        sum.setQuestionId(questionResponse.getId());
-        sum.setQuestion(questionResponse.getQuestion());
-        sum.setQuestionType(questionResponse.getQuestionType());
-        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
-        sum.setDistinctResponseCount(timeRepository.getDistinctResponseCount(formId, questionResponse.getId()));
-
-        return sum;
+        return new TimeResponseQuestionDto.Summary();
     }
 
     @Override
@@ -229,7 +219,17 @@ public class TimeManager extends ResponseManager<
 
     @Override
     public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
-        return List.of();
+        var map = IdUtil.reconstructCompressedEncodedId(formResponsesIdentifier);
+
+        var time = map.get("time");
+
+        if (time.isEmpty()) {
+            throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
+        }
+
+        var groupedResponse = Instant.parse(time.getFirst());
+
+        return timeRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
     }
 
     @Override

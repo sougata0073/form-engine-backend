@@ -22,7 +22,7 @@ import java.util.List;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = CheckboxResponseIndividualDto.class, name = "CHECKBOX"),
-        @JsonSubTypes.Type(value = DateTimeResponseIndividualDto.class, name = "DATE"),
+        @JsonSubTypes.Type(value = DateResponseIndividualDto.class, name = "DATE"),
         @JsonSubTypes.Type(value = DateTimeResponseIndividualDto.class, name = "DATE_TIME"),
         @JsonSubTypes.Type(value = DropdownResponseIndividualDto.class, name = "DROPDOWN"),
         @JsonSubTypes.Type(value = DurationResponseIndividualDto.class, name = "DURATION"),

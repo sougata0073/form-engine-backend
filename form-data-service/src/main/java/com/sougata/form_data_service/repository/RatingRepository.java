@@ -49,7 +49,7 @@ public interface RatingRepository extends AnyTypeQuestionResponseRepository<Rati
             on qr.id = r.question_response_id
             where fr.form_id = :formId
             group by r.rating
-            order by responseCount desc, min(fr.created_at) asc
+            order by responseCount desc, r.rating asc
             """, nativeQuery = true)
     List<Tuple> groupedByRating(UUID formId, long questionId, Pageable pageable);
 
@@ -62,4 +62,22 @@ public interface RatingRepository extends AnyTypeQuestionResponseRepository<Rati
             and r.questionResponse.formResponse.id = :formResponseId
             """)
     List<Tuple> getRatingsByFormResponse(UUID formId, long formResponseId);
+
+    @Query(value = """
+            select
+            fr.id responseId,
+            fr.user_id userId
+            from form_responses fr
+            left join question_responses qr
+            on fr.id = qr.form_response_id
+            and qr.question_id = :questionId
+            left join ratings r
+            on qr.id = r.question_response_id
+            where fr.form_id = :formId and (
+                (:response is null and r.rating is null)
+                or r.rating = :response
+            )
+            order by fr.created_at
+            """, nativeQuery = true)
+    List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, Integer response, Pageable pageable);
 }

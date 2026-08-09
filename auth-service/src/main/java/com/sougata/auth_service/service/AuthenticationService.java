@@ -34,18 +34,18 @@ public class AuthenticationService {
 
     public JwtTokenResponseDto registerUser(RegisterRequestDto dto) {
 
-        if (userRepository.existsByEmailAndAuthProvider(dto.email(), AuthProvider.EMAIL_PASSWORD)) {
-            throw new EmailIsAlreadyInUseException("Email is already in use. Email: " + dto.email());
+        if (userRepository.existsByEmailAndAuthProvider(dto.getEmail(), AuthProvider.EMAIL_PASSWORD)) {
+            throw new EmailIsAlreadyInUseException("Email is already in use. Email: " + dto.getEmail());
         }
 
         User newUser = new User();
 
-        newUser.setUsername(dto.username());
-        newUser.setEmail(dto.email());
+        newUser.setUsername(dto.getUsername());
+        newUser.setEmail(dto.getEmail());
         newUser.setIsEmailVerified(false);
-        newUser.setPasswordHash(passwordEncoder.encode(dto.password()));
+        newUser.setPasswordHash(passwordEncoder.encode(dto.getPassword()));
         newUser.setAuthProvider(AuthProvider.EMAIL_PASSWORD);
-        newUser.setAvatarUrl(dto.avatarUrl());
+        newUser.setAvatarUrl(dto.getAvatarUrl());
 
         User savedUser = userRepository.save(newUser);
 
@@ -59,7 +59,7 @@ public class AuthenticationService {
     public JwtTokenResponseDto loginUser(LoginRequestDto dto) {
 
         var authToken = new UsernamePasswordAuthenticationToken(
-                dto.email(), dto.password()
+                dto.getEmail(), dto.getPassword()
         );
         Authentication auth;
 

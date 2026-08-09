@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.configuration;
 
-import com.sougata.form_data_service.form_schema.responseValidator.CheckboxValidator;
-import com.sougata.form_data_service.form_schema.responseValidator.ParagraphValidator;
-import com.sougata.form_data_service.form_schema.responseValidator.ShortAnswerValidator;
+import com.sougata.form_data_service.formValidation.responseValidator.CheckboxValidator;
+import com.sougata.form_data_service.formValidation.responseValidator.ParagraphValidator;
+import com.sougata.form_data_service.formValidation.responseValidator.ShortAnswerValidator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

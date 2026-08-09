@@ -14,35 +14,14 @@ public interface ShortAnswerRepository extends AnyTypeQuestionResponseRepository
 
     @Query("""
             select
-            sa.questionResponse.questionId questionId,
-            sa.text text
-            from ShortAnswer sa
-            where sa.questionResponse.formResponse.formId = :formId
-            group by sa.questionResponse.questionId, sa.text
-            order by count(sa.questionResponseId) desc, min(sa.questionResponse.formResponse.createdAt) asc
-            """)
-    List<Tuple> getResponsesTexts(UUID formId, Pageable pageable);
-
-    @Query("""
-            select
             sa.text
             from ShortAnswer sa
             where sa.questionResponse.formResponse.formId = :formId
             and sa.questionResponse.questionId = :questionId
             group by sa.text
-            order by count(sa.questionResponseId) desc, min(sa.questionResponse.formResponse.createdAt) asc
+            order by count(sa.questionResponseId) desc, sa.text asc
             """)
     List<String> getResponseTexts(UUID formId, long questionId, Pageable pageable);
-
-    @Query("""
-            select
-            sa.text text
-            from ShortAnswer sa
-            where sa.questionResponse.formResponse.formId = :formId and sa.questionResponse.questionId = :questionId
-            group by sa.text
-            order by count(sa.questionResponseId) desc
-            """)
-    List<Tuple> getAllResponseByQuestion(UUID formId, long questionId, Pageable pageable);
 
     @Query(value = """
             select
@@ -68,7 +47,7 @@ public interface ShortAnswerRepository extends AnyTypeQuestionResponseRepository
             on qr.id = sa.question_response_id
             where fr.form_id = :formId
             group by sa.text
-            order by responseCount desc, min(fr.created_at) asc
+            order by responseCount desc, sa.text asc
             """, nativeQuery = true)
     List<Tuple> groupedByText(UUID formId, long questionId, Pageable pageable);
 
@@ -88,7 +67,7 @@ public interface ShortAnswerRepository extends AnyTypeQuestionResponseRepository
             )
             order by fr.created_at
             """, nativeQuery = true)
-    List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, String response);
+    List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, String response, Pageable pageable);
 
     @Query("""
             select

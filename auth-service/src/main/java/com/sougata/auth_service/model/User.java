@@ -37,7 +37,6 @@ public class User extends Auditable {
     @Column(nullable = false)
     private String username;
 
-    @Column
     private String email;
 
     @Column(nullable = false)

@@ -10,12 +10,12 @@ import com.sougata.form_data_service.dto.response.question.ResponseByQuestionSum
 import com.sougata.form_data_service.dto.response.question.ResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.ResponseSummaryDto;
 import com.sougata.form_data_service.dto.response.summary.ResponseSummaryResDto;
-import com.sougata.form_data_service.dto.user.UserSummaryDto;
+import com.sougata.form_data_service.dto.user.UserSummaryShortDto;
 import com.sougata.form_data_service.dto.validation.ResponseValidationRequestDto;
 import com.sougata.form_data_service.exception.FormSubmitException;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.feignClient.FormServiceFeignClient;
-import com.sougata.form_data_service.form_schema.service.FormSchemaService;
+import com.sougata.form_data_service.formValidation.service.FormSchemaService;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.repository.FormResponseRepository;
 import com.sougata.form_data_service.repository.QuestionResponseRepository;
@@ -27,10 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -48,7 +45,10 @@ public class FormResponseServiceImpl implements FormResponseService {
             FormResponseRepository formResponseRepository,
             ResponseManagerFactory responseManagerFactory,
             FormServiceFeignClient formServiceFeignClient,
-            QuestionResponseRepository questionResponseRepository, FormSchemaService formSchemaService, AuthServiceFeignClient authServiceFeignClient) {
+            QuestionResponseRepository questionResponseRepository,
+            FormSchemaService formSchemaService,
+            AuthServiceFeignClient authServiceFeignClient
+    ) {
         this.formResponseRepository = formResponseRepository;
         this.responseManagerFactory = responseManagerFactory;
         this.formServiceFeignClient = formServiceFeignClient;
@@ -68,7 +68,7 @@ public class FormResponseServiceImpl implements FormResponseService {
         var formInfo = formServiceFeignClient.getFormInfo(formId);
 
         if (!formInfo.getPublished()) {
-            throw new FormSubmitException("This form is not published yet. FOrm ID: " + formId);
+            throw new FormSubmitException("This form is not published yet. Form ID: " + formId);
         }
 
         boolean isAcceptingDateExceeded =
@@ -76,7 +76,7 @@ public class FormResponseServiceImpl implements FormResponseService {
                         Instant.now().isAfter(formInfo.getStopAcceptingResponseOn());
 
         boolean isNumberOfResponseExceeded = formInfo.getStopAcceptingResponseAfterResponse() != null &&
-                getFormResponseSummary(formId).getResponseCount() >= Integer.toUnsignedLong(formInfo.getStopAcceptingResponseAfterResponse());
+                getFormResponseSummaryShort(formId).getResponseCount() >= Integer.toUnsignedLong(formInfo.getStopAcceptingResponseAfterResponse());
 
         if (!formInfo.getAcceptingResponse() || isAcceptingDateExceeded || isNumberOfResponseExceeded) {
             throw new FormSubmitException("This form is not accepting response. Form ID: " + formId);
@@ -104,7 +104,7 @@ public class FormResponseServiceImpl implements FormResponseService {
     }
 
     @Override
-    public FormResponseSummaryShortDto getFormResponseSummary(UUID formId) {
+    public FormResponseSummaryShortDto getFormResponseSummaryShort(UUID formId) {
         return formResponseRepository.getFormResponseSummary(formId);
     }
 
@@ -144,7 +144,13 @@ public class FormResponseServiceImpl implements FormResponseService {
         var qRes = formServiceFeignClient.getQuestion(formId, questionId);
         var manager = responseManagerFactory.get(qRes.getQuestionType());
 
-        return manager.getResponseByQuestionSummary(formId, qRes);
+        var res = manager.getResponseByQuestionSummary(formId, qRes);
+
+        res.setQuestionId(qRes.getId());
+        res.setQuestion(qRes.getQuestion());
+        res.setQuestionType(qRes.getQuestionType());
+
+        return res;
     }
 
     @Override
@@ -156,7 +162,10 @@ public class FormResponseServiceImpl implements FormResponseService {
 
         var userIds = resAndUserIds.stream().map(tuple -> tuple.get("userId", UUID.class)).toList();
 
-        var userSummaryRes = authServiceFeignClient.userSummaries(userIds);
+        var userSummaries = authServiceFeignClient.userSummaries(userIds).getUsers();
+
+        var userSummariesMap = new HashMap<UUID, UserSummaryShortDto>();
+        userSummaries.forEach(userSummary -> userSummariesMap.put(userSummary.getId(), userSummary));
 
         var formResponseSummaries = new ArrayList<FormResponseSummaryDto>();
 
@@ -164,19 +173,13 @@ public class FormResponseServiceImpl implements FormResponseService {
             var resId = tuple.get("responseId", Long.class);
             var userId = tuple.get("userId", UUID.class);
 
-            var user = userSummaryRes.getUsers().stream()
-                    .filter(u -> u.getUserId().equals(userId))
-                    .findFirst()
-//                    .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
-                    .orElse(new UserSummaryDto(UUID.randomUUID(), "User name", "Email", "https://picsum.photos/200/300"));
+            var user = Optional.ofNullable(userSummariesMap.get(userId)).orElse(new UserSummaryShortDto(null, null));
 
             formResponseSummaries.add(
                     new FormResponseSummaryDto(
                             resId,
-                            user.getUserId(),
-                            user.getUserName(),
-                            user.getEmail(),
-                            user.getAvatarUrl()
+                            user.getId(),
+                            user.getUserName()
                     )
             );
         });

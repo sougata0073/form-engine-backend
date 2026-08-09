@@ -37,7 +37,7 @@ import java.util.List;
 @Getter
 @Setter
 @NoArgsConstructor
-public class ResponseQuestionDto<TRes> {
+public class ResponseQuestionDto<TRes extends ResponseByQuestionResponse> {
 
     @JsonSerialize(using = ToStringSerializer.class)
     private Long questionId;

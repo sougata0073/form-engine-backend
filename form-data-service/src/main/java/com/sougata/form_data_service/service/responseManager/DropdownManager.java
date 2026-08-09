@@ -116,19 +116,14 @@ public class DropdownManager extends ResponseManager<
 
     @Override
     public DropdownResponseSummaryDto getResponseSummary(UUID formId, Long questionId, DropdownResDto questionRes, Pageable pageable) {
-        return null;
+        return new DropdownResponseSummaryDto();
     }
 
     @Override
     public DropdownResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, DropdownResDto questionResponse) {
         var sum = new DropdownResponseQuestionDto.Summary();
 
-        sum.setQuestionId(questionResponse.getId());
-        sum.setQuestion(questionResponse.getQuestion());
-        sum.setQuestionType(questionResponse.getQuestionType());
-        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
         sum.setOptions(questionResponse.getOptions());
-        sum.setDistinctResponseCount(dropdownRepository.getDistinctResponseCount(formId, questionResponse.getId()));
 
         return sum;
     }
@@ -183,7 +178,17 @@ public class DropdownManager extends ResponseManager<
 
     @Override
     public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
-        return List.of();
+        var map = IdUtil.reconstructCompressedEncodedId(formResponsesIdentifier);
+
+        var optionId = map.get("optionId");
+
+        if (optionId.isEmpty()) {
+            throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
+        }
+
+        var groupedResponse = Long.parseLong(optionId.getFirst());
+
+        return dropdownRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
     }
 
     @Override

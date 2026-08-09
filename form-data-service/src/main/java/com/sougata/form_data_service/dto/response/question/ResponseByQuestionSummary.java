@@ -43,12 +43,6 @@ public class ResponseByQuestionSummary {
 
     private QuestionType questionType;
 
-    @JsonSerialize(using = ToStringSerializer.class)
-    private Long totalResponseCount;
-
-    @JsonSerialize(using = ToStringSerializer.class)
-    private Long distinctResponseCount;
-
     @JsonProperty(value = "@class")
     private String cls = getClass().getName();
 }

@@ -35,9 +35,6 @@ public interface AnyTypeQuestionResponseRepository<Q extends AnyTypeQuestionResp
             """)
     CommonResponseSummaryProjection getResponseSummary(UUID formId, long questionId);
 
-    @Query("select qr from #{#entityName} qr where qr.questionResponse.formResponse.formId = :formId and qr.questionResponse.questionId = :questionId")
-    List<Q> findByFormIdAndQuestionId(UUID formId, Long questionId);
-
     @Modifying
     @Transactional
     @Query("""

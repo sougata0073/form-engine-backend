@@ -120,6 +120,7 @@ public class RedisConfiguration implements CachingConfigurer {
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory, GenericJacksonJsonRedisSerializer redisSerializer) {
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
+                .disableCachingNullValues()
                 .entryTtl(Duration.ofMinutes(defaultTtlMinutes))
                 .disableCachingNullValues()
                 .prefixCacheNameWith("form-data::")

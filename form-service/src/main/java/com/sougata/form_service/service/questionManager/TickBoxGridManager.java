@@ -152,11 +152,14 @@ public class TickBoxGridManager extends QuestionManager<TickBoxGrid, TickBoxGrid
                 .map(row ->
                         new TickBoxGridResDto.TickBoxGridRowResDto(row.getId(), row.getRowName(), row.getOrderIndex())
                 )
+                .sorted(Comparator.comparingInt(TickBoxGridResDto.TickBoxGridRowResDto::getOrderIndex))
                 .toList();
+
         var columns = question.getColumns().stream()
                 .map(column ->
                         new TickBoxGridResDto.TickBoxGridColumnResDto(column.getId(), column.getColumnName(), column.getOrderIndex())
                 )
+                .sorted(Comparator.comparingInt(TickBoxGridResDto.TickBoxGridColumnResDto::getOrderIndex))
                 .toList();
 
         t.setEachRowRequired(question.getEachRowRequired());

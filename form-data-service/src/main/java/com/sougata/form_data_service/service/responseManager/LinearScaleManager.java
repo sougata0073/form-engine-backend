@@ -117,20 +117,15 @@ public class LinearScaleManager extends ResponseManager<
 
     @Override
     public LinearScaleResponseSummaryDto getResponseSummary(UUID formId, Long questionId, LinearScaleResDto questionRes, Pageable pageable) {
-        return null;
+        return new LinearScaleResponseSummaryDto();
     }
 
     @Override
     public LinearScaleResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, LinearScaleResDto questionResponse) {
         var sum = new LinearScaleResponseQuestionDto.Summary();
 
-        sum.setQuestionId(questionResponse.getId());
-        sum.setQuestion(questionResponse.getQuestion());
-        sum.setQuestionType(questionResponse.getQuestionType());
         sum.setFromNumber(questionResponse.getFromNumber());
         sum.setToNumber(questionResponse.getToNumber());
-        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
-        sum.setDistinctResponseCount(linearScaleRepository.getDistinctResponseCount(formId, questionResponse.getId()));
 
         return sum;
     }
@@ -186,7 +181,17 @@ public class LinearScaleManager extends ResponseManager<
 
     @Override
     public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
-        return List.of();
+        var map = IdUtil.reconstructCompressedEncodedId(formResponsesIdentifier);
+
+        var scale = map.get("scale");
+
+        if (scale.isEmpty()) {
+            throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
+        }
+
+        var groupedResponse = Integer.parseInt(scale.getFirst());
+
+        return linearScaleRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
     }
 
     @Override

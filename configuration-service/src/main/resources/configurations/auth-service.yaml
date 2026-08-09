@@ -7,6 +7,13 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 30
+      minimum-idle: 10
+      connection-timeout: 60000
+      max-lifetime: 1800000
+      idle-timeout: 600000
+      leak-detection-threshold: 10000
   jpa:
     hibernate:
       ddl-auto: update
@@ -26,6 +33,16 @@ spring:
           github:
             client-id: ${OAUTH2_GITHUB_CLIENT_ID}
             client-secret: ${OAUTH2_GITHUB_CLIENT_SECRET}
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      username: ${REDIS_USERNAME}
+      database: ${REDIS_DATABASE}
+      ssl:
+        enabled: ${REDIS_SSL_ENABLED}
+      timeout: ${REDIS_TIMEOUT}
 
 eureka:
   instance:
@@ -58,3 +75,7 @@ jwt:
   expiration-millis: ${JWT_EXPIRATION_MILLIS}
 
 frontend-url: ${FRONTEND_URL}
+
+app:
+  cache:
+    default-ttl-minutes: ${CACHE_DEFAULT_TTL_MINUTES}

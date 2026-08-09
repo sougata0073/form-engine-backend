@@ -1,6 +1,14 @@
 package com.sougata.auth_service.dto;
 
-public record JwtTokenResponseDto(
-        String jwtToken
-) {
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class JwtTokenResponseDto {
+    private String jwtToken;
 }

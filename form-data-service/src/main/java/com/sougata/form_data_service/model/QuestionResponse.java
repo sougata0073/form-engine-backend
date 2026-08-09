@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
@@ -16,7 +17,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @AllArgsConstructor
 @Getter
 @Setter
-public class QuestionResponse {
+public class QuestionResponse implements Persistable<Long> {
 
     @Id
     private Long id = TsidCreator.getTsid().toLong();
@@ -32,4 +33,17 @@ public class QuestionResponse {
     @JoinColumn(nullable = false)
     private FormResponse formResponse;
 
+    @Transient
+    private boolean isNew = true;
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PostPersist
+    @PostLoad
+    void markNotNew() {
+        isNew = false;
+    }
 }

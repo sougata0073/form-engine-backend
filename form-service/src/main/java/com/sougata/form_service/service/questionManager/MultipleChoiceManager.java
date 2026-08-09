@@ -113,13 +113,14 @@ public class MultipleChoiceManager extends QuestionManager<MultipleChoice, Multi
 
         populateCommonFields(question, m);
 
-        m.setOptions(
-                question.getOptions().stream()
-                        .map(op ->
-                                new MultipleChoiceResDto.MultipleChoiceOptionResDto(op.getId(), op.getOption(), op.getOrderIndex())
-                        )
-                        .toList()
-        );
+        var options = question.getOptions().stream()
+                .map(op ->
+                        new MultipleChoiceResDto.MultipleChoiceOptionResDto(op.getId(), op.getOption(), op.getOrderIndex())
+                )
+                .sorted(Comparator.comparingInt(MultipleChoiceResDto.MultipleChoiceOptionResDto::getOrderIndex))
+                .toList();
+
+        m.setOptions(options);
 
         return m;
     }

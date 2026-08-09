@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
@@ -15,7 +16,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @Getter
 @Setter
-public class MultipleChoiceGridRow {
+public class MultipleChoiceGridRow implements Persistable<Long> {
 
     @Id
     private Long id = TsidCreator.getTsid().toLong();
@@ -29,5 +30,19 @@ public class MultipleChoiceGridRow {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = false, name = "multiple_choice_grid_id")
     private MultipleChoiceGrid multipleChoiceGrid;
+
+    @Transient
+    private boolean isNew = true;
+
+    @Override
+    public boolean isNew() {
+        return isNew;
+    }
+
+    @PostPersist
+    @PostLoad
+    void markNotNew() {
+        isNew = false;
+    }
 
 }

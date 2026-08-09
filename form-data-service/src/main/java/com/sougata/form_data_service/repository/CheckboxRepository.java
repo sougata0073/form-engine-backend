@@ -56,22 +56,21 @@ public interface CheckboxRepository extends AnyTypeQuestionResponseRepository<Ch
             count(*) as responsecount
             from (
                 select
-                array_agg(co.response_option_id order by co.response_option_id) as optionIds,
-                fr.created_at fr_created_at
-                from fe_form_data.form_responses fr
-                left join fe_form_data.question_responses qr
+                array_agg(co.response_option_id order by co.response_option_id) as optionIds
+                from form_responses fr
+                left join question_responses qr
                 on qr.form_response_id = fr.id
                 and qr.question_id = :questionId
-                left join fe_form_data.checkboxes c
+                left join checkboxes c
                 on qr.id = c.question_response_id
-                left join fe_form_data.checkbox_options co
+                left join checkbox_options co
                 on co.checkbox_id = c.question_response_id
                 where fr.form_id = :formId
-                group by c.question_response_id, fr.id, fr.created_at
+                group by c.question_response_id, fr.id
                 order by optionIds
             ) responses
             group by optionIds
-            order by responsecount desc, min(fr_created_at) asc;
+            order by responsecount desc, optionIds asc
             """, nativeQuery = true)
     List<Tuple> groupedByResponseOptions(UUID formId, long questionId, Pageable pageable);
 

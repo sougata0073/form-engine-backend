@@ -14,35 +14,14 @@ public interface ParagraphRepository extends AnyTypeQuestionResponseRepository<P
 
     @Query("""
             select
-            p.questionResponse.questionId questionId,
-            p.text text
-            from Paragraph p
-            where p.questionResponse.formResponse.formId = :formId
-            group by p.questionResponse.questionId, p.text
-            order by count(p.questionResponseId) desc
-            """)
-    List<Tuple> getResponsesTexts(UUID formId, Pageable pageable);
-
-    @Query("""
-            select
             p.text
             from Paragraph p
             where p.questionResponse.formResponse.formId = :formId
             and p.questionResponse.questionId = :questionId
             group by p.text
-            order by count(p.questionResponseId) desc, min(p.questionResponse.formResponse.createdAt) asc
+            order by count(p.questionResponseId) desc, p.text asc
             """)
     List<String> getResponseTexts(UUID formId, long questionId, Pageable pageable);
-
-    @Query("""
-            select
-            p.text text
-            from Paragraph p
-            where p.questionResponse.formResponse.formId = :formId and p.questionResponse.questionId = :questionId
-            group by p.text
-            order by count(p.questionResponseId) desc
-            """)
-    List<Tuple> getAllResponseByQuestion(UUID formId, long questionId, Pageable pageable);
 
     @Query(value = """
             select
@@ -68,7 +47,7 @@ public interface ParagraphRepository extends AnyTypeQuestionResponseRepository<P
             on qr.id = p.question_response_id
             where fr.form_id = :formId
             group by p.text
-            order by responseCount desc, min(fr.created_at) asc
+            order by responseCount desc, p.text asc
             """, nativeQuery = true)
     List<Tuple> groupedByText(UUID formId, long questionId, Pageable pageable);
 
@@ -88,7 +67,7 @@ public interface ParagraphRepository extends AnyTypeQuestionResponseRepository<P
             )
             order by fr.created_at
             """, nativeQuery = true)
-    List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, String response);
+    List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, String response, Pageable pageable);
 
     @Query("""
             select

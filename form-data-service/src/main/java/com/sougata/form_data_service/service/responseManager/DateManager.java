@@ -34,13 +34,11 @@ public class DateManager extends ResponseManager<
         > {
 
     private final DateRepository dateRepository;
-    private final QuestionResponseRepository questionResponseRepository;
 
     @Autowired
     public DateManager(DateRepository dateRepository, QuestionResponseRepository questionResponseRepository) {
         super(questionResponseRepository);
         this.dateRepository = dateRepository;
-        this.questionResponseRepository = questionResponseRepository;
     }
 
     @Override
@@ -60,9 +58,6 @@ public class DateManager extends ResponseManager<
         var responseSummaries = dateRepository.getResponseSummaries(formId);
         var result = new ArrayList<DateResponseSummaryDto>();
 
-        var responseMap = dateRepository.getResponsesDates(formId, Pageable.ofSize(20))
-                .stream().collect(Collectors.groupingBy(e -> e.get("questionId", Long.class)));
-
         questionResponses.forEach(qr ->
                 result.add(
                         responseSummaries.stream()
@@ -76,7 +71,9 @@ public class DateManager extends ResponseManager<
                                     d.setNumberOfResponses(rs.numberOfResponses());
                                     d.setQuestionType(QuestionType.DATE);
 
-                                    var responses = responseMap.get(rs.questionId()).stream().map(tuple -> {
+                                    var dateResponses = dateRepository.getResponseDates(formId, rs.questionId(), Pageable.ofSize(20));
+
+                                    var responses = dateResponses.stream().map(tuple -> {
                                         var res = new DateResponseSummaryDto.Response();
 
                                         res.setYear(tuple.get("year", Integer.class));
@@ -125,7 +122,7 @@ public class DateManager extends ResponseManager<
     @Override
     public DateResponseSummaryDto getResponseSummary(UUID formId, Long questionId, DateResDto questionRes, Pageable pageable) {
         var responseSummary = dateRepository.getResponseSummary(formId, questionId);
-        var dateTimes = dateRepository.getResponseDates(formId, questionId, pageable);
+        var dateResponses = dateRepository.getResponseDates(formId, questionId, pageable);
 
         var d = new DateResponseSummaryDto();
 
@@ -135,7 +132,7 @@ public class DateManager extends ResponseManager<
         d.setNumberOfResponses(responseSummary.numberOfResponses());
         d.setQuestionType(getQuestionType());
 
-        var responses = dateTimes.stream().map(tuple -> {
+        var responses = dateResponses.stream().map(tuple -> {
             var res = new DateResponseSummaryDto.Response();
 
             res.setYear(tuple.get("year", Integer.class));
@@ -166,15 +163,7 @@ public class DateManager extends ResponseManager<
 
     @Override
     public DateResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, DateResDto questionResponse) {
-        var sum = new DateResponseQuestionDto.Summary();
-
-        sum.setQuestionId(questionResponse.getId());
-        sum.setQuestion(questionResponse.getQuestion());
-        sum.setQuestionType(questionResponse.getQuestionType());
-        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
-        sum.setDistinctResponseCount(dateRepository.getDistinctResponseCount(formId, questionResponse.getId()));
-
-        return sum;
+        return new DateResponseQuestionDto.Summary();
     }
 
     @Override
@@ -228,7 +217,17 @@ public class DateManager extends ResponseManager<
 
     @Override
     public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
-        return List.of();
+        var map = IdUtil.reconstructCompressedEncodedId(formResponsesIdentifier);
+
+        var date = map.get("date");
+
+        if (date.isEmpty()) {
+            throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
+        }
+
+        var groupedResponse = Instant.parse(date.getFirst());
+
+        return dateRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
     }
 
     @Override

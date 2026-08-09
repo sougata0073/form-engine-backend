@@ -14,19 +14,6 @@ public interface FileUploadRepository extends AnyTypeQuestionResponseRepository<
 
     @Query("""
             select
-            f.questionResponse.questionId questionId,
-            f.fileName fileName,
-            f.fileUrl fileUrl,
-            f.fileMimeType fileMimeType
-            from FileUpload f
-            where f.questionResponse.formResponse.formId = :formId
-            group by f.questionResponse.questionId, f.fileName, f.fileUrl, f.fileMimeType
-            order by count(f.questionResponseId) desc
-            """)
-    List<Tuple> getResponsesFiles(UUID formId, Pageable pageable);
-
-    @Query("""
-            select
             f.fileName fileName,
             f.fileUrl fileUrl,
             f.fileMimeType fileMimeType
@@ -34,26 +21,14 @@ public interface FileUploadRepository extends AnyTypeQuestionResponseRepository<
             where f.questionResponse.formResponse.formId = :formId
             and f.questionResponse.questionId = :questionId
             group by f.fileName, f.fileUrl, f.fileMimeType
-            order by count(f.questionResponseId) desc, min(f.questionResponse.formResponse.createdAt) asc
+            order by count(f.questionResponseId) desc, f.fileName asc, f.fileUrl asc, f.fileMimeType asc
             """)
     List<Tuple> getResponseFiles(UUID formId, long questionId, Pageable pageable);
-
-    @Query("""
-            select
-            f.fileName fileName,
-            f.fileUrl fileUrl,
-            f.fileMimeType fileMimeType
-            from FileUpload f
-            where f.questionResponse.formResponse.formId = :formId and f.questionResponse.questionId = :questionId
-            group by f.fileName, f.fileUrl, f.fileMimeType
-            order by count(f.questionResponseId) desc
-            """)
-    List<Tuple> getAllResponseByQuestion(UUID formId, long questionId, Pageable pageable);
 
     @Query(value = """
             select
             count(distinct (
-                            coalesce(f.file_name, 'default_filename'), 
+                            coalesce(f.file_name, 'default_filename'),
                             coalesce(f.file_url, 'default_url'),
                             coalesce(f.file_mime_type, 'default_mime_type')
                         )
@@ -81,7 +56,7 @@ public interface FileUploadRepository extends AnyTypeQuestionResponseRepository<
             on qr.id = f.question_response_id
             where fr.form_id = :formId
             group by f.file_name, f.file_url, f.file_mime_type
-            order by responseCount desc, min(fr.created_at) asc
+            order by responseCount desc, f.file_name asc, f.file_url asc, f.file_mime_type asc
             """, nativeQuery = true)
     List<Tuple> groupedByFile(UUID formId, long questionId, Pageable pageable);
 
@@ -96,5 +71,29 @@ public interface FileUploadRepository extends AnyTypeQuestionResponseRepository<
             and f.questionResponse.formResponse.id = :formResponseId
             """)
     List<Tuple> getFileUploadsByFormResponse(UUID formId, long formResponseId);
+
+    @Query(value = """
+            select
+            fr.id responseId,
+            fr.user_id userId
+            from form_responses fr
+            left join question_responses qr
+            on fr.id = qr.form_response_id
+            and qr.question_id = :questionId
+            left join file_uploads f
+            on qr.id = f.question_response_id
+            where fr.form_id = :formId and (
+                (:fileName is null and f.file_name is null)
+                or f.file_name = :fileName
+            ) and (
+                (:fileUrl is null and f.file_url is null)
+                or f.file_url = :fileUrl
+            ) and (
+                (:fileMimeType is null and f.file_mime_type is null)
+                or f.file_mime_type = :fileMimeType
+            )
+            order by fr.created_at
+            """, nativeQuery = true)
+    List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, String fileName, String fileUrl, String fileMimeType, Pageable pageable);
 
 }

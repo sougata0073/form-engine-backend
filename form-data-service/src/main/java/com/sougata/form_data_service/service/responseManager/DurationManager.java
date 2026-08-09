@@ -63,9 +63,6 @@ public class DurationManager extends ResponseManager<
         var responseSummaries = durationRepository.getResponseSummaries(formId);
         var result = new ArrayList<DurationResponseSummaryDto>();
 
-        var responseMap = durationRepository.getResponsesDurations(formId, Pageable.ofSize(20))
-                .stream().collect(Collectors.groupingBy(e -> e.get("questionId", Long.class)));
-
         questionResponses.forEach(qr ->
                 result.add(
                         responseSummaries.stream()
@@ -79,8 +76,9 @@ public class DurationManager extends ResponseManager<
                                     d.setNumberOfResponses(rs.numberOfResponses());
                                     d.setQuestionType(getQuestionType());
 
-                                    var responses = responseMap.get(rs.questionId())
-                                            .stream().map(tuple -> {
+                                    var durations = durationRepository.getResponseDurations(formId, rs.questionId(), Pageable.ofSize(20));
+
+                                    var responses = durations.stream().map(tuple -> {
                                                 var res = new DurationResponseSummaryDto.Response();
 
                                                 res.setHours(tuple.get("hours", Integer.class));
@@ -178,15 +176,7 @@ public class DurationManager extends ResponseManager<
 
     @Override
     public DurationResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, DurationResDto questionResponse) {
-        var sum = new DurationResponseQuestionDto.Summary();
-
-        sum.setQuestionId(questionResponse.getId());
-        sum.setQuestion(questionResponse.getQuestion());
-        sum.setQuestionType(questionResponse.getQuestionType());
-        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
-        sum.setDistinctResponseCount(durationRepository.getDistinctResponseCount(formId, questionResponse.getId()));
-
-        return sum;
+        return new DurationResponseQuestionDto.Summary();
     }
 
     @Override
@@ -252,7 +242,21 @@ public class DurationManager extends ResponseManager<
 
     @Override
     public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
-        return List.of();
+        var map = IdUtil.reconstructCompressedEncodedId(formResponsesIdentifier);
+
+        var hours = map.get("hours");
+        var minutes = map.get("minutes");
+        var seconds = map.get("seconds");
+
+        if (hours.isEmpty() || minutes.isEmpty() || seconds.isEmpty()) {
+            throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
+        }
+
+        var h = Integer.parseInt(hours.getFirst());
+        var m = Integer.parseInt(minutes.getFirst());
+        var s = Integer.parseInt(seconds.getFirst());
+
+        return durationRepository.getResponseIdsByGroupedResponse(formId, questionId, h, m, s, pageable);
     }
 
     @Override

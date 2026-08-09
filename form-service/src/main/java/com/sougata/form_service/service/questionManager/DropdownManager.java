@@ -122,11 +122,12 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
 
         populateCommonFields(question, dd);
 
-        dd.setOptions(
-                question.getOptions().stream()
-                        .map(o -> new DropdownResDto.DropdownOptionResDto(o.getId(), o.getOption(), o.getOrderIndex()))
-                        .toList()
-        );
+        var options = question.getOptions().stream()
+                .map(o -> new DropdownResDto.DropdownOptionResDto(o.getId(), o.getOption(), o.getOrderIndex()))
+                .sorted(Comparator.comparingInt(DropdownResDto.DropdownOptionResDto::getOrderIndex))
+                .toList();
+
+        dd.setOptions(options);
 
         return dd;
     }

@@ -47,7 +47,7 @@ public interface MultipleChoiceRepository extends AnyTypeQuestionResponseReposit
             on qr.id = mc.question_response_id
             where fr.form_id = :formId
             group by mc.response_option_id
-            order by responseCount desc, min(fr.created_at) asc
+            order by responseCount desc, mc.response_option_id asc
             """, nativeQuery = true)
     List<Tuple> groupedByResponseOption(UUID formId, long questionId, Pageable pageable);
 
@@ -60,4 +60,22 @@ public interface MultipleChoiceRepository extends AnyTypeQuestionResponseReposit
             and mc.questionResponse.formResponse.id = :formResponseId
             """)
     List<Tuple> getOptionIdsByFormResponse(UUID formId, long formResponseId);
+
+    @Query(value = """
+            select
+            fr.id responseId,
+            fr.user_id userId
+            from form_responses fr
+            left join question_responses qr
+            on fr.id = qr.form_response_id
+            and qr.question_id = :questionId
+            left join multiple_choices mc
+            on qr.id = mc.question_response_id
+            where fr.form_id = :formId and (
+                (:response is null and mc.response_option_id is null)
+                or mc.response_option_id = :response
+            )
+            order by fr.created_at
+            """, nativeQuery = true)
+    List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, Long response, Pageable pageable);
 }

@@ -63,9 +63,6 @@ public class FileUploadManager extends ResponseManager<
         var responseSummaries = fileUploadRepository.getResponseSummaries(formId);
         var result = new ArrayList<FileUploadResponseSummaryDto>();
 
-        var responseTextMap = fileUploadRepository.getResponsesFiles(formId, Pageable.ofSize(20))
-                .stream().collect(Collectors.groupingBy(e -> e.get("questionId", Long.class)));
-
         questionResponses.forEach(qr ->
                 result.add(
                         responseSummaries.stream()
@@ -78,15 +75,17 @@ public class FileUploadManager extends ResponseManager<
                                     f.setOrderIndex(qr.getOrderIndex());
                                     f.setNumberOfResponses(rs.numberOfResponses());
                                     f.setQuestionType(QuestionType.FILE_UPLOAD);
+
+                                    var files = fileUploadRepository.getResponseFiles(formId, rs.questionId(), Pageable.ofSize(20));
+
                                     f.setResponses(
-                                            responseTextMap.get(rs.questionId())
-                                                    .stream()
-                                                    .map(tuple -> new FileUploadResponseSummaryDto.Response(
+                                            files.stream().map(tuple ->
+                                                    new FileUploadResponseSummaryDto.Response(
                                                             tuple.get("fileName", String.class),
                                                             tuple.get("fileUrl", String.class),
                                                             tuple.get("fileMimeType", String.class)
-                                                    ))
-                                                    .toList()
+                                                    )
+                                            ).toList()
                                     );
 
                                     return f;
@@ -136,15 +135,7 @@ public class FileUploadManager extends ResponseManager<
 
     @Override
     public FileUploadResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, FileUploadResDto questionResponse) {
-        var sum = new FileUploadResponseQuestionDto.Summary();
-
-        sum.setQuestionId(questionResponse.getId());
-        sum.setQuestion(questionResponse.getQuestion());
-        sum.setQuestionType(questionResponse.getQuestionType());
-        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
-        sum.setDistinctResponseCount(fileUploadRepository.getDistinctResponseCount(formId, questionResponse.getId()));
-
-        return sum;
+        return new FileUploadResponseQuestionDto.Summary();
     }
 
     @Override
@@ -205,7 +196,21 @@ public class FileUploadManager extends ResponseManager<
 
     @Override
     public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
-        return List.of();
+        var map = IdUtil.reconstructCompressedEncodedId(formResponsesIdentifier);
+
+        var fileName = map.get("fileName");
+        var fileUrl = map.get("fileUrl");
+        var fileMimeType = map.get("fileMimeType");
+
+        if (fileName.isEmpty() || fileUrl.isEmpty() || fileMimeType.isEmpty()) {
+            throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
+        }
+
+        var fName = fileName.getFirst();
+        var fUrl = fileUrl.getFirst();
+        var fMimeType = fileMimeType.getFirst();
+
+        return fileUploadRepository.getResponseIdsByGroupedResponse(formId, questionId, fName, fUrl, fMimeType, pageable);
     }
 
     @Override

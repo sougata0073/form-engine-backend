@@ -152,11 +152,14 @@ public class MultipleChoiceGridManager extends QuestionManager<MultipleChoiceGri
                 .map(row ->
                         new MultipleChoiceGridResDto.MultipleChoiceGridRowResDto(row.getId(), row.getRowName(), row.getOrderIndex())
                 )
+                .sorted(Comparator.comparingInt(MultipleChoiceGridResDto.MultipleChoiceGridRowResDto::getOrderIndex))
                 .toList();
+
         var columns = question.getColumns().stream()
                 .map(column ->
                         new MultipleChoiceGridResDto.MultipleChoiceGridColumnResDto(column.getId(), column.getColumnName(), column.getOrderIndex())
                 )
+                .sorted(Comparator.comparingInt(MultipleChoiceGridResDto.MultipleChoiceGridColumnResDto::getOrderIndex))
                 .toList();
 
         mc.setEachRowRequired(question.getEachRowRequired());

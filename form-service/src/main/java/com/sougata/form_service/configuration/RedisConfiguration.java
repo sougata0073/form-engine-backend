@@ -106,7 +106,7 @@ public class RedisConfiguration implements CachingConfigurer {
     public GenericJacksonJsonRedisSerializer redisSerializer() {
         var typeValidator = BasicPolymorphicTypeValidator.builder()
                 .allowIfBaseType(Object.class)
-                .allowIfSubType("com.sougata.form_data_service")
+                .allowIfSubType("com.sougata.form_service")
                 .allowIfSubType("java.util")
                 .build();
 
@@ -120,8 +120,8 @@ public class RedisConfiguration implements CachingConfigurer {
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory, GenericJacksonJsonRedisSerializer redisSerializer) {
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(defaultTtlMinutes))
                 .disableCachingNullValues()
+                .entryTtl(Duration.ofMinutes(defaultTtlMinutes))
                 .prefixCacheNameWith("form-schema::")
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(redisSerializer));

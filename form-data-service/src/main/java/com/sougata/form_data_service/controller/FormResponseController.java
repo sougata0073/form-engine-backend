@@ -56,7 +56,7 @@ public class FormResponseController {
     public FormResponseSummaryShortDto getFormResponseSummary(
             @PathVariable("formId") UUID formId
     ) {
-        return formResponseService.getFormResponseSummary(formId);
+        return formResponseService.getFormResponseSummaryShort(formId);
     }
 
     @GetMapping(path = "{formId}/response-summaries")

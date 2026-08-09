@@ -148,23 +148,15 @@ public class MultipleChoiceGridManager extends ResponseManager<
 
     @Override
     public MultipleChoiceGridResponseSummaryDto getResponseSummary(UUID formId, Long questionId, MultipleChoiceGridResDto questionRes, Pageable pageable) {
-        return null;
+        return new MultipleChoiceGridResponseSummaryDto();
     }
 
     @Override
     public MultipleChoiceGridResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, MultipleChoiceGridResDto questionResponse) {
         var sum = new MultipleChoiceGridResponseQuestionDto.Summary();
 
-        sum.setQuestionId(questionResponse.getId());
-        sum.setQuestion(questionResponse.getQuestion());
-        sum.setQuestionType(questionResponse.getQuestionType());
         sum.setRows(questionResponse.getRows());
         sum.setColumns(questionResponse.getColumns());
-
-        var responseCount = getTotalResponseCount(formId, questionResponse.getId());
-
-        sum.setTotalResponseCount(responseCount);
-        sum.setDistinctResponseCount(responseCount);
 
         return sum;
     }

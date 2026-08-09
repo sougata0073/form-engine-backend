@@ -77,7 +77,7 @@ public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAdd
         List<String> categories = crudDto.getAllowedFileCategories();
         List<FileType> fileTypes = categories.stream()
                 .map(category ->
-                        fileTypeRepository.findById(category)
+                        fileTypeRepository.findByCategory(category)
                                 .orElseThrow(() -> new FileTypeNotFoundException(category))
                 ).collect(Collectors.toList());
 
@@ -121,7 +121,7 @@ public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAdd
         List<String> categories = source.getAllowedFileCategories();
         List<FileType> fileTypes = categories.stream()
                 .map(category ->
-                        fileTypeRepository.findById(category)
+                        fileTypeRepository.findByCategory(category)
                                 .orElseThrow(() -> new FileTypeNotFoundException(category))
                 ).collect(Collectors.toList());
 

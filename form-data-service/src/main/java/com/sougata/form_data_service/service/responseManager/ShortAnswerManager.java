@@ -65,9 +65,6 @@ public class ShortAnswerManager extends ResponseManager<
         var responseSummaries = shortAnswerRepository.getResponseSummaries(formId);
         var result = new ArrayList<ShortAnswerResponseSummaryDto>();
 
-        var responseTextMap = shortAnswerRepository.getResponsesTexts(formId, Pageable.ofSize(20))
-                .stream().collect(Collectors.groupingBy(e -> e.get("questionId", Long.class)));
-
         questionResponses.forEach(qr ->
                 result.add(
                         responseSummaries.stream()
@@ -80,10 +77,10 @@ public class ShortAnswerManager extends ResponseManager<
                                     sa.setOrderIndex(qr.getOrderIndex());
                                     sa.setNumberOfResponses(rs.numberOfResponses());
                                     sa.setQuestionType(QuestionType.SHORT_ANSWER);
-                                    sa.setResponses(
-                                            responseTextMap.get(rs.questionId())
-                                                    .stream().map(tuple -> tuple.get("text", String.class)).toList()
-                                    );
+
+                                    var texts = shortAnswerRepository.getResponseTexts(formId, rs.questionId(), Pageable.ofSize(20));
+
+                                    sa.setResponses(texts);
 
                                     return sa;
                                 })
@@ -124,15 +121,7 @@ public class ShortAnswerManager extends ResponseManager<
 
     @Override
     public ShortAnswerResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, ShortAnswerResDto questionResponse) {
-        var sum = new ShortAnswerResponseQuestionDto.Summary();
-
-        sum.setQuestionId(questionResponse.getId());
-        sum.setQuestion(questionResponse.getQuestion());
-        sum.setQuestionType(questionResponse.getQuestionType());
-        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
-        sum.setDistinctResponseCount(shortAnswerRepository.getDistinctResponseCount(formId, questionResponse.getId()));
-
-        return sum;
+        return new ShortAnswerResponseQuestionDto.Summary();
     }
 
     @Override
@@ -191,12 +180,12 @@ public class ShortAnswerManager extends ResponseManager<
         var text = map.get("text");
 
         if (text.isEmpty()) {
-            throw new IllegalArgumentException("Invalid Form Responses Identifier");
+            throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
         }
 
         var groupedResponse = text.getFirst();
 
-        return shortAnswerRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse);
+        return shortAnswerRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
     }
 
     @Override

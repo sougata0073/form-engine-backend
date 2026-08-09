@@ -62,9 +62,6 @@ public class ParagraphManager extends ResponseManager<
         var responseSummaries = paragraphRepository.getResponseSummaries(formId);
         var result = new ArrayList<ParagraphResponseSummaryDto>();
 
-        var responseTextMap = paragraphRepository.getResponsesTexts(formId, Pageable.ofSize(20))
-                .stream().collect(Collectors.groupingBy(e -> e.get("questionId", Long.class)));
-
         questionResponses.forEach(qr ->
                 result.add(
                         responseSummaries.stream()
@@ -76,11 +73,11 @@ public class ParagraphManager extends ResponseManager<
                                     p.setQuestion(qr.getQuestion());
                                     p.setOrderIndex(qr.getOrderIndex());
                                     p.setNumberOfResponses(rs.numberOfResponses());
-                                    p.setQuestionType(QuestionType.PARAGRAPH);
-                                    p.setResponses(
-                                            responseTextMap.get(rs.questionId())
-                                                    .stream().map(tuple -> tuple.get("text", String.class)).toList()
-                                    );
+                                    p.setQuestionType(getQuestionType());
+
+                                    var texts = paragraphRepository.getResponseTexts(formId, rs.questionId(), Pageable.ofSize(20));
+
+                                    p.setResponses(texts);
 
                                     return p;
                                 })
@@ -92,7 +89,7 @@ public class ParagraphManager extends ResponseManager<
                                     p.setQuestion(qr.getQuestion());
                                     p.setOrderIndex(qr.getOrderIndex());
                                     p.setNumberOfResponses(0L);
-                                    p.setQuestionType(QuestionType.PARAGRAPH);
+                                    p.setQuestionType(getQuestionType());
                                     p.setResponses(List.of());
 
                                     return p;
@@ -121,15 +118,7 @@ public class ParagraphManager extends ResponseManager<
 
     @Override
     public ParagraphResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, ParagraphResDto questionResponse) {
-        var sum = new ParagraphResponseQuestionDto.Summary();
-
-        sum.setQuestionId(questionResponse.getId());
-        sum.setQuestion(questionResponse.getQuestion());
-        sum.setQuestionType(questionResponse.getQuestionType());
-        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
-        sum.setDistinctResponseCount(paragraphRepository.getDistinctResponseCount(formId, questionResponse.getId()));
-
-        return sum;
+        return new ParagraphResponseQuestionDto.Summary();
     }
 
     @Override
@@ -192,7 +181,7 @@ public class ParagraphManager extends ResponseManager<
 
         var groupedResponse = text.getFirst();
 
-        return paragraphRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse);
+        return paragraphRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
     }
 
     @Override

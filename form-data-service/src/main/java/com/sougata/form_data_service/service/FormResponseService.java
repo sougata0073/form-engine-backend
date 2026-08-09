@@ -18,7 +18,7 @@ import java.util.UUID;
 public interface FormResponseService {
     FormResponseAddResDto saveResponse(UUID formId, FormResponseAddReqDto req, UUID userId);
 
-    FormResponseSummaryShortDto getFormResponseSummary(UUID formId);
+    FormResponseSummaryShortDto getFormResponseSummaryShort(UUID formId);
 
     ResponseSummaryResDto getResponseSummaries(UUID formId);
 

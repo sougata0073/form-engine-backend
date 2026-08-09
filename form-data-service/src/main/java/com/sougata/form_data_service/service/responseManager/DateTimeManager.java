@@ -35,13 +35,11 @@ public class DateTimeManager extends ResponseManager<
         > {
 
     private final DateTimeRepository dateTimeRepository;
-    private final QuestionResponseRepository questionResponseRepository;
 
     @Autowired
     public DateTimeManager(DateTimeRepository dateTimeRepository, QuestionResponseRepository questionResponseRepository) {
         super(questionResponseRepository);
         this.dateTimeRepository = dateTimeRepository;
-        this.questionResponseRepository = questionResponseRepository;
     }
 
     @Override
@@ -62,9 +60,6 @@ public class DateTimeManager extends ResponseManager<
         var responseSummaries = dateTimeRepository.getResponseSummaries(formId);
         var result = new ArrayList<DateTimeResponseSummaryDto>();
 
-        var responsesMap = dateTimeRepository.getResponsesDateTimes(formId, Pageable.ofSize(50)).stream()
-                .collect(Collectors.groupingBy(tuple -> tuple.get("questionId", Long.class)));
-
         questionResponses.forEach(qr ->
                 result.add(
                         responseSummaries.stream()
@@ -78,7 +73,9 @@ public class DateTimeManager extends ResponseManager<
                                     dt.setNumberOfResponses(rs.numberOfResponses());
                                     dt.setQuestionType(getQuestionType());
 
-                                    var responses = responsesMap.get(rs.questionId()).stream().map(tuple -> {
+                                    var dateTimes = dateTimeRepository.getResponseDateTimes(formId, rs.questionId(), Pageable.ofSize(20));
+
+                                    var responses = dateTimes.stream().map(tuple -> {
                                         var res = new DateTimeResponseSummaryDto.Response();
 
                                         res.setDate(tuple.get("date", LocalDate.class));
@@ -140,15 +137,7 @@ public class DateTimeManager extends ResponseManager<
 
     @Override
     public DateTimeResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, DateTimeResDto questionResponse) {
-        var sum = new DateTimeResponseQuestionDto.Summary();
-
-        sum.setQuestionId(questionResponse.getId());
-        sum.setQuestion(questionResponse.getQuestion());
-        sum.setQuestionType(questionResponse.getQuestionType());
-        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
-        sum.setDistinctResponseCount(dateTimeRepository.getDistinctResponseCount(formId, questionResponse.getId()));
-
-        return sum;
+        return new DateTimeResponseQuestionDto.Summary();
     }
 
     @Override
@@ -202,7 +191,17 @@ public class DateTimeManager extends ResponseManager<
 
     @Override
     public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
-        return List.of();
+        var map = IdUtil.reconstructCompressedEncodedId(formResponsesIdentifier);
+
+        var dateTime = map.get("dateTime");
+
+        if (dateTime.isEmpty()) {
+            throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
+        }
+
+        var groupedResponse = Instant.parse(dateTime.getFirst());
+
+        return dateTimeRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
     }
 
     @Override

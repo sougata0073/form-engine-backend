@@ -40,7 +40,7 @@ public interface MultipleChoiceGridRepository extends AnyTypeQuestionResponseRep
             and mcgr.row_id = :rowId
             where fr.form_id = :formId
             group by mcgr.response_column_id
-            order by responseCount desc, min(fr.created_at) asc
+            order by responseCount desc, mcgr.response_column_id asc
             """, nativeQuery = true)
     List<Tuple> groupedByResponseRowColumn(UUID formId, long questionId, long rowId, Pageable pageable);
 

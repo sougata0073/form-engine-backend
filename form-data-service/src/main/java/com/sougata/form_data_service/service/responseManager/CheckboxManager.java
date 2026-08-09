@@ -35,14 +35,12 @@ public class CheckboxManager extends ResponseManager<
 
     private final CheckboxRepository checkboxRepository;
     private final CheckboxOptionRepository checkboxOptionRepository;
-    private final QuestionResponseRepository questionResponseRepository;
 
     @Autowired
     public CheckboxManager(CheckboxRepository checkboxRepository, CheckboxOptionRepository checkboxOptionRepository, QuestionResponseRepository questionResponseRepository) {
         super(questionResponseRepository);
         this.checkboxRepository = checkboxRepository;
         this.checkboxOptionRepository = checkboxOptionRepository;
-        this.questionResponseRepository = questionResponseRepository;
     }
 
     @Override
@@ -128,19 +126,14 @@ public class CheckboxManager extends ResponseManager<
 
     @Override
     public CheckboxResponseSummaryDto getResponseSummary(UUID formId, Long questionId, CheckboxResDto questionRes, Pageable pageable) {
-        return null;
+        return new CheckboxResponseSummaryDto();
     }
 
     @Override
     public CheckboxResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, CheckboxResDto questionResponse) {
         var sum = new CheckboxResponseQuestionDto.Summary();
 
-        sum.setQuestionId(questionResponse.getId());
-        sum.setQuestion(questionResponse.getQuestion());
-        sum.setQuestionType(questionResponse.getQuestionType());
         sum.setOptions(questionResponse.getOptions());
-        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
-        sum.setDistinctResponseCount(checkboxRepository.getDistinctResponseCount(formId, questionResponse.getId()));
 
         return sum;
     }

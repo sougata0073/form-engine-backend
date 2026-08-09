@@ -6,36 +6,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
 @Repository("TIME_RESPONSE_REPOSITORY")
 public interface TimeRepository extends AnyTypeQuestionResponseRepository<Time, Long> {
-
-    @Query(value = """
-            select
-            x.questionId questionId,
-            x.hour as hour,
-            array_agg(to_char(x.time, 'YYYY-MM-DD"T"HH24:MI:SSOF') order by x.time) times,
-            array_agg(x.timeCount order by x.time) timeCounts
-            from (
-                select
-                qr.question_id questionId,
-                extract(hour from t.time)::int as hour,
-                t.time time,
-                count(t.time) timeCount
-                from times t
-                join question_responses qr
-                on t.question_response_id = qr.id
-                join form_responses fr
-                on fr.id = qr.form_response_id
-                where fr.form_id = :formId
-                group by qr.question_id, hour, time
-            ) x
-            group by x.questionId, x.hour
-            order by x.hour
-            """, nativeQuery = true)
-    List<Tuple> getResponsesTimes(UUID formId);
 
     @Query(value = """
             select
@@ -85,7 +61,7 @@ public interface TimeRepository extends AnyTypeQuestionResponseRepository<Time, 
             on qr.id = t.question_response_id
             where fr.form_id = :formId
             group by t.time
-            order by responseCount desc, min(fr.created_at) asc
+            order by responseCount desc, t.time asc
             """, nativeQuery = true)
     List<Tuple> groupedByTime(UUID formId, long questionId, Pageable pageable);
 
@@ -98,5 +74,23 @@ public interface TimeRepository extends AnyTypeQuestionResponseRepository<Time, 
             and t.questionResponse.formResponse.id = :formResponseId
             """)
     List<Tuple> getTimesByFormResponse(UUID formId, long formResponseId);
+
+    @Query(value = """
+            select
+            fr.id responseId,
+            fr.user_id userId
+            from form_responses fr
+            left join question_responses qr
+            on fr.id = qr.form_response_id
+            and qr.question_id = :questionId
+            left join times t
+            on qr.id = t.question_response_id
+            where fr.form_id = :formId and (
+                (:response is null and t.time is null)
+                or t.time = :response
+            )
+            order by fr.created_at
+            """, nativeQuery = true)
+    List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, Instant response, Pageable pageable);
 
 }

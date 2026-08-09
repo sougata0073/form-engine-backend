@@ -126,20 +126,15 @@ public class RatingManager extends ResponseManager<
 
     @Override
     public RatingResponseSummaryDto getResponseSummary(UUID formId, Long questionId, RatingResDto questionRes, Pageable pageable) {
-        return null;
+        return new RatingResponseSummaryDto();
     }
 
     @Override
     public RatingResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, RatingResDto questionResponse) {
         var sum = new RatingResponseQuestionDto.Summary();
 
-        sum.setQuestionId(questionResponse.getId());
-        sum.setQuestion(questionResponse.getQuestion());
-        sum.setQuestionType(questionResponse.getQuestionType());
         sum.setRatingIcon(questionResponse.getRatingIcon());
         sum.setMaxRatingNumber(questionResponse.getMaxRatingNumber());
-        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
-        sum.setDistinctResponseCount(ratingRepository.getDistinctResponseCount(formId, questionResponse.getId()));
 
         return sum;
     }
@@ -194,7 +189,17 @@ public class RatingManager extends ResponseManager<
 
     @Override
     public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
-        return List.of();
+        var map = IdUtil.reconstructCompressedEncodedId(formResponsesIdentifier);
+
+        var rating = map.get("rating");
+
+        if (rating.isEmpty()) {
+            throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
+        }
+
+        var groupedResponse = Integer.parseInt(rating.getFirst());
+
+        return ratingRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
     }
 
 

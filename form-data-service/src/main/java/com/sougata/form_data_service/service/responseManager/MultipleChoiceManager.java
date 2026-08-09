@@ -116,19 +116,14 @@ public class MultipleChoiceManager extends ResponseManager<
 
     @Override
     public MultipleChoiceResponseSummaryDto getResponseSummary(UUID formId, Long questionId, MultipleChoiceResDto questionRes, Pageable pageable) {
-        return null;
+        return new MultipleChoiceResponseSummaryDto();
     }
 
     @Override
     public MultipleChoiceResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, MultipleChoiceResDto questionResponse) {
         var sum = new MultipleChoiceResponseQuestionDto.Summary();
 
-        sum.setQuestionId(questionResponse.getId());
-        sum.setQuestion(questionResponse.getQuestion());
-        sum.setQuestionType(questionResponse.getQuestionType());
         sum.setOptions(questionResponse.getOptions());
-        sum.setTotalResponseCount(getTotalResponseCount(formId, questionResponse.getId()));
-        sum.setDistinctResponseCount(multipleChoiceRepository.getDistinctResponseCount(formId, questionResponse.getId()));
 
         return sum;
     }
@@ -184,7 +179,17 @@ public class MultipleChoiceManager extends ResponseManager<
 
     @Override
     public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
-        return List.of();
+        var map = IdUtil.reconstructCompressedEncodedId(formResponsesIdentifier);
+
+        var optionId = map.get("optionId");
+
+        if (optionId.isEmpty()) {
+            throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
+        }
+
+        var groupedResponse = Long.parseLong(optionId.getFirst());
+
+        return multipleChoiceRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
     }
 
     @Override

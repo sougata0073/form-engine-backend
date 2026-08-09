@@ -120,13 +120,14 @@ public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdate
 
         populateCommonFields(question, cb);
 
-        cb.setOptions(
-                question.getOptions().stream()
-                        .map(o ->
-                                new CheckboxResDto.CheckboxOptionResDto(o.getId(), o.getOption(), o.getOrderIndex())
-                        )
-                        .toList()
-        );
+        var options = question.getOptions().stream()
+                .map(o ->
+                        new CheckboxResDto.CheckboxOptionResDto(o.getId(), o.getOption(), o.getOrderIndex())
+                )
+                .sorted(Comparator.comparingInt(CheckboxResDto.CheckboxOptionResDto::getOrderIndex))
+                .toList();
+
+        cb.setOptions(options);
 
         try {
             cb.setValidationConfig(

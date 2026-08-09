@@ -159,23 +159,15 @@ public class TickBoxGridManager extends ResponseManager<
 
     @Override
     public TickBoxGridResponseSummaryDto getResponseSummary(UUID formId, Long questionId, TickBoxGridResDto questionRes, Pageable pageable) {
-        return null;
+        return new TickBoxGridResponseSummaryDto();
     }
 
     @Override
     public TickBoxGridResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, TickBoxGridResDto questionResponse) {
         var sum = new TickBoxGridResponseQuestionDto.Summary();
 
-        sum.setQuestionId(questionResponse.getId());
-        sum.setQuestion(questionResponse.getQuestion());
-        sum.setQuestionType(questionResponse.getQuestionType());
         sum.setRows(questionResponse.getRows());
         sum.setColumns(questionResponse.getColumns());
-
-        var responseCount = getTotalResponseCount(formId, questionResponse.getId());
-
-        sum.setTotalResponseCount(responseCount);
-        sum.setDistinctResponseCount(responseCount);
 
         return sum;
     }

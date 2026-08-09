@@ -47,7 +47,7 @@ public interface LinearScaleRepository extends AnyTypeQuestionResponseRepository
             on qr.id = ls.question_response_id
             where fr.form_id = :formId
             group by ls.scale
-            order by responseCount desc, min(fr.created_at) asc
+            order by responseCount desc, ls.scale asc
             """, nativeQuery = true)
     List<Tuple> groupedByResponseScale(UUID formId, long questionId, Pageable pageable);
 
@@ -60,5 +60,23 @@ public interface LinearScaleRepository extends AnyTypeQuestionResponseRepository
             and ls.questionResponse.formResponse.id = :formResponseId
             """)
     List<Tuple> getScalesByFormResponse(UUID formId, long formResponseId);
+
+    @Query(value = """
+            select
+            fr.id responseId,
+            fr.user_id userId
+            from form_responses fr
+            left join question_responses qr
+            on fr.id = qr.form_response_id
+            and qr.question_id = :questionId
+            left join linear_scales ls
+            on qr.id = ls.question_response_id
+            where fr.form_id = :formId and (
+                (:response is null and ls.scale is null)
+                or ls.scale = :response
+            )
+            order by fr.created_at
+            """, nativeQuery = true)
+    List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, Integer response, Pageable pageable);
 
 }
