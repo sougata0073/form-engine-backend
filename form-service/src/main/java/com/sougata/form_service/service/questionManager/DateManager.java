@@ -4,7 +4,7 @@ import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.DateAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.DateResDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.questionSchema.Date;
+import com.sougata.form_service.model.Date;
 import com.sougata.form_service.repository.DateRepository;
 import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormService;
@@ -31,7 +31,7 @@ public class DateManager extends QuestionManager<Date, DateAddUpdateReqDto, Date
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public DateResDto create(UUID formId, DateAddUpdateReqDto crudDto) {
         var newDate = new Date();
 
@@ -58,7 +58,7 @@ public class DateManager extends QuestionManager<Date, DateAddUpdateReqDto, Date
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public DateResDto update(UUID formId, Long questionId, DateAddUpdateReqDto crudDto) {
         Date date = dateRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.DATE, questionId));

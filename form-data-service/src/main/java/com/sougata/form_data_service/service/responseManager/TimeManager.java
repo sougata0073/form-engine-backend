@@ -75,31 +75,32 @@ public class TimeManager extends ResponseManager<
                                     t.setNumberOfResponses(rs.numberOfResponses());
                                     t.setQuestionType(getQuestionType());
 
-                                    var timeResponses = timeRepository.getResponseTimes(formId, rs.questionId(), Pageable.ofSize(20));
+//                                    var timeResponses = timeRepository.getResponseTimes(formId, rs.questionId(), Pageable.ofSize(20));
 
-                                    var responses = timeResponses.stream().map(tuple -> {
-                                                var res = new TimeResponseSummaryDto.Response();
+//                                    var responses = timeResponses.stream().map(tuple -> {
+//                                        var res = new TimeResponseSummaryDto.Response();
+//
+//                                        var times = tuple.get("times", String[].class);
+//                                        var timeCounts = tuple.get("timeCounts", Long[].class);
+//
+//                                        var timeCountPairs = new ArrayList<TimeResponseSummaryDto.TimeCountPair>();
+//
+//                                        for (int i = 0; i < times.length; i++) {
+//                                            timeCountPairs.add(
+//                                                    new TimeResponseSummaryDto.TimeCountPair(
+//                                                            Instant.parse(times[i]), timeCounts[i]
+//                                                    )
+//                                            );
+//                                        }
+//
+//                                        res.setHour(tuple.get("hour", Integer.class));
+//                                        res.setTimes(timeCountPairs);
+//
+//                                        return res;
+//                                    }).toList();
 
-                                                var times = tuple.get("times", String[].class);
-                                                var timeCounts = tuple.get("timeCounts", Long[].class);
-
-                                                var timeCountPairs = new ArrayList<TimeResponseSummaryDto.TimeCountPair>();
-
-                                                for (int i = 0; i < times.length; i++) {
-                                                    timeCountPairs.add(
-                                                            new TimeResponseSummaryDto.TimeCountPair(
-                                                                    Instant.parse(times[i]), timeCounts[i]
-                                                            )
-                                                    );
-                                                }
-
-                                                res.setHour(tuple.get("hour", Integer.class));
-                                                res.setTimes(timeCountPairs);
-
-                                                return res;
-                                            }).toList();
-
-                                    t.setResponses(responses);
+//                                    t.setResponses(responses);
+                                    t.setResponses(List.of());
 
                                     return t;
                                 })
@@ -123,8 +124,6 @@ public class TimeManager extends ResponseManager<
 
     @Override
     public TimeResponseSummaryDto getResponseSummary(UUID formId, Long questionId, TimeResDto questionRes, Pageable pageable) {
-        return new TimeResponseSummaryDto();
-        /*
         var responseSummary = timeRepository.getResponseSummary(formId, questionId);
         var timeResponses = timeRepository.getResponseTimes(formId, questionId, pageable);
 
@@ -160,7 +159,7 @@ public class TimeManager extends ResponseManager<
         t.setResponses(responses);
 
         return t;
-         */
+
     }
 
     @Override
@@ -238,7 +237,12 @@ public class TimeManager extends ResponseManager<
     }
 
     @Override
-    public void deleteResponses(UUID formId, Long questionId) {
+    public void deleteResponsesByQuestion(UUID formId, Long questionId) {
         timeRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
+    }
+
+    @Override
+    public void deleteResponsesByFormResponse(UUID formId, Long formResponseId) {
+        timeRepository.deleteAllByFormIdAndFormResponseId(formId, formResponseId);
     }
 }

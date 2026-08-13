@@ -1,6 +1,6 @@
 package com.sougata.form_service.repository;
 
-import com.sougata.form_service.model.questionSchema.MultipleChoiceOption;
+import com.sougata.form_service.model.MultipleChoiceOption;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

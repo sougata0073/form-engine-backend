@@ -88,7 +88,7 @@ public interface DateRepository extends AnyTypeQuestionResponseRepository<Date, 
             left join dates d
             on qr.id = d.question_response_id
             where fr.form_id = :formId and (
-                (:response is null and d.date is null)
+                (cast(:response as timestamp with time zone) is null and d.date is null)
                 or d.date = :response
             )
             order by fr.created_at

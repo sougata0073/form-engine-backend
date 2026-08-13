@@ -6,8 +6,8 @@ import com.sougata.form_service.dto.question.request.ParagraphAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.ParagraphResDto;
 import com.sougata.form_service.exception.JsonParsingException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.questionSchema.Paragraph;
-import com.sougata.form_service.model.questionSchema.Question;
+import com.sougata.form_service.model.Paragraph;
+import com.sougata.form_service.model.Question;
 import com.sougata.form_service.repository.ParagraphRepository;
 import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormService;
@@ -35,7 +35,7 @@ public class ParagraphManager extends QuestionManager<Paragraph, ParagraphAddUpd
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public ParagraphResDto create(UUID formId, ParagraphAddUpdateReqDto crudDto) {
         var newP = new Paragraph();
 
@@ -62,7 +62,7 @@ public class ParagraphManager extends QuestionManager<Paragraph, ParagraphAddUpd
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public ParagraphResDto update(UUID formId, Long questionId, ParagraphAddUpdateReqDto crudDto) {
         Paragraph p = paragraphRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.PARAGRAPH, questionId));

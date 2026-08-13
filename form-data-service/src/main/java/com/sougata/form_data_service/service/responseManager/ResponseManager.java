@@ -4,7 +4,6 @@ import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.QuestionResponseAddReq;
 import com.sougata.form_data_service.dto.question.response.QuestionRes;
 import com.sougata.form_data_service.dto.response.individual.ResponseIndividualDto;
-import com.sougata.form_data_service.dto.response.individual.ResponseIndividualResDto;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionResponse;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionSummary;
 import com.sougata.form_data_service.dto.response.question.ResponseQuestionDto;
@@ -51,7 +50,9 @@ public abstract class ResponseManager<
 
     public abstract QuestionType getQuestionType();
 
-    public abstract void deleteResponses(UUID formId, Long questionId);
+    public abstract void deleteResponsesByQuestion(UUID formId, Long questionId);
+
+    public abstract void deleteResponsesByFormResponse(UUID formId, Long formResponseId);
 
     public QuestionResponse createQuestionResponse(Long questionId, FormResponse formResponse) {
         var qr = new QuestionResponse();

@@ -6,6 +6,7 @@ import com.sougata.form_data_service.dto.question.response.DropdownResDto;
 import com.sougata.form_data_service.dto.response.individual.DateResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.individual.DropdownResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.DropdownResponseQuestionDto;
+import com.sougata.form_data_service.dto.response.summary.CheckboxResponseSummaryDto;
 import com.sougata.form_data_service.dto.response.summary.DropdownResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.Dropdown;
@@ -116,7 +117,17 @@ public class DropdownManager extends ResponseManager<
 
     @Override
     public DropdownResponseSummaryDto getResponseSummary(UUID formId, Long questionId, DropdownResDto questionRes, Pageable pageable) {
-        return new DropdownResponseSummaryDto();
+        var responseSummary = dropdownRepository.getResponseSummary(formId, questionId);
+        var res = new DropdownResponseSummaryDto();
+
+        res.setQuestionId(questionRes.getId());
+        res.setQuestion(questionRes.getQuestion());
+        res.setQuestionType(getQuestionType());
+        res.setOrderIndex(questionRes.getOrderIndex());
+        res.setNumberOfResponses(responseSummary.numberOfResponses());
+        res.setResponses(List.of());
+
+        return res;
     }
 
     @Override
@@ -197,7 +208,12 @@ public class DropdownManager extends ResponseManager<
     }
 
     @Override
-    public void deleteResponses(UUID formId, Long questionId) {
+    public void deleteResponsesByQuestion(UUID formId, Long questionId) {
         dropdownRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
+    }
+
+    @Override
+    public void deleteResponsesByFormResponse(UUID formId, Long formResponseId) {
+        dropdownRepository.deleteAllByFormIdAndFormResponseId(formId, formResponseId);
     }
 }

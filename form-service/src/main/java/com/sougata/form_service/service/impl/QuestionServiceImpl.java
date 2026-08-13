@@ -4,6 +4,7 @@ import com.sougata.form_service.dto.common.SuccessMessageDto;
 import com.sougata.form_service.dto.question.QuestionSummariesResDto;
 import com.sougata.form_service.dto.question.QuestionSummaryDto;
 import com.sougata.form_service.dto.question.request.QuestionAddUpdateReq;
+import com.sougata.form_service.dto.question.request.QuestionOrderUpdateReqDto;
 import com.sougata.form_service.dto.question.response.QuestionRes;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.feignClient.FormDataServiceFeignClient;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -41,7 +43,7 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public QuestionRes updateQuestion(UUID formId, Long questionId, QuestionAddUpdateReq dto) {
 
         var prevQType = questionRepository.findQuestionTypeByFormIdAndId(formId, questionId)
@@ -63,19 +65,18 @@ public class QuestionServiceImpl implements QuestionService {
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public SuccessMessageDto deleteQuestion(UUID formId, Long questionId) {
 
-        var questionType = questionRepository.findQuestionTypeByFormIdAndId(formId, questionId)
-                .orElseThrow(() -> new QuestionNotFoundException(questionId)).getQuestionType();
+        var question = questionRepository.findQuestionSummaryByFormIdAndId(formId, questionId)
+                .orElseThrow(() -> new QuestionNotFoundException(questionId));
 
         // TODO: Message broker will handle this
         formDataServiceFeignClient.deleteResponses(formId, questionId);
 
-        var manager = questionManagerFactory.get(questionType);
-
-        manager.delete(formId, questionId);
         questionRepository.deleteQuestion(questionId);
+
+        questionRepository.setQuestionOrderAfterDeleteQuestion(formId, question.getOrderIndex());
 
         return SuccessMessageDto.create("Question deleted successfully with question ID: " + questionId);
     }
@@ -116,5 +117,27 @@ public class QuestionServiceImpl implements QuestionService {
                 .orElseThrow(() -> new QuestionNotFoundException(questionId));
 
         return new QuestionSummaryDto(q.getId(), q.getQuestion(), q.getQuestionType(), q.getOrderIndex());
+    }
+
+    @Override
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public SuccessMessageDto updateOrderIndex(UUID formId, Long questionId, QuestionOrderUpdateReqDto req) {
+
+
+        var question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new QuestionNotFoundException(questionId));
+
+        var prevIndex = question.getOrderIndex();
+
+        if (!Objects.equals(req.getCurrentIndex(), prevIndex)) {
+            question.setOrderIndex(req.getCurrentIndex());
+
+            questionRepository.save(question);
+            questionRepository.updateNextQuestionOrderIndexes(formId, questionId, prevIndex, req.getCurrentIndex());
+        }
+
+        return SuccessMessageDto.create(
+                "Question order updated successfully previous order: " + prevIndex + ". current index : " + req.getCurrentIndex()
+        );
     }
 }

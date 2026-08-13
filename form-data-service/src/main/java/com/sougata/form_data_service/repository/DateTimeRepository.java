@@ -79,7 +79,7 @@ public interface DateTimeRepository extends AnyTypeQuestionResponseRepository<Da
             left join date_times dt
             on qr.id = dt.question_response_id
             where fr.form_id = :formId and (
-                (:response is null and dt.date_time is null)
+                (cast(:response as timestamp with time zone) is null and dt.date_time is null)
                 or dt.date_time = :response
             )
             order by fr.created_at

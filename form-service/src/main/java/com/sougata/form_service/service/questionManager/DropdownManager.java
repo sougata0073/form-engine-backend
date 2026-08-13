@@ -4,9 +4,9 @@ import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.DropdownAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.DropdownResDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.questionSchema.Dropdown;
-import com.sougata.form_service.model.questionSchema.DropdownOption;
-import com.sougata.form_service.model.questionSchema.Question;
+import com.sougata.form_service.model.Dropdown;
+import com.sougata.form_service.model.DropdownOption;
+import com.sougata.form_service.model.Question;
 import com.sougata.form_service.repository.DropdownOptionRepository;
 import com.sougata.form_service.repository.DropdownRepository;
 import com.sougata.form_service.repository.QuestionRepository;
@@ -36,7 +36,7 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public DropdownResDto create(UUID formId, DropdownAddUpdateReqDto crudDto) {
         var newDd = new Dropdown();
 
@@ -63,7 +63,7 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public DropdownResDto update(UUID formId, Long questionId, DropdownAddUpdateReqDto crudDto) {
         Dropdown dd = dropdownRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.DROPDOWN, questionId));
@@ -110,9 +110,8 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public void delete(UUID formId, Long questionId) {
-        dropdownOptionRepository.deleteAllByFormIdAndDropdownId(formId, questionId);
         dropdownRepository.deleteQuestion(formId, questionId);
     }
 

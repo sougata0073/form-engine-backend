@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -26,6 +28,7 @@ public class CheckboxOption implements Persistable<Long> {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = false, name = "checkbox_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private Checkbox checkbox;
 
     @Transient

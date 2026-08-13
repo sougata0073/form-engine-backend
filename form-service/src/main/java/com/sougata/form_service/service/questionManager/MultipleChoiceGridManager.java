@@ -4,10 +4,10 @@ import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.MultipleChoiceGridAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.MultipleChoiceGridResDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.questionSchema.MultipleChoiceGrid;
-import com.sougata.form_service.model.questionSchema.MultipleChoiceGridColumn;
-import com.sougata.form_service.model.questionSchema.MultipleChoiceGridRow;
-import com.sougata.form_service.model.questionSchema.Question;
+import com.sougata.form_service.model.MultipleChoiceGrid;
+import com.sougata.form_service.model.MultipleChoiceGridColumn;
+import com.sougata.form_service.model.MultipleChoiceGridRow;
+import com.sougata.form_service.model.Question;
 import com.sougata.form_service.repository.MultipleChoiceGridColumnRepository;
 import com.sougata.form_service.repository.MultipleChoiceGridRepository;
 import com.sougata.form_service.repository.MultipleChoiceGridRowRepository;
@@ -40,7 +40,7 @@ public class MultipleChoiceGridManager extends QuestionManager<MultipleChoiceGri
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public MultipleChoiceGridResDto create(UUID formId, MultipleChoiceGridAddUpdateReqDto crudDto) {
         var newMcg = new MultipleChoiceGrid();
 
@@ -67,7 +67,7 @@ public class MultipleChoiceGridManager extends QuestionManager<MultipleChoiceGri
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public MultipleChoiceGridResDto update(UUID formId, Long questionId, MultipleChoiceGridAddUpdateReqDto crudDto) {
         MultipleChoiceGrid mcg = multipleChoiceGridRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.MULTIPLE_CHOICE_GRID, questionId));
@@ -175,10 +175,8 @@ public class MultipleChoiceGridManager extends QuestionManager<MultipleChoiceGri
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public void delete(UUID formId, Long questionId) {
-        multipleChoiceGridRowRepository.deleteAllByFormIdAndMultipleChoiceGridId(formId, questionId);
-        multipleChoiceGridColumnRepository.deleteAllByFormIdAndMultipleChoiceGridId(formId, questionId);
         multipleChoiceGridRepository.deleteQuestion(formId, questionId);
     }
 

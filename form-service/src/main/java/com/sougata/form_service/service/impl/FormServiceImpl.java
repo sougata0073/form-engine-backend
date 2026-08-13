@@ -16,7 +16,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -73,7 +72,7 @@ public class FormServiceImpl implements FormService {
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public FormResponseDto getForm(UUID id) {
 
         formRepo.updateLastOpenedOn(id, Instant.now());
@@ -126,12 +125,14 @@ public class FormServiceImpl implements FormService {
     }
 
     @Override
-    public List<FormSummaryResDto> getFormsSummaries(UUID userId) {
-        return formRepo.findByUserIdOrderByLastOpenedOnDesc(userId)
+    public FormSummariesRes getFormsSummaries(UUID userId) {
+        var forms = formRepo.findByUserIdOrderByLastOpenedOnDesc(userId)
                 .stream()
                 .map(f ->
                         new FormSummaryResDto(f.getId(), f.getName(), f.getLastOpenedOn())
                 ).toList();
+
+        return new FormSummariesRes(forms);
     }
 
     @Override

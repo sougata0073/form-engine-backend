@@ -17,4 +17,8 @@ public interface CheckboxOptionRepository extends JpaRepository<CheckboxOption, 
     @Query("delete from CheckboxOption co where co.checkbox.questionResponse.formResponse.formId = :formId and co.checkbox.questionResponse.questionId = :questionId")
     void deleteAllByFormIdAndQuestionId(UUID formId, long questionId);
 
+    @Modifying
+    @Transactional
+    @Query("delete from CheckboxOption co where co.checkbox.questionResponse.formResponse.formId = :formId and co.checkbox.questionResponse.formResponse.id = :formResponseId")
+    void deleteAllByFormIdAndFormResponseId(UUID formId, long formResponseId);
 }

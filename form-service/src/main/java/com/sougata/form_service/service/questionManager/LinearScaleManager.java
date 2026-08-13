@@ -4,8 +4,8 @@ import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.LinearScaleAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.LinearScaleResDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.questionSchema.LinearScale;
-import com.sougata.form_service.model.questionSchema.Question;
+import com.sougata.form_service.model.LinearScale;
+import com.sougata.form_service.model.Question;
 import com.sougata.form_service.repository.LinearScaleRepository;
 import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormService;
@@ -31,7 +31,7 @@ public class LinearScaleManager extends QuestionManager<LinearScale, LinearScale
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public LinearScaleResDto create(UUID formId, LinearScaleAddUpdateReqDto crudDto) {
         var newLs = new LinearScale();
 
@@ -58,7 +58,7 @@ public class LinearScaleManager extends QuestionManager<LinearScale, LinearScale
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public LinearScaleResDto update(UUID formId, Long questionId, LinearScaleAddUpdateReqDto crudDto) {
         LinearScale ls = linearScaleRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.LINEAR_SCALE, questionId));

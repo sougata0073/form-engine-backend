@@ -2,7 +2,7 @@ package com.sougata.form_service.repository;
 
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.response.RatingResDto;
-import com.sougata.form_service.model.questionSchema.Rating;
+import com.sougata.form_service.model.Rating;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 

@@ -2,10 +2,11 @@ package com.sougata.form_data_service.repository;
 
 import com.sougata.form_data_service.dto.form.FormResponseSummaryShortDto;
 import com.sougata.form_data_service.model.FormResponse;
-import jakarta.persistence.Tuple;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -13,7 +14,11 @@ import java.util.UUID;
 @Repository
 public interface FormResponseRepository extends JpaRepository<FormResponse, Long> {
 
+    Optional<FormResponse> findByFormIdAndId(UUID formId, Long id);
+
     Optional<FormResponse> findByFormIdAndUserId(UUID formId, UUID userId);
+
+    Optional<FormResponse> findByFormIdAndUserIdAndId(UUID formId, UUID userId, Long id);
 
     @Query("""
             select
@@ -26,17 +31,6 @@ public interface FormResponseRepository extends JpaRepository<FormResponse, Long
     FormResponseSummaryShortDto getFormResponseSummary(UUID formId);
 
     boolean existsByFormIdAndUserId(UUID formId, UUID userId);
-
-    @Query(value = """
-            select
-            count(fr.id) totalResponseCount,
-            array_agg(fr.id order by fr.created_at) responseIds,
-            array_agg(fr.user_id order by fr.created_at) userIds
-            from form_responses fr
-            where fr.form_id = :formId
-            group by fr.form_id
-            """, nativeQuery = true)
-    Tuple getAllResponseIdsAndUserIds(UUID formId);
 
     @Query("""
             select
@@ -65,4 +59,10 @@ public interface FormResponseRepository extends JpaRepository<FormResponse, Long
             where (x.rn - 1) = :page
             """)
     Optional<Long> getFormResponseIdFromPage(UUID formId, long page);
+
+    @Modifying
+    @Transactional
+    @Query("delete from FormResponse fr where fr.id = :formResponseId")
+    void deleteByFormResponseId(Long formResponseId);
+
 }

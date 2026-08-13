@@ -126,7 +126,17 @@ public class CheckboxManager extends ResponseManager<
 
     @Override
     public CheckboxResponseSummaryDto getResponseSummary(UUID formId, Long questionId, CheckboxResDto questionRes, Pageable pageable) {
-        return new CheckboxResponseSummaryDto();
+        var responseSummary = checkboxRepository.getResponseSummary(formId, questionId);
+        var res = new CheckboxResponseSummaryDto();
+
+        res.setQuestionId(questionRes.getId());
+        res.setQuestion(questionRes.getQuestion());
+        res.setQuestionType(getQuestionType());
+        res.setOrderIndex(questionRes.getOrderIndex());
+        res.setNumberOfResponses(responseSummary.numberOfResponses());
+        res.setResponses(List.of());
+
+        return res;
     }
 
     @Override
@@ -200,9 +210,12 @@ public class CheckboxManager extends ResponseManager<
     }
 
     @Override
-    @Transactional
-    public void deleteResponses(UUID formId, Long questionId) {
-        checkboxOptionRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
+    public void deleteResponsesByQuestion(UUID formId, Long questionId) {
         checkboxRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
+    }
+
+    @Override
+    public void deleteResponsesByFormResponse(UUID formId, Long formResponseId) {
+        checkboxRepository.deleteAllByFormIdAndFormResponseId(formId, formResponseId);
     }
 }

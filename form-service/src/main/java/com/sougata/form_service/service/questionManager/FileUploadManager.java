@@ -7,8 +7,8 @@ import com.sougata.form_service.dto.question.response.FileUploadResDto;
 import com.sougata.form_service.exception.FileTypeNotFoundException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.FileType;
-import com.sougata.form_service.model.questionSchema.FileUpload;
-import com.sougata.form_service.model.questionSchema.Question;
+import com.sougata.form_service.model.FileUpload;
+import com.sougata.form_service.model.Question;
 import com.sougata.form_service.repository.FileTypeRepository;
 import com.sougata.form_service.repository.FileUploadRepository;
 import com.sougata.form_service.repository.QuestionRepository;
@@ -40,7 +40,7 @@ public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAdd
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public FileUploadResDto create(UUID formId, FileUploadAddUpdateReqDto crudDto) {
         var newFu = new FileUpload();
 
@@ -67,7 +67,7 @@ public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAdd
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public FileUploadResDto update(UUID formId, Long questionId, FileUploadAddUpdateReqDto crudDto) {
         FileUpload fu = fileUploadRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.FILE_UPLOAD, questionId));
@@ -113,7 +113,6 @@ public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAdd
 
     @Override
     public void delete(UUID formId, Long questionId) {
-        fileUploadRepository.deleteAllFileUploadFileTypeByFileUploadId(questionId);
         fileUploadRepository.deleteQuestion(formId, questionId);
     }
 

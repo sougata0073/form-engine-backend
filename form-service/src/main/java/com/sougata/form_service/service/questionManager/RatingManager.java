@@ -4,8 +4,8 @@ import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.RatingAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.RatingResDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.questionSchema.Question;
-import com.sougata.form_service.model.questionSchema.Rating;
+import com.sougata.form_service.model.Question;
+import com.sougata.form_service.model.Rating;
 import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.repository.RatingRepository;
 import com.sougata.form_service.service.FormService;
@@ -31,7 +31,7 @@ public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public RatingResDto create(UUID formId, RatingAddUpdateReqDto crudDto) {
         var newR = new Rating();
 
@@ -58,7 +58,7 @@ public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public RatingResDto update(UUID formId, Long questionId, RatingAddUpdateReqDto crudDto) {
         Rating r = ratingRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.RATING, questionId));

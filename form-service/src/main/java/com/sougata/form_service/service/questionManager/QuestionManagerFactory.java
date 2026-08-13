@@ -4,7 +4,7 @@ import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.QuestionAddUpdateReq;
 import com.sougata.form_service.dto.question.response.QuestionRes;
 import com.sougata.form_service.exception.NoQuestionManagerFoundException;
-import com.sougata.form_service.model.questionSchema.AnyTypeQuestion;
+import com.sougata.form_service.model.AnyTypeQuestion;
 import com.sougata.form_service.service.QuestionManager;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;

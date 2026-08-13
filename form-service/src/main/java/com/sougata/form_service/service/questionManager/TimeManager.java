@@ -4,7 +4,7 @@ import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.TimeAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.TimeResDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.questionSchema.Time;
+import com.sougata.form_service.model.Time;
 import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.repository.TimeRepository;
 import com.sougata.form_service.service.FormService;
@@ -30,7 +30,7 @@ public class TimeManager extends QuestionManager<Time, TimeAddUpdateReqDto, Time
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public TimeResDto create(UUID formId, TimeAddUpdateReqDto crudDto) {
         var newTime = new Time();
 
@@ -57,7 +57,7 @@ public class TimeManager extends QuestionManager<Time, TimeAddUpdateReqDto, Time
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public TimeResDto update(UUID formId, Long questionId, TimeAddUpdateReqDto crudDto) {
         Time t = timeRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.TIME, questionId));

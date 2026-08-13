@@ -6,6 +6,8 @@ import com.sougata.form_data_service.dto.question.response.TickBoxGridResDto;
 import com.sougata.form_data_service.dto.response.individual.ParagraphResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.individual.TickBoxGridResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.TickBoxGridResponseQuestionDto;
+import com.sougata.form_data_service.dto.response.summary.CheckboxResponseSummaryDto;
+import com.sougata.form_data_service.dto.response.summary.ResponseSummaryDto;
 import com.sougata.form_data_service.dto.response.summary.TickBoxGridResponseSummaryDto;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.TickBoxGrid;
@@ -159,7 +161,17 @@ public class TickBoxGridManager extends ResponseManager<
 
     @Override
     public TickBoxGridResponseSummaryDto getResponseSummary(UUID formId, Long questionId, TickBoxGridResDto questionRes, Pageable pageable) {
-        return new TickBoxGridResponseSummaryDto();
+        var responseSummary = tickBoxGridRepository.getResponseSummary(formId, questionId);
+        var res = new TickBoxGridResponseSummaryDto();
+
+        res.setQuestionId(questionRes.getId());
+        res.setQuestion(questionRes.getQuestion());
+        res.setQuestionType(getQuestionType());
+        res.setOrderIndex(questionRes.getOrderIndex());
+        res.setNumberOfResponses(responseSummary.numberOfResponses());
+        res.setResponses(List.of());
+
+        return res;
     }
 
     @Override
@@ -268,10 +280,12 @@ public class TickBoxGridManager extends ResponseManager<
     }
 
     @Override
-    @Transactional
-    public void deleteResponses(UUID formId, Long questionId) {
-        tickBoxGridColumnRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
-        tickBoxGridRowRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
+    public void deleteResponsesByQuestion(UUID formId, Long questionId) {
         tickBoxGridRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
+    }
+
+    @Override
+    public void deleteResponsesByFormResponse(UUID formId, Long formResponseId) {
+        tickBoxGridRepository.deleteAllByFormIdAndFormResponseId(formId, formResponseId);
     }
 }

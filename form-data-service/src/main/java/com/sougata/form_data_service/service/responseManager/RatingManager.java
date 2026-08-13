@@ -6,7 +6,9 @@ import com.sougata.form_data_service.dto.question.response.RatingResDto;
 import com.sougata.form_data_service.dto.response.individual.ParagraphResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.individual.RatingResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.RatingResponseQuestionDto;
+import com.sougata.form_data_service.dto.response.summary.CheckboxResponseSummaryDto;
 import com.sougata.form_data_service.dto.response.summary.RatingResponseSummaryDto;
+import com.sougata.form_data_service.dto.response.summary.ResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.Rating;
@@ -126,7 +128,17 @@ public class RatingManager extends ResponseManager<
 
     @Override
     public RatingResponseSummaryDto getResponseSummary(UUID formId, Long questionId, RatingResDto questionRes, Pageable pageable) {
-        return new RatingResponseSummaryDto();
+        var responseSummary = ratingRepository.getResponseSummary(formId, questionId);
+        var res = new RatingResponseSummaryDto();
+
+        res.setQuestionId(questionRes.getId());
+        res.setQuestion(questionRes.getQuestion());
+        res.setQuestionType(getQuestionType());
+        res.setOrderIndex(questionRes.getOrderIndex());
+        res.setNumberOfResponses(responseSummary.numberOfResponses());
+        res.setResponses(List.of());
+
+        return res;
     }
 
     @Override
@@ -209,7 +221,12 @@ public class RatingManager extends ResponseManager<
     }
 
     @Override
-    public void deleteResponses(UUID formId, Long questionId) {
+    public void deleteResponsesByQuestion(UUID formId, Long questionId) {
         ratingRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
+    }
+
+    @Override
+    public void deleteResponsesByFormResponse(UUID formId, Long formResponseId) {
+        ratingRepository.deleteAllByFormIdAndFormResponseId(formId, formResponseId);
     }
 }

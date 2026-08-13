@@ -76,17 +76,18 @@ public class FileUploadManager extends ResponseManager<
                                     f.setNumberOfResponses(rs.numberOfResponses());
                                     f.setQuestionType(QuestionType.FILE_UPLOAD);
 
-                                    var files = fileUploadRepository.getResponseFiles(formId, rs.questionId(), Pageable.ofSize(20));
-
-                                    f.setResponses(
-                                            files.stream().map(tuple ->
-                                                    new FileUploadResponseSummaryDto.Response(
-                                                            tuple.get("fileName", String.class),
-                                                            tuple.get("fileUrl", String.class),
-                                                            tuple.get("fileMimeType", String.class)
-                                                    )
-                                            ).toList()
-                                    );
+//                                    var files = fileUploadRepository.getResponseFiles(formId, rs.questionId(), Pageable.ofSize(20));
+//
+//                                    var responses = files.stream().map(tuple ->
+//                                            new FileUploadResponseSummaryDto.Response(
+//                                                    tuple.get("fileName", String.class),
+//                                                    tuple.get("fileUrl", String.class),
+//                                                    tuple.get("fileMimeType", String.class)
+//                                            )
+//                                    ).toList();
+//
+//                                    f.setResponses(responses);
+                                    f.setResponses(List.of());
 
                                     return f;
                                 })
@@ -219,7 +220,12 @@ public class FileUploadManager extends ResponseManager<
     }
 
     @Override
-    public void deleteResponses(UUID formId, Long questionId) {
+    public void deleteResponsesByQuestion(UUID formId, Long questionId) {
         fileUploadRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
+    }
+
+    @Override
+    public void deleteResponsesByFormResponse(UUID formId, Long formResponseId) {
+        fileUploadRepository.deleteAllByFormIdAndFormResponseId(formId, formResponseId);
     }
 }

@@ -76,37 +76,38 @@ public class DurationManager extends ResponseManager<
                                     d.setNumberOfResponses(rs.numberOfResponses());
                                     d.setQuestionType(getQuestionType());
 
-                                    var durations = durationRepository.getResponseDurations(formId, rs.questionId(), Pageable.ofSize(20));
-
-                                    var responses = durations.stream().map(tuple -> {
-                                                var res = new DurationResponseSummaryDto.Response();
-
-                                                res.setHours(tuple.get("hours", Integer.class));
-
-                                                var minutes = tuple.get("minutes", Integer[].class);
-                                                var seconds = tuple.get("seconds", Integer[].class);
-                                                var minSecCounts = tuple.get("minSecCounts", Long[].class);
-
-                                                var durationCountPairs = new ArrayList<DurationResponseSummaryDto.DurationCountPair>();
-
-                                                for (int i = 0; i < minutes.length; i++) {
-                                                    var min = minutes[i];
-                                                    var sec = seconds[i];
-                                                    var cnt = minSecCounts[i];
-
-                                                    durationCountPairs.add(
-                                                            new DurationResponseSummaryDto.DurationCountPair(
-                                                                    min, sec, cnt
-                                                            )
-                                                    );
-                                                }
-
-                                                res.setDurations(durationCountPairs);
-
-                                                return res;
-                                            }).toList();
-
-                                    d.setResponses(responses);
+//                                    var durations = durationRepository.getResponseDurations(formId, rs.questionId(), Pageable.ofSize(20));
+//
+//                                    var responses = durations.stream().map(tuple -> {
+//                                                var res = new DurationResponseSummaryDto.Response();
+//
+//                                                res.setHours(tuple.get("hours", Integer.class));
+//
+//                                                var minutes = tuple.get("minutes", Integer[].class);
+//                                                var seconds = tuple.get("seconds", Integer[].class);
+//                                                var minSecCounts = tuple.get("minSecCounts", Long[].class);
+//
+//                                                var durationCountPairs = new ArrayList<DurationResponseSummaryDto.DurationCountPair>();
+//
+//                                                for (int i = 0; i < minutes.length; i++) {
+//                                                    var min = minutes[i];
+//                                                    var sec = seconds[i];
+//                                                    var cnt = minSecCounts[i];
+//
+//                                                    durationCountPairs.add(
+//                                                            new DurationResponseSummaryDto.DurationCountPair(
+//                                                                    min, sec, cnt
+//                                                            )
+//                                                    );
+//                                                }
+//
+//                                                res.setDurations(durationCountPairs);
+//
+//                                                return res;
+//                                            }).toList();
+//
+//                                    d.setResponses(responses);
+                                    d.setResponses(List.of());
 
                                     return d;
                                 })
@@ -265,7 +266,12 @@ public class DurationManager extends ResponseManager<
     }
 
     @Override
-    public void deleteResponses(UUID formId, Long questionId) {
+    public void deleteResponsesByQuestion(UUID formId, Long questionId) {
         durationRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
+    }
+
+    @Override
+    public void deleteResponsesByFormResponse(UUID formId, Long formResponseId) {
+        durationRepository.deleteAllByFormIdAndFormResponseId(formId, formResponseId);
     }
 }

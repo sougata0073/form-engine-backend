@@ -2,7 +2,7 @@ package com.sougata.form_service.repository;
 
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.response.DateTimeResDto;
-import com.sougata.form_service.model.questionSchema.DateTime;
+import com.sougata.form_service.model.DateTime;
 import org.springframework.stereotype.Repository;
 
 @Repository("DATE_TIME_REPOSITORY")

@@ -4,7 +4,7 @@ import com.sougata.form_service.dto.form.FormResponseDto;
 import com.sougata.form_service.dto.question.response.QuestionRes;
 import com.sougata.form_service.exception.FormNotFoundException;
 import com.sougata.form_service.model.Form;
-import com.sougata.form_service.model.questionSchema.Question;
+import com.sougata.form_service.projection.QuestionSummaryProjection;
 import com.sougata.form_service.repository.AnyTypeQuestionRepositoryFactory;
 import com.sougata.form_service.repository.FormRepository;
 import com.sougata.form_service.repository.QuestionRepository;
@@ -42,13 +42,13 @@ public class FormServiceCachedImpl implements FormServiceCached {
 
         List<QuestionRes> questionResponses = new ArrayList<>();
 
-        var questions = questionRepository.findByFormId(id);
-        var questionTypeMap = questions.stream().collect(Collectors.groupingBy(Question::getQuestionType));
+        var questions = questionRepository.findQuestionSummariesByFormId(id);
+        var questionTypeMap = questions.stream().collect(Collectors.groupingBy(QuestionSummaryProjection::getQuestionType));
 
         questionTypeMap.keySet().forEach(qType -> {
             var repo = anyTypeQuestionRepositoryFactory.get(qType);
             var manager = questionManagerFactory.get(qType);
-            var qIds = questionTypeMap.get(qType).stream().map(Question::getId).collect(Collectors.toList());
+            var qIds = questionTypeMap.get(qType).stream().map(QuestionSummaryProjection::getId).collect(Collectors.toList());
 
             var qs = repo.findAllById((Iterable<Object>) (Iterable<?>) qIds).stream().map(manager::toQuestionResDto).toList();
 

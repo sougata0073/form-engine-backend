@@ -1,5 +1,6 @@
 package com.sougata.form_data_service.service;
 
+import com.sougata.form_data_service.dto.common.SuccessMessageDto;
 import com.sougata.form_data_service.dto.form.FormResponseAddReqDto;
 import com.sougata.form_data_service.dto.form.FormResponseAddResDto;
 import com.sougata.form_data_service.dto.form.FormResponseSummariesDto;
@@ -36,5 +37,7 @@ public interface FormResponseService {
 
     boolean getIsResponseAlreadySubmitted(UUID formId, UUID userId);
 
-    void deleteResponses(UUID formId, Long questionId);
+    SuccessMessageDto deleteFormResponse(UUID formId, UUID userId, Long formResponseId);
+
+    void deleteQuestionResponses(UUID formId, Long questionId);
 }

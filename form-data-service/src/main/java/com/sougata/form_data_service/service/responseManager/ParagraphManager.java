@@ -75,9 +75,10 @@ public class ParagraphManager extends ResponseManager<
                                     p.setNumberOfResponses(rs.numberOfResponses());
                                     p.setQuestionType(getQuestionType());
 
-                                    var texts = paragraphRepository.getResponseTexts(formId, rs.questionId(), Pageable.ofSize(20));
-
-                                    p.setResponses(texts);
+//                                    var texts = paragraphRepository.getResponseTexts(formId, rs.questionId(), Pageable.ofSize(20));
+//
+//                                    p.setResponses(texts);
+                                    p.setResponses(List.of());
 
                                     return p;
                                 })
@@ -190,7 +191,12 @@ public class ParagraphManager extends ResponseManager<
     }
 
     @Override
-    public void deleteResponses(UUID formId, Long questionId) {
+    public void deleteResponsesByQuestion(UUID formId, Long questionId) {
         paragraphRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
+    }
+
+    @Override
+    public void deleteResponsesByFormResponse(UUID formId, Long formResponseId) {
+        paragraphRepository.deleteAllByFormIdAndFormResponseId(formId, formResponseId);
     }
 }

@@ -4,10 +4,10 @@ import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.TickBoxGridAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.TickBoxGridResDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.questionSchema.Question;
-import com.sougata.form_service.model.questionSchema.TickBoxGrid;
-import com.sougata.form_service.model.questionSchema.TickBoxGridColumn;
-import com.sougata.form_service.model.questionSchema.TickBoxGridRow;
+import com.sougata.form_service.model.Question;
+import com.sougata.form_service.model.TickBoxGrid;
+import com.sougata.form_service.model.TickBoxGridColumn;
+import com.sougata.form_service.model.TickBoxGridRow;
 import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.repository.TickBoxGridColumnRepository;
 import com.sougata.form_service.repository.TickBoxGridRepository;
@@ -40,7 +40,7 @@ public class TickBoxGridManager extends QuestionManager<TickBoxGrid, TickBoxGrid
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public TickBoxGridResDto create(UUID formId, TickBoxGridAddUpdateReqDto crudDto) {
         var newTbg = new TickBoxGrid();
 
@@ -67,7 +67,7 @@ public class TickBoxGridManager extends QuestionManager<TickBoxGrid, TickBoxGrid
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public TickBoxGridResDto update(UUID formId, Long questionId, TickBoxGridAddUpdateReqDto crudDto) {
         TickBoxGrid tbg = tickBoxGridRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.TICK_BOX_GRID, questionId));
@@ -175,10 +175,8 @@ public class TickBoxGridManager extends QuestionManager<TickBoxGrid, TickBoxGrid
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public void delete(UUID formId, Long questionId) {
-        tickBoxGridRowRepository.deleteAllByFormIdAndTickBoxGridId(formId, questionId);
-        tickBoxGridColumnRepository.deleteAllByFormIdAndTickBoxGridId(formId, questionId);
         tickBoxGridRepository.deleteQuestion(formId, questionId);
     }
 

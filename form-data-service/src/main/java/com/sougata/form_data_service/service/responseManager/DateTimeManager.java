@@ -73,19 +73,20 @@ public class DateTimeManager extends ResponseManager<
                                     dt.setNumberOfResponses(rs.numberOfResponses());
                                     dt.setQuestionType(getQuestionType());
 
-                                    var dateTimes = dateTimeRepository.getResponseDateTimes(formId, rs.questionId(), Pageable.ofSize(20));
-
-                                    var responses = dateTimes.stream().map(tuple -> {
-                                        var res = new DateTimeResponseSummaryDto.Response();
-
-                                        res.setDate(tuple.get("date", LocalDate.class));
-                                        res.setTime(tuple.get("time", Instant.class));
-                                        res.setTimeCount(tuple.get("timeCount", Long.class));
-
-                                        return res;
-                                    }).toList();
-
-                                    dt.setResponses(responses);
+//                                    var dateTimes = dateTimeRepository.getResponseDateTimes(formId, rs.questionId(), Pageable.ofSize(20));
+//
+//                                    var responses = dateTimes.stream().map(tuple -> {
+//                                        var res = new DateTimeResponseSummaryDto.Response();
+//
+//                                        res.setDate(tuple.get("date", LocalDate.class));
+//                                        res.setTime(tuple.get("time", Instant.class));
+//                                        res.setTimeCount(tuple.get("timeCount", Long.class));
+//
+//                                        return res;
+//                                    }).toList();
+//
+//                                    dt.setResponses(responses);
+                                    dt.setResponses(List.of());
 
                                     return dt;
                                 })
@@ -210,7 +211,12 @@ public class DateTimeManager extends ResponseManager<
     }
 
     @Override
-    public void deleteResponses(UUID formId, Long questionId) {
+    public void deleteResponsesByQuestion(UUID formId, Long questionId) {
         dateTimeRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
+    }
+
+    @Override
+    public void deleteResponsesByFormResponse(UUID formId, Long formResponseId) {
+        dateTimeRepository.deleteAllByFormIdAndFormResponseId(formId, formResponseId);
     }
 }

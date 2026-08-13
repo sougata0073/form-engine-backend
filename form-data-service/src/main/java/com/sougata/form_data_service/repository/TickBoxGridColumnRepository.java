@@ -17,4 +17,9 @@ public interface TickBoxGridColumnRepository extends JpaRepository<TickBoxGridCo
     @Query("delete from TickBoxGridColumn tbgc where tbgc.tickBoxGridRow.tickBoxGrid.questionResponse.formResponse.formId = :formId and tbgc.tickBoxGridRow.tickBoxGrid.questionResponse.questionId = :questionId")
     void deleteAllByFormIdAndQuestionId(UUID formId, long questionId);
 
+    @Modifying
+    @Transactional
+    @Query("delete from TickBoxGridColumn tbgc where tbgc.tickBoxGridRow.tickBoxGrid.questionResponse.formResponse.formId = :formId and tbgc.tickBoxGridRow.tickBoxGrid.questionResponse.formResponse.id = :formResponseId")
+    void deleteAllByFormIdAndFormResponseId(UUID formId, long formResponseId);
+
 }

@@ -2,7 +2,7 @@ package com.sougata.form_service.repository;
 
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.response.FileUploadResDto;
-import com.sougata.form_service.model.questionSchema.FileUpload;
+import com.sougata.form_service.model.FileUpload;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;

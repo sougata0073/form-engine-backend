@@ -4,8 +4,8 @@ import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.QuestionAddUpdateReq;
 import com.sougata.form_service.dto.question.response.QuestionRes;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.questionSchema.AnyTypeQuestion;
-import com.sougata.form_service.model.questionSchema.Question;
+import com.sougata.form_service.model.AnyTypeQuestion;
+import com.sougata.form_service.model.Question;
 import com.sougata.form_service.repository.QuestionRepository;
 
 import java.util.UUID;
@@ -47,12 +47,13 @@ QuestionManager<Q extends AnyTypeQuestion, QAUR extends QuestionAddUpdateReq, QR
     public Question createQuestion(QAUR source, UUID formId) {
         var newQ = new Question();
 
+        newQ.setForm(formService.getFormById(formId));
+
         newQ.setQuestion(source.getQuestion());
         newQ.setDescription(source.getDescription());
         newQ.setRequired(source.getRequired());
-        newQ.setOrderIndex(source.getOrderIndex());
+        newQ.setOrderIndex(questionRepository.getNextQuestionIndex(formId));
         newQ.setQuestionType(getQuestionType());
-        newQ.setForm(formService.getFormById(formId));
 
         return questionRepository.save(newQ);
     }
@@ -64,7 +65,6 @@ QuestionManager<Q extends AnyTypeQuestion, QAUR extends QuestionAddUpdateReq, QR
         q.setQuestion(source.getQuestion());
         q.setDescription(source.getDescription());
         q.setRequired(source.getRequired());
-        q.setOrderIndex(source.getOrderIndex());
         q.setQuestionType(getQuestionType());
 
         return questionRepository.save(q);

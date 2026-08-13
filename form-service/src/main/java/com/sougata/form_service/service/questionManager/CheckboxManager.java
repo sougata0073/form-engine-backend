@@ -6,9 +6,9 @@ import com.sougata.form_service.dto.question.request.CheckboxAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.CheckboxResDto;
 import com.sougata.form_service.exception.JsonParsingException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.questionSchema.Checkbox;
-import com.sougata.form_service.model.questionSchema.CheckboxOption;
-import com.sougata.form_service.model.questionSchema.Question;
+import com.sougata.form_service.model.Checkbox;
+import com.sougata.form_service.model.CheckboxOption;
+import com.sougata.form_service.model.Question;
 import com.sougata.form_service.repository.CheckboxOptionRepository;
 import com.sougata.form_service.repository.CheckboxRepository;
 import com.sougata.form_service.repository.QuestionRepository;
@@ -45,7 +45,7 @@ public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdate
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public CheckboxResDto create(UUID formId, CheckboxAddUpdateReqDto crudDto) {
         var newCb = new Checkbox();
 
@@ -72,7 +72,7 @@ public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdate
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public CheckboxResDto update(UUID formId, Long questionId, CheckboxAddUpdateReqDto crudDto) {
         Checkbox cb = checkboxRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.CHECKBOX, questionId));
@@ -146,9 +146,8 @@ public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdate
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public void delete(UUID formId, Long questionId) {
-        checkboxOptionRepository.deleteAllByFormIdAndCheckboxId(formId, questionId);
         checkboxRepository.deleteQuestion(formId, questionId);
     }
 

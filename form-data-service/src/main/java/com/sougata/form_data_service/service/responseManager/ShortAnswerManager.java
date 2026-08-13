@@ -78,9 +78,10 @@ public class ShortAnswerManager extends ResponseManager<
                                     sa.setNumberOfResponses(rs.numberOfResponses());
                                     sa.setQuestionType(QuestionType.SHORT_ANSWER);
 
-                                    var texts = shortAnswerRepository.getResponseTexts(formId, rs.questionId(), Pageable.ofSize(20));
-
-                                    sa.setResponses(texts);
+//                                    var texts = shortAnswerRepository.getResponseTexts(formId, rs.questionId(), Pageable.ofSize(20));
+//
+//                                    sa.setResponses(texts);
+                                    sa.setResponses(List.of());
 
                                     return sa;
                                 })
@@ -194,7 +195,12 @@ public class ShortAnswerManager extends ResponseManager<
     }
 
     @Override
-    public void deleteResponses(UUID formId, Long questionId) {
+    public void deleteResponsesByQuestion(UUID formId, Long questionId) {
         shortAnswerRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
+    }
+
+    @Override
+    public void deleteResponsesByFormResponse(UUID formId, Long formResponseId) {
+        shortAnswerRepository.deleteAllByFormIdAndFormResponseId(formId, formResponseId);
     }
 }

@@ -38,11 +38,21 @@ public interface AnyTypeQuestionResponseRepository<Q extends AnyTypeQuestionResp
     @Modifying
     @Transactional
     @Query("""
-        delete
-        from #{#entityName} e
-        where e.questionResponse.formResponse.formId = :formId
-        and e.questionResponse.questionId = :questionId
-        """)
+            delete
+            from #{#entityName} e
+            where e.questionResponse.formResponse.formId = :formId
+            and e.questionResponse.questionId = :questionId
+            """)
     void deleteAllByFormIdAndQuestionId(UUID formId, Long questionId);
+
+    @Modifying
+    @Transactional
+    @Query("""
+            delete
+            from #{#entityName} e
+            where e.questionResponse.formResponse.formId = :formId
+            and e.questionResponse.formResponse.id = :formResponseId
+            """)
+    void deleteAllByFormIdAndFormResponseId(UUID formId, long formResponseId);
 
 }

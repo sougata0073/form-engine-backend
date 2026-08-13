@@ -8,6 +8,7 @@ import tools.jackson.databind.annotation.JsonSerialize;
 import tools.jackson.databind.ser.std.ToStringSerializer;
 
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -20,6 +21,8 @@ public class ResponseIndividualResDto {
 
     @JsonSerialize(using = ToStringSerializer.class)
     private Long page;
+
+    private UUID userId;
 
     private List<ResponseIndividualDto> responses;
 }

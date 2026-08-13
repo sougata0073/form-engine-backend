@@ -2,7 +2,7 @@ package com.sougata.form_service.repository;
 
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.response.QuestionRes;
-import com.sougata.form_service.model.questionSchema.AnyTypeQuestion;
+import com.sougata.form_service.model.AnyTypeQuestion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -19,7 +19,7 @@ public interface AnyTypeQuestionRepository<Q extends AnyTypeQuestion, ID, QRD ex
 
     @Modifying
     @Transactional
-    @Query("delete from #{#entityName} e where e.question.form.id = :formId and e.questionId = :questionId")
+    @Query("delete from #{#entityName} e where e.questionId = :questionId")
     void deleteQuestion(UUID formId, long questionId);
 
     default QuestionType getQuestionType() {

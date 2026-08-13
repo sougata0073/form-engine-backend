@@ -6,6 +6,7 @@ import com.sougata.form_data_service.dto.question.response.MultipleChoiceGridRes
 import com.sougata.form_data_service.dto.response.individual.DropdownResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.individual.MultipleChoiceGridResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.MultipleChoiceGridResponseQuestionDto;
+import com.sougata.form_data_service.dto.response.summary.CheckboxResponseSummaryDto;
 import com.sougata.form_data_service.dto.response.summary.MultipleChoiceGridResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.FormResponse;
@@ -148,7 +149,17 @@ public class MultipleChoiceGridManager extends ResponseManager<
 
     @Override
     public MultipleChoiceGridResponseSummaryDto getResponseSummary(UUID formId, Long questionId, MultipleChoiceGridResDto questionRes, Pageable pageable) {
-        return new MultipleChoiceGridResponseSummaryDto();
+        var responseSummary = multipleChoiceGridRepository.getResponseSummary(formId, questionId);
+        var res = new MultipleChoiceGridResponseSummaryDto();
+
+        res.setQuestionId(questionRes.getId());
+        res.setQuestion(questionRes.getQuestion());
+        res.setQuestionType(getQuestionType());
+        res.setOrderIndex(questionRes.getOrderIndex());
+        res.setNumberOfResponses(responseSummary.numberOfResponses());
+        res.setResponses(List.of());
+
+        return res;
     }
 
     @Override
@@ -254,9 +265,12 @@ public class MultipleChoiceGridManager extends ResponseManager<
     }
 
     @Override
-    @Transactional
-    public void deleteResponses(UUID formId, Long questionId) {
-        multipleChoiceGridRowRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
+    public void deleteResponsesByQuestion(UUID formId, Long questionId) {
         multipleChoiceGridRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
+    }
+
+    @Override
+    public void deleteResponsesByFormResponse(UUID formId, Long formResponseId) {
+        multipleChoiceGridRepository.deleteAllByFormIdAndFormResponseId(formId, formResponseId);
     }
 }

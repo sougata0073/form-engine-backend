@@ -4,7 +4,6 @@ import com.sougata.form_service.dto.common.SuccessMessageDto;
 import com.sougata.form_service.dto.form.*;
 import com.sougata.form_service.model.Form;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface FormService {
@@ -16,7 +15,7 @@ public interface FormService {
 
     FormResponseDto viewForm(UUID id, UUID userId);
 
-    List<FormSummaryResDto> getFormsSummaries(UUID userId);
+    FormSummariesRes getFormsSummaries(UUID userId);
 
     Form getFormById(UUID id);
 

@@ -71,33 +71,34 @@ public class DateManager extends ResponseManager<
                                     d.setNumberOfResponses(rs.numberOfResponses());
                                     d.setQuestionType(QuestionType.DATE);
 
-                                    var dateResponses = dateRepository.getResponseDates(formId, rs.questionId(), Pageable.ofSize(20));
-
-                                    var responses = dateResponses.stream().map(tuple -> {
-                                        var res = new DateResponseSummaryDto.Response();
-
-                                        res.setYear(tuple.get("year", Integer.class));
-                                        res.setMonth(tuple.get("month", Integer.class));
-
-                                        var dates = tuple.get("dates", String[].class);
-                                        var dateCounts = tuple.get("dateCounts", Long[].class);
-
-                                        var dateCountPairs = new ArrayList<DateResponseSummaryDto.DateCountPair>();
-
-                                        for (int i = 0; i < dates.length; i++) {
-                                            dateCountPairs.add(
-                                                    new DateResponseSummaryDto.DateCountPair(
-                                                            Instant.parse(dates[i]), dateCounts[i]
-                                                    )
-                                            );
-                                        }
-
-                                        res.setDates(dateCountPairs);
-
-                                        return res;
-                                    }).toList();
-
-                                    d.setResponses(responses);
+//                                    var dateResponses = dateRepository.getResponseDates(formId, rs.questionId(), Pageable.ofSize(20));
+//
+//                                    var responses = dateResponses.stream().map(tuple -> {
+//                                        var res = new DateResponseSummaryDto.Response();
+//
+//                                        res.setYear(tuple.get("year", Integer.class));
+//                                        res.setMonth(tuple.get("month", Integer.class));
+//
+//                                        var dates = tuple.get("dates", String[].class);
+//                                        var dateCounts = tuple.get("dateCounts", Long[].class);
+//
+//                                        var dateCountPairs = new ArrayList<DateResponseSummaryDto.DateCountPair>();
+//
+//                                        for (int i = 0; i < dates.length; i++) {
+//                                            dateCountPairs.add(
+//                                                    new DateResponseSummaryDto.DateCountPair(
+//                                                            Instant.parse(dates[i]), dateCounts[i]
+//                                                    )
+//                                            );
+//                                        }
+//
+//                                        res.setDates(dateCountPairs);
+//
+//                                        return res;
+//                                    }).toList();
+//
+//                                    d.setResponses(responses);
+                                    d.setResponses(List.of());
 
                                     return d;
                                 })
@@ -236,7 +237,12 @@ public class DateManager extends ResponseManager<
     }
 
     @Override
-    public void deleteResponses(UUID formId, Long questionId) {
+    public void deleteResponsesByQuestion(UUID formId, Long questionId) {
         dateRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
+    }
+
+    @Override
+    public void deleteResponsesByFormResponse(UUID formId, Long formResponseId) {
+        dateRepository.deleteAllByFormIdAndFormResponseId(formId, formResponseId);
     }
 }

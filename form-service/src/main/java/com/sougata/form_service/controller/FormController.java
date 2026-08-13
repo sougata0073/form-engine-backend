@@ -5,6 +5,7 @@ import com.sougata.form_service.dto.form.*;
 import com.sougata.form_service.dto.question.QuestionSummariesResDto;
 import com.sougata.form_service.dto.question.QuestionSummaryDto;
 import com.sougata.form_service.dto.question.request.QuestionAddUpdateReq;
+import com.sougata.form_service.dto.question.request.QuestionOrderUpdateReqDto;
 import com.sougata.form_service.dto.question.response.QuestionRes;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.FormServiceCached;
@@ -18,7 +19,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -52,7 +52,10 @@ public class FormController {
             @CacheEvict(cacheNames = {"formDetails", "formInfo"}, key = "#formId"),
             @CacheEvict(cacheNames = "recentForms", key = "{#userId}")
     })
-    public SuccessMessageDto deleteForm(@PathVariable("formId") UUID formId) {
+    public SuccessMessageDto deleteForm(
+            @PathVariable("formId") UUID formId,
+            @RequestHeader("auth-jwt") UUID userId
+    ) {
         return formService.deleteForm(formId);
     }
 
@@ -84,7 +87,11 @@ public class FormController {
 
     // Cached in service
     @GetMapping(path = "{formId}")
-    public FormResponseDto getForm(@PathVariable("formId") UUID formId) {
+    @CacheEvict(cacheNames = {"recentForms"}, key = "#userId")
+    public FormResponseDto getForm(
+            @PathVariable("formId") UUID formId,
+            @RequestHeader("auth-jwt") UUID userId
+    ) {
         return formService.getForm(formId);
     }
 
@@ -170,9 +177,22 @@ public class FormController {
 
     @GetMapping(path = "recent")
     @Cacheable(cacheNames = {"recentForms"}, key = "#userId")
-    public List<FormSummaryResDto> getRecentForms(
+    public FormSummariesRes getRecentForms(
             @RequestHeader("auth-jwt") UUID userId
     ) {
         return formService.getFormsSummaries(userId);
+    }
+
+    @PatchMapping(path = "{formId}/questions/{questionId}/order")
+    @Caching(evict = {
+            @CacheEvict(cacheNames = {"formDetails", "questionSummaries"}, key = "#formId"),
+            @CacheEvict(cacheNames = {"questionSummary", "questionDetails"}, key = "{#formId, #questionId}")
+    })
+    public SuccessMessageDto updateQuestionIndex(
+            @PathVariable("formId") UUID formId,
+            @PathVariable("questionId") Long questionId,
+            @RequestBody @Valid QuestionOrderUpdateReqDto req
+    ) {
+        return questionService.updateOrderIndex(formId, questionId, req);
     }
 }

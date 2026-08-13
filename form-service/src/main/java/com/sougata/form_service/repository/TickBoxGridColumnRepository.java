@@ -1,6 +1,6 @@
 package com.sougata.form_service.repository;
 
-import com.sougata.form_service.model.questionSchema.TickBoxGridColumn;
+import com.sougata.form_service.model.TickBoxGridColumn;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

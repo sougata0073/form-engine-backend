@@ -7,7 +7,9 @@ import com.sougata.form_data_service.dto.response.individual.LinearScaleResponse
 import com.sougata.form_data_service.dto.response.individual.MultipleChoiceResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.individual.ResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.MultipleChoiceResponseQuestionDto;
+import com.sougata.form_data_service.dto.response.summary.CheckboxResponseSummaryDto;
 import com.sougata.form_data_service.dto.response.summary.MultipleChoiceResponseSummaryDto;
+import com.sougata.form_data_service.dto.response.summary.ResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.MultipleChoice;
@@ -116,7 +118,17 @@ public class MultipleChoiceManager extends ResponseManager<
 
     @Override
     public MultipleChoiceResponseSummaryDto getResponseSummary(UUID formId, Long questionId, MultipleChoiceResDto questionRes, Pageable pageable) {
-        return new MultipleChoiceResponseSummaryDto();
+        var responseSummary = multipleChoiceRepository.getResponseSummary(formId, questionId);
+        var res = new MultipleChoiceResponseSummaryDto();
+
+        res.setQuestionId(questionRes.getId());
+        res.setQuestion(questionRes.getQuestion());
+        res.setQuestionType(getQuestionType());
+        res.setOrderIndex(questionRes.getOrderIndex());
+        res.setNumberOfResponses(responseSummary.numberOfResponses());
+        res.setResponses(List.of());
+
+        return res;
     }
 
     @Override
@@ -198,7 +210,12 @@ public class MultipleChoiceManager extends ResponseManager<
     }
 
     @Override
-    public void deleteResponses(UUID formId, Long questionId) {
+    public void deleteResponsesByQuestion(UUID formId, Long questionId) {
         multipleChoiceRepository.deleteAllByFormIdAndQuestionId(formId, questionId);
+    }
+
+    @Override
+    public void deleteResponsesByFormResponse(UUID formId, Long formResponseId) {
+        multipleChoiceRepository.deleteAllByFormIdAndFormResponseId(formId, formResponseId);
     }
 }

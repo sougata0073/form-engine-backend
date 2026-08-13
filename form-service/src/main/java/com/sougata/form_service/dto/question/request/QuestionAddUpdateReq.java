@@ -47,9 +47,6 @@ public class QuestionAddUpdateReq {
     @NotNull(message = ValidationMessages.QUESTION_TYPE_NOT_NULL)
     private QuestionType questionType;
 
-    @NotNull
-    private Integer orderIndex;
-
     @JsonProperty(value = "@class")
     private String cls = getClass().getName();
 

@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 import org.springframework.data.domain.Persistable;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
@@ -29,6 +31,7 @@ public class MultipleChoiceGridRow implements Persistable<Long> {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = false, name = "multiple_choice_grid_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private MultipleChoiceGrid multipleChoiceGrid;
 
     @Transient

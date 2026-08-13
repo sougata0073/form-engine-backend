@@ -1,7 +1,7 @@
 package com.sougata.form_data_service.service.impl;
 
+import com.sougata.form_data_service.dto.common.SuccessMessageDto;
 import com.sougata.form_data_service.dto.form.*;
-import com.sougata.form_data_service.dto.question.QuestionSummaryDto;
 import com.sougata.form_data_service.dto.question.response.QuestionRes;
 import com.sougata.form_data_service.dto.response.individual.ResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.individual.ResponseIndividualResDto;
@@ -17,6 +17,7 @@ import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.feignClient.FormServiceFeignClient;
 import com.sougata.form_data_service.formValidation.service.FormSchemaService;
 import com.sougata.form_data_service.model.FormResponse;
+import com.sougata.form_data_service.model.QuestionResponse;
 import com.sougata.form_data_service.repository.FormResponseRepository;
 import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import com.sougata.form_data_service.service.FormResponseService;
@@ -189,9 +190,10 @@ public class FormResponseServiceImpl implements FormResponseService {
 
     @Override
     public ResponseIndividualResDto getIndividualFormResponse(UUID formId, Long formResponseId) {
-        var questionSummaries = formServiceFeignClient.getQuestionSummaries(formId).getQuestions();
+        var formResponse = formResponseRepository.findByFormIdAndId(formId, formResponseId)
+                .orElseThrow(() -> new IllegalArgumentException("Form response not found with ID: " + formResponseId));
 
-        var questionTypeMap = questionSummaries.stream().collect(Collectors.groupingBy(QuestionSummaryDto::getQuestionType));
+        var questionTypeMap = formResponse.getQuestionResponses().stream().collect(Collectors.groupingBy(QuestionResponse::getQuestionType));
 
         var result = new ArrayList<ResponseIndividualDto>();
 
@@ -206,7 +208,7 @@ public class FormResponseServiceImpl implements FormResponseService {
         var formResponsePage = formResponseRepository.getPageNumberOfFormResponse(formId, formResponseId)
                 .orElseThrow(() -> new IllegalArgumentException("Form response not found with ID: " + formResponseId));
 
-        return new ResponseIndividualResDto(formResponseId, formResponsePage, result);
+        return new ResponseIndividualResDto(formResponseId, formResponsePage, formResponse.getUserId(), result);
     }
 
     @Override
@@ -231,14 +233,14 @@ public class FormResponseServiceImpl implements FormResponseService {
     }
 
     @Override
-    @Transactional
-    public void deleteResponses(UUID formId, Long questionId) {
+    public SuccessMessageDto deleteFormResponse(UUID formId, UUID userId, Long formResponseId) {
+        formResponseRepository.deleteByFormResponseId(formResponseId);
 
-        var questionSummary = formServiceFeignClient.getQuestionSummary(formId, questionId);
+        return SuccessMessageDto.create("Response deleted successfully. Form id: " + formId + " Form response ID: " + formResponseId);
+    }
 
-        var manager = responseManagerFactory.get(questionSummary.getQuestionType());
-
-        manager.deleteResponses(formId, questionSummary.getId());
-        questionResponseRepository.deleteAllByFormIdAndQuestionId(formId, questionSummary.getId());
+    @Override
+    public void deleteQuestionResponses(UUID formId, Long questionId) {
+        questionResponseRepository.deleteAllByQuestionId(questionId);
     }
 }

@@ -86,7 +86,7 @@ public interface TimeRepository extends AnyTypeQuestionResponseRepository<Time, 
             left join times t
             on qr.id = t.question_response_id
             where fr.form_id = :formId and (
-                (:response is null and t.time is null)
+                (cast(:response as timestamp with time zone) is null and t.time is null)
                 or t.time = :response
             )
             order by fr.created_at

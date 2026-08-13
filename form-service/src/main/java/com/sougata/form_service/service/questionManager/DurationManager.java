@@ -4,7 +4,7 @@ import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.DurationAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.DurationResDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.questionSchema.Duration;
+import com.sougata.form_service.model.Duration;
 import com.sougata.form_service.repository.DurationRepository;
 import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormService;
@@ -30,7 +30,7 @@ public class DurationManager extends QuestionManager<Duration, DurationAddUpdate
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public DurationResDto create(UUID formId, DurationAddUpdateReqDto crudDto) {
         var newD = new Duration();
 
@@ -57,7 +57,7 @@ public class DurationManager extends QuestionManager<Duration, DurationAddUpdate
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public DurationResDto update(UUID formId, Long questionId, DurationAddUpdateReqDto crudDto) {
         Duration dur = durationRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.DURATION, questionId));

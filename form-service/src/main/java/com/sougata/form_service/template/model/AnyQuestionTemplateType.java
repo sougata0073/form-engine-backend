@@ -1,0 +1,27 @@
+package com.sougata.form_service.template.model;
+
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
+@MappedSuperclass
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+public class AnyQuestionTemplateType {
+
+    @Id
+    private Long questionTemplateId;
+
+    @MapsId
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(nullable = false, unique = true)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private QuestionTemplate questionTemplate;
+
+}

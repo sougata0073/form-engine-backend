@@ -3,7 +3,7 @@ package com.sougata.form_service.repository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.response.ShortAnswerResDto;
-import com.sougata.form_service.model.questionSchema.ShortAnswer;
+import com.sougata.form_service.model.ShortAnswer;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 

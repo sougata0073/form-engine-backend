@@ -1,7 +1,5 @@
 package com.sougata.form_service.model;
 
-import com.sougata.form_service.model.questionSchema.FileUpload;
-import com.sougata.form_service.model.templateSchema.FileUploadTemplate;
 import io.hypersistence.utils.hibernate.type.array.StringArrayType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -20,8 +18,7 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 @Setter
-@EntityListeners(AuditingEntityListener.class)
-public class FileType extends Auditable {
+public class FileType {
 
     @Id
     private String category;
@@ -32,7 +29,4 @@ public class FileType extends Auditable {
 
     @ManyToMany(mappedBy = "allowedFileTypes")
     private List<FileUpload> fileUploads = new ArrayList<>();
-
-    @ManyToMany(mappedBy = "allowedFileTypes")
-    private List<FileUploadTemplate> fileUploadTemplates = new ArrayList<>();
 }

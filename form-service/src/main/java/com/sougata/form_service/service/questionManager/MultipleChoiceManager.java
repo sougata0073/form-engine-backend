@@ -4,9 +4,9 @@ import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.MultipleChoiceAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.MultipleChoiceResDto;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.questionSchema.MultipleChoice;
-import com.sougata.form_service.model.questionSchema.MultipleChoiceOption;
-import com.sougata.form_service.model.questionSchema.Question;
+import com.sougata.form_service.model.MultipleChoice;
+import com.sougata.form_service.model.MultipleChoiceOption;
+import com.sougata.form_service.model.Question;
 import com.sougata.form_service.repository.MultipleChoiceOptionRepository;
 import com.sougata.form_service.repository.MultipleChoiceRepository;
 import com.sougata.form_service.repository.QuestionRepository;
@@ -36,7 +36,7 @@ public class MultipleChoiceManager extends QuestionManager<MultipleChoice, Multi
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public MultipleChoiceResDto create(UUID formId, MultipleChoiceAddUpdateReqDto crudDto) {
         var newMc = new MultipleChoice();
 
@@ -63,7 +63,7 @@ public class MultipleChoiceManager extends QuestionManager<MultipleChoice, Multi
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public MultipleChoiceResDto update(UUID formId, Long questionId, MultipleChoiceAddUpdateReqDto crudDto) {
         MultipleChoice mc = multipleChoiceRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.MULTIPLE_CHOICE, questionId));
@@ -131,9 +131,8 @@ public class MultipleChoiceManager extends QuestionManager<MultipleChoice, Multi
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public void delete(UUID formId, Long questionId) {
-        multipleChoiceOptionRepository.deleteAllByFormIdAndMultipleChoiceId(formId, questionId);
         multipleChoiceRepository.deleteQuestion(formId, questionId);
     }
 

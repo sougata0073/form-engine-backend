@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 @MappedSuperclass
 @NoArgsConstructor
@@ -19,6 +21,7 @@ public class AnyTypeQuestionResponse {
     @MapsId
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(nullable = false, unique = true, name = "question_response_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private QuestionResponse questionResponse;
 
 }

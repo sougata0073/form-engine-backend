@@ -17,4 +17,9 @@ public interface MultipleChoiceGridRowRepository extends JpaRepository<MultipleC
     @Query("delete from MultipleChoiceGridRow mcr where mcr.multipleChoiceGrid.questionResponse.formResponse.formId = :formId and mcr.multipleChoiceGrid.questionResponse.questionId = :questionId")
     void deleteAllByFormIdAndQuestionId(UUID formId, long questionId);
 
+    @Modifying
+    @Transactional
+    @Query("delete from MultipleChoiceGridRow mcr where mcr.multipleChoiceGrid.questionResponse.formResponse.formId = :formId and mcr.multipleChoiceGrid.questionResponse.formResponse.id = :formResponseId")
+    void deleteAllByFormIdAndFormResponseId(UUID formId, long formResponseId);
+
 }

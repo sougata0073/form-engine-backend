@@ -6,8 +6,8 @@ import com.sougata.form_service.dto.question.request.ShortAnswerAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.ShortAnswerResDto;
 import com.sougata.form_service.exception.JsonParsingException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.questionSchema.Question;
-import com.sougata.form_service.model.questionSchema.ShortAnswer;
+import com.sougata.form_service.model.Question;
+import com.sougata.form_service.model.ShortAnswer;
 import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.repository.ShortAnswerRepository;
 import com.sougata.form_service.service.FormService;
@@ -35,7 +35,7 @@ public class ShortAnswerManager extends QuestionManager<ShortAnswer, ShortAnswer
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public ShortAnswerResDto create(UUID formId, ShortAnswerAddUpdateReqDto crudDto) {
         var newS = new ShortAnswer();
 
@@ -62,7 +62,7 @@ public class ShortAnswerManager extends QuestionManager<ShortAnswer, ShortAnswer
     }
 
     @Override
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     public ShortAnswerResDto update(UUID formId, Long questionId, ShortAnswerAddUpdateReqDto crudDto) {
         ShortAnswer sa = shortAnswerRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.SHORT_ANSWER, questionId));
