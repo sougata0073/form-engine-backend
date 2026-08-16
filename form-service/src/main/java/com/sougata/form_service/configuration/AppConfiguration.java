@@ -1,0 +1,21 @@
+package com.sougata.form_service.configuration;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+public class AppConfiguration {
+
+    private final Long cacheDefaultTtlMinutes;
+
+    public AppConfiguration(
+            @Value("${app.cache.default-ttl-minutes}") Long cacheDefaultTtlMinutes
+    ) {
+        this.cacheDefaultTtlMinutes = cacheDefaultTtlMinutes;
+    }
+
+    public Long getCacheDefaultTtlMinutes() {
+        return cacheDefaultTtlMinutes;
+    }
+
+}

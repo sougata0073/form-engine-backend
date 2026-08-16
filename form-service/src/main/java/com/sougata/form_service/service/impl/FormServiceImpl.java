@@ -1,6 +1,9 @@
 package com.sougata.form_service.service.impl;
 
+import com.sougata.form_service.configuration.AppConfiguration;
+import com.sougata.form_service.constant.CommonCacheNames;
 import com.sougata.form_service.constant.ViewFormErrorReason;
+import com.sougata.form_service.constant.cacheNames.FormCacheNames;
 import com.sougata.form_service.dto.common.SuccessMessageDto;
 import com.sougata.form_service.dto.form.*;
 import com.sougata.form_service.dto.template.TemplateDetails;
@@ -18,6 +21,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -29,19 +33,21 @@ public class FormServiceImpl implements FormService {
     private final FormServiceCached formServiceCached;
     private final QuestionManagerFactory questionManagerFactory;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final AppConfiguration appConfiguration;
 
     @Autowired
     public FormServiceImpl(
             FormRepository formRepo,
             FormDataServiceFeignClient formDataServiceFeignClient,
             FormServiceCached formServiceCached,
-            QuestionManagerFactory questionManagerFactory, RedisTemplate<String, Object> redisTemplate
+            QuestionManagerFactory questionManagerFactory, RedisTemplate<String, Object> redisTemplate, AppConfiguration appConfiguration
     ) {
         this.formRepo = formRepo;
         this.formDataServiceFeignClient = formDataServiceFeignClient;
         this.formServiceCached = formServiceCached;
         this.questionManagerFactory = questionManagerFactory;
         this.redisTemplate = redisTemplate;
+        this.appConfiguration = appConfiguration;
     }
 
     @Override
@@ -58,7 +64,11 @@ public class FormServiceImpl implements FormService {
 
         var savedForm = formRepo.save(newForm);
 
-        return FormInfoResDto.create(savedForm);
+        var formInfo = FormInfoResDto.create(savedForm);
+
+        replaceRecentFormsCache(formInfo, userId);
+
+        return formInfo;
     }
 
     @Override
@@ -83,7 +93,11 @@ public class FormServiceImpl implements FormService {
             manager.create(savedForm.getId(), addUpdateReq);
         });
 
-        return FormInfoResDto.create(savedForm);
+        var formInfo = FormInfoResDto.create(savedForm);
+
+        replaceRecentFormsCache(formInfo, userId);
+
+        return formInfo;
     }
 
     @Override
@@ -102,16 +116,37 @@ public class FormServiceImpl implements FormService {
 
         Form savedForm = formRepo.save(f);
 
-        return FormInfoResDto.create(savedForm);
+        var formInfo = FormInfoResDto.create(savedForm);
+
+        replaceFormInfoCache(formInfo);
+        replaceRecentFormsCache(formInfo, userId);
+
+        return formInfo;
     }
 
     @Override
     @Transactional(transactionManager = "schemaTransactionManager")
-    public FormResponseDto getForm(UUID id) {
-
+    public FormResponseDto getForm(UUID id, UUID userId) {
         formRepo.updateLastOpenedOn(id, Instant.now());
 
-        return formServiceCached.getFormDetails(id);
+        var formDetails = formServiceCached.getFormDetails(id);
+
+        var formInfo = new FormInfoResDto(
+                formDetails.getId(),
+                formDetails.getName(),
+                formDetails.getTitle(),
+                formDetails.getDescription(),
+                formDetails.getPublished(),
+                formDetails.getAcceptingResponse(),
+                formDetails.getNotAcceptingResponseMessage(),
+                formDetails.getStopAcceptingResponseOn(),
+                formDetails.getStopAcceptingResponseAfterResponse(),
+                formDetails.getLastOpenedOn()
+        );
+
+        replaceRecentFormsCache(formInfo, userId);
+
+        return formDetails;
     }
 
     @Override
@@ -175,9 +210,32 @@ public class FormServiceImpl implements FormService {
     }
 
     @Override
-    public SuccessMessageDto renameForm(UUID formId, FormRenameReqDto dto) {
-
+    public SuccessMessageDto renameForm(UUID formId, FormRenameReqDto dto, UUID userId) {
         formRepo.renameForm(formId, dto.getNewName());
+
+        var formSummariesCacheKey = CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + FormCacheNames.RECENT_FORMS + CommonCacheNames.SEPARATOR + userId;
+
+        if (redisTemplate.hasKey(formSummariesCacheKey)) {
+            var prevFormSummaries = (FormSummariesRes) redisTemplate.opsForValue().get(formSummariesCacheKey);
+
+            prevFormSummaries.getForms().forEach(fInfo -> {
+                if (fInfo.getId().equals(formId)) {
+                    fInfo.setName(dto.getNewName());
+                }
+            });
+
+            redisTemplate.opsForValue().set(formSummariesCacheKey, prevFormSummaries, Duration.ofMinutes(appConfiguration.getCacheDefaultTtlMinutes()));
+        }
+
+        var formInfoCacheKey = CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + FormCacheNames.FORM_INFO + CommonCacheNames.SEPARATOR + formId;
+
+        if (redisTemplate.hasKey(formInfoCacheKey)) {
+            var prevFormInfo = (FormInfoResDto) redisTemplate.opsForValue().get(formInfoCacheKey);
+
+            prevFormInfo.setName(dto.getNewName());
+
+            redisTemplate.opsForValue().set(formInfoCacheKey, prevFormInfo, Duration.ofMinutes(appConfiguration.getCacheDefaultTtlMinutes()));
+        }
 
         return SuccessMessageDto.create("Form renamed successfully");
     }
@@ -190,8 +248,17 @@ public class FormServiceImpl implements FormService {
     }
 
     @Override
-    public SuccessMessageDto deleteForm(UUID formId) {
+    public SuccessMessageDto deleteForm(UUID formId, UUID userId) {
         formRepo.deleteById(formId);
+
+        var formSummariesCacheKey = CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + FormCacheNames.RECENT_FORMS + CommonCacheNames.SEPARATOR + userId;
+
+        if (redisTemplate.hasKey(formSummariesCacheKey)) {
+            var prevFormSummaries = (FormSummariesRes) redisTemplate.opsForValue().get(formSummariesCacheKey);
+            prevFormSummaries.getForms().removeIf(f -> f.getId().equals(formId));
+
+            redisTemplate.opsForValue().set(formSummariesCacheKey, prevFormSummaries, Duration.ofMinutes(appConfiguration.getCacheDefaultTtlMinutes()));
+        }
 
         return new SuccessMessageDto("Form deleted successfully with ID: " + formId);
     }
@@ -217,6 +284,26 @@ public class FormServiceImpl implements FormService {
         });
 
         return savedForm;
+    }
+
+    private void replaceRecentFormsCache(FormInfoResDto formInfo, UUID userId) {
+        var formSummariesCacheKey = CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + FormCacheNames.RECENT_FORMS + CommonCacheNames.SEPARATOR + userId;
+
+        if (redisTemplate.hasKey(formSummariesCacheKey)) {
+            var prevFormSummaries = (FormSummariesRes) redisTemplate.opsForValue().get(formSummariesCacheKey);
+            var recentFormSummary = new FormSummaryResDto(formInfo.getId(), formInfo.getName(), formInfo.getLastOpenedOn());
+
+            prevFormSummaries.getForms().removeIf(f -> f.getId().equals(formInfo.getId()));
+            prevFormSummaries.getForms().addFirst(recentFormSummary);
+
+            redisTemplate.opsForValue().set(formSummariesCacheKey, prevFormSummaries, Duration.ofMinutes(appConfiguration.getCacheDefaultTtlMinutes()));
+        }
+    }
+
+    private void replaceFormInfoCache(FormInfoResDto formInfo) {
+        var formInfoCacheKey = CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + FormCacheNames.FORM_INFO + CommonCacheNames.SEPARATOR + formInfo.getId();
+
+        redisTemplate.opsForValue().set(formInfoCacheKey, formInfo, Duration.ofMinutes(appConfiguration.getCacheDefaultTtlMinutes()));
     }
 
 }

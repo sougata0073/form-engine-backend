@@ -1,6 +1,7 @@
 package com.sougata.form_service.configuration;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.sougata.form_service.constant.CommonCacheNames;
 import io.lettuce.core.ClientOptions;
 import io.lettuce.core.SocketOptions;
 import io.lettuce.core.TimeoutOptions;
@@ -122,7 +123,7 @@ public class RedisConfiguration implements CachingConfigurer {
         RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                 .disableCachingNullValues()
                 .entryTtl(Duration.ofMinutes(defaultTtlMinutes))
-                .prefixCacheNameWith("form-schema::")
+                .prefixCacheNameWith(CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR)
                 .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
                 .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(redisSerializer));
 
@@ -148,12 +149,34 @@ public class RedisConfiguration implements CachingConfigurer {
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory, GenericJacksonJsonRedisSerializer redisSerializer) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
+
         template.setConnectionFactory(connectionFactory);
+
         template.setKeySerializer(new StringRedisSerializer());
         template.setValueSerializer(redisSerializer);
         template.setHashKeySerializer(new StringRedisSerializer());
         template.setHashValueSerializer(redisSerializer);
+
         template.afterPropertiesSet();
+        return template;
+    }
+
+    @Bean
+    public RedisTemplate<String, String> redisTemplateString(
+            RedisConnectionFactory connectionFactory
+    ) {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+        var stringSerializer = new StringRedisSerializer();
+
+        template.setConnectionFactory(connectionFactory);
+
+        template.setKeySerializer(stringSerializer);
+        template.setValueSerializer(stringSerializer);
+        template.setHashKeySerializer(stringSerializer);
+        template.setHashValueSerializer(stringSerializer);
+
+        template.afterPropertiesSet();
+
         return template;
     }
 }

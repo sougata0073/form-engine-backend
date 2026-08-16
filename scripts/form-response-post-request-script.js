@@ -1,7 +1,7 @@
 const POST_URL = "http://localhost:9093/api/v1/forms/b91cb39f-a944-4c89-b47d-43da924cef6f/response";
 
-const NUMBER_OF_REQUESTS = 10000;
-const CONCURRENCY = 10000;
+const NUMBER_OF_REQUESTS = 5000;
+const CONCURRENCY = 2000;
 
 const HEADERS = {
     "Content-Type": "application/json"

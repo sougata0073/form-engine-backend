@@ -14,7 +14,7 @@ public interface FormService {
 
     FormInfoResDto updateForm(UUID formId, FormAddUpdateReqDto dto, UUID userId);
 
-    FormResponseDto getForm(UUID id);
+    FormResponseDto getForm(UUID id, UUID userId);
 
     FormResponseDto viewForm(UUID id, UUID userId);
 
@@ -22,11 +22,11 @@ public interface FormService {
 
     Form getFormById(UUID id);
 
-    SuccessMessageDto renameForm(UUID formId, FormRenameReqDto dto);
+    SuccessMessageDto renameForm(UUID formId, FormRenameReqDto dto, UUID userId);
 
     FormInfoResDto getFormInfo(UUID formId);
 
-    SuccessMessageDto deleteForm(UUID formId);
+    SuccessMessageDto deleteForm(UUID formId, UUID userId);
 
     Form createFromTemplate(TemplateDetails template, UUID userId);
 

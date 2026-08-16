@@ -1,8 +1,9 @@
 package com.sougata.form_service.service.impl;
 
+import com.sougata.form_service.configuration.AppConfiguration;
 import com.sougata.form_service.constant.CommonCacheNames;
-import com.sougata.form_service.constant.FormCacheNames;
-import com.sougata.form_service.constant.QuestionCacheNames;
+import com.sougata.form_service.constant.cacheNames.FormCacheNames;
+import com.sougata.form_service.constant.cacheNames.QuestionCacheNames;
 import com.sougata.form_service.dto.form.FormInfoResDto;
 import com.sougata.form_service.dto.form.FormResponseDto;
 import com.sougata.form_service.dto.question.response.QuestionRes;
@@ -16,7 +17,6 @@ import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormServiceCached;
 import com.sougata.form_service.service.questionManager.QuestionManagerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.connection.RedisStringCommands;
 import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -25,6 +25,7 @@ import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -40,84 +41,44 @@ public class FormServiceCachedImpl implements FormServiceCached {
     private final AnyTypeQuestionRepositoryFactory anyTypeQuestionRepositoryFactory;
     private final QuestionRepository questionRepository;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplateString;
+    private final AppConfiguration appConfiguration;
 
-    public FormServiceCachedImpl(FormRepository formRepository, QuestionManagerFactory questionManagerFactory, AnyTypeQuestionRepositoryFactory anyTypeQuestionRepositoryFactory, QuestionRepository questionRepository, RedisTemplate<String, Object> redisTemplate) {
+    public FormServiceCachedImpl(FormRepository formRepository, QuestionManagerFactory questionManagerFactory, AnyTypeQuestionRepositoryFactory anyTypeQuestionRepositoryFactory, QuestionRepository questionRepository, RedisTemplate<String, Object> redisTemplate, RedisTemplate<String, String> redisTemplateString, AppConfiguration appConfiguration) {
         this.formRepository = formRepository;
         this.questionManagerFactory = questionManagerFactory;
         this.anyTypeQuestionRepositoryFactory = anyTypeQuestionRepositoryFactory;
         this.questionRepository = questionRepository;
         this.redisTemplate = redisTemplate;
+        this.redisTemplateString = redisTemplateString;
+        this.appConfiguration = appConfiguration;
     }
 
     @Override
-    @Cacheable(cacheNames = "formDetails", key = "#id")
     @SuppressWarnings("unchecked")
     @Transactional(transactionManager = "schemaTransactionManager", readOnly = true)
-    public FormResponseDto getFormDetails(UUID id) {
-        Form f = formRepository.findById(id).orElseThrow(() -> new FormNotFoundException(id));
-
-        List<QuestionRes> questionResponses = new ArrayList<>();
-
-        var questions = questionRepository.findAllByFormId(id);
-        var questionIdMap = questions.stream().collect(Collectors.toMap(
-                Question::getId,
-                Function.identity()
-        ));
-
-        var questionTypeMap = questions.stream().collect(Collectors.groupingBy(Question::getQuestionType));
-
-        questionTypeMap.keySet().forEach(qType -> {
-            var repo = anyTypeQuestionRepositoryFactory.get(qType);
-            var manager = questionManagerFactory.get(qType);
-
-            var qIds = questionTypeMap.get(qType).stream().map(Question::getId).collect(Collectors.toList());
-
-            var qs = repo.findAllById((Iterable<Object>) (Iterable<?>) qIds).stream()
-                    .map(q -> {
-                        var parentQuestion = questionIdMap.get(q.getQuestionId());
-                        return manager.toQuestionResDto(q, parentQuestion);
-                    })
-                    .toList();
-
-            questionResponses.addAll(qs);
-        });
-
-        questionResponses.sort(Comparator.comparingInt(QuestionRes::getOrderIndex));
-
-        return new FormResponseDto(
-                f.getId(),
-                f.getName(),
-                f.getTitle(),
-                f.getDescription(),
-                f.getPublished(),
-                f.getAcceptingResponse(),
-                f.getNotAcceptingResponseMessage(),
-                f.getStopAcceptingResponseOn(),
-                f.getStopAcceptingResponseAfterResponse(),
-                f.getLastOpenedOn(),
-                questionResponses
-        );
-    }
-
-    @SuppressWarnings("unchecked")
-    @Transactional(transactionManager = "schemaTransactionManager", readOnly = true)
-    public FormResponseDto getFormDetailsV2(UUID formId) {
-
+    public FormResponseDto getFormDetails(UUID formId) {
         var formQuestionIdsCacheKey = CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + FormCacheNames.FORM_QUESTION_IDS + CommonCacheNames.SEPARATOR + formId;
 
         List<Long> cacheQuestionIds = null;
         List<Long> dbQuestionIds = null;
 
         if (redisTemplate.hasKey(formQuestionIdsCacheKey)) {
-            cacheQuestionIds = redisTemplate.opsForList().range(formQuestionIdsCacheKey, 0, -1).stream().map(id -> (Long) id).toList();
+            cacheQuestionIds = redisTemplateString.opsForSet().members(formQuestionIdsCacheKey).stream().map(Long::parseLong).toList();
         } else {
             dbQuestionIds = questionRepository.findQuestionIdsByFormId(formId).stream().map(QuestionIdProjection::getId).toList();
         }
 
         var questionIds = cacheQuestionIds == null ? dbQuestionIds : cacheQuestionIds;
 
+        if (dbQuestionIds != null && !dbQuestionIds.isEmpty()) {
+            var cacheableQuestionIds = dbQuestionIds.stream().map(String::valueOf).toArray(String[]::new);
+            redisTemplateString.opsForSet().add(formQuestionIdsCacheKey, cacheableQuestionIds);
+        }
+        redisTemplateString.expire(formQuestionIdsCacheKey, Duration.ofMinutes(appConfiguration.getCacheDefaultTtlMinutes()));
+
         var questionDetailsCacheKeys = questionIds.stream().map(questionId ->
-            CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + QuestionCacheNames.QUESTION_DETAILS + CommonCacheNames.SEPARATOR + questionId
+                CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + QuestionCacheNames.QUESTION_DETAILS + CommonCacheNames.SEPARATOR + questionId
         ).toList();
 
         var cacheQuestionDetailsList = redisTemplate.opsForValue().multiGet(questionDetailsCacheKeys);
@@ -163,7 +124,6 @@ public class FormServiceCachedImpl implements FormServiceCached {
             questionResponses.addAll(qs);
         });
 
-
         var keySerializer = (RedisSerializer<String>) redisTemplate.getKeySerializer();
         var valueSerializer = (RedisSerializer<Object>) redisTemplate.getValueSerializer();
 
@@ -196,7 +156,10 @@ public class FormServiceCachedImpl implements FormServiceCached {
         } else {
             Form form = formRepository.findById(formId).orElseThrow(() -> new FormNotFoundException(formId));
             formInfo = FormInfoResDto.create(form);
+            redisTemplate.opsForValue().set(formInfoCacheKey, formInfo, Duration.ofMinutes(appConfiguration.getCacheDefaultTtlMinutes()));
         }
+
+        questionResponses.sort(Comparator.comparingInt(QuestionRes::getOrderIndex));
 
         return new FormResponseDto(
                 formInfo.getId(),
