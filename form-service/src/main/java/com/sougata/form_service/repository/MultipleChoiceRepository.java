@@ -1,12 +1,11 @@
 package com.sougata.form_service.repository;
 
 import com.sougata.form_service.constant.QuestionType;
-import com.sougata.form_service.dto.question.response.MultipleChoiceResDto;
 import com.sougata.form_service.model.MultipleChoice;
 import org.springframework.stereotype.Repository;
 
 @Repository("MULTIPLE_CHOICE_REPOSITORY")
-public interface MultipleChoiceRepository extends AnyTypeQuestionRepository<MultipleChoice, Long, MultipleChoiceResDto> {
+public interface MultipleChoiceRepository extends AnyTypeQuestionRepository<MultipleChoice, Long> {
 
     @Override
     default QuestionType getQuestionType() {

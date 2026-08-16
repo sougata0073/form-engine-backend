@@ -47,10 +47,10 @@ public class UserService {
 
         var dbUsers = userRepository.getUserSummariesShort(dbUserIds);
 
-        redisTemplate.executePipelined((RedisCallback<?>) connection -> {
+        var keySerializer = (RedisSerializer<String>) redisTemplate.getKeySerializer();
+        var valueSerializer = (RedisSerializer<Object>) redisTemplate.getValueSerializer();
 
-            var keySerializer = (RedisSerializer<String>) redisTemplate.getKeySerializer();
-            var valueSerializer = (RedisSerializer<Object>) redisTemplate.getValueSerializer();
+        redisTemplate.executePipelined((RedisCallback<?>) connection -> {
 
             dbUsers.forEach(user -> {
                 byte[] key = keySerializer.serialize(USER_SUMMARY_SHORT_CACHE_KEY_PREFIX + user.getId().toString());

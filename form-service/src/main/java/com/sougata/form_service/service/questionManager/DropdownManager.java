@@ -3,11 +3,12 @@ package com.sougata.form_service.service.questionManager;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.DropdownAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.DropdownResDto;
+import com.sougata.form_service.dto.template.questionTemplate.DropdownTemplateDetails;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.Dropdown;
 import com.sougata.form_service.model.DropdownOption;
+import com.sougata.form_service.model.Form;
 import com.sougata.form_service.model.Question;
-import com.sougata.form_service.repository.DropdownOptionRepository;
 import com.sougata.form_service.repository.DropdownRepository;
 import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormService;
@@ -19,20 +20,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("DROPDOWN_QUESTION_MANAGER")
-public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdateReqDto, DropdownResDto> {
+public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdateReqDto, DropdownResDto, DropdownTemplateDetails> {
 
     private final DropdownRepository dropdownRepository;
-    private final DropdownOptionRepository dropdownOptionRepository;
 
-    public DropdownManager(DropdownRepository dropdownRepository, FormService formService, QuestionRepository questionRepository, DropdownOptionRepository dropdownOptionRepository) {
+    public DropdownManager(DropdownRepository dropdownRepository, FormService formService, QuestionRepository questionRepository) {
         super(questionRepository, formService);
         this.dropdownRepository = dropdownRepository;
-        this.dropdownOptionRepository = dropdownOptionRepository;
     }
 
     @Override
     public DropdownResDto get(UUID formId, Long questionId) {
-        return toQuestionResDto(dropdownRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
+        return toQuestionResDto(dropdownRepository.findByQuestionId(questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
@@ -46,41 +45,42 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
 
         var saved = dropdownRepository.save(newDd);
 
-        return toQuestionResDto(saved);
-    }
-
-    @Override
-    public DropdownResDto create(UUID formId, Long questionId, DropdownAddUpdateReqDto crudDto) {
-        var newDd = new Dropdown();
-
-        var question = updateQuestion(formId, questionId, crudDto);
-
-        setPropertiesForNew(crudDto, newDd, question);
-
-        var saved = dropdownRepository.save(newDd);
-
-        return toQuestionResDto(saved);
+        return toQuestionResDto(saved, question);
     }
 
     @Override
     @Transactional(transactionManager = "schemaTransactionManager")
-    public DropdownResDto update(UUID formId, Long questionId, DropdownAddUpdateReqDto crudDto) {
-        Dropdown dd = dropdownRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
+    public DropdownResDto create(UUID formId, Long questionId, DropdownAddUpdateReqDto questionAddUpdateReq) {
+        var newDd = new Dropdown();
+
+        var question = updateQuestion(questionId, questionAddUpdateReq);
+
+        setPropertiesForNew(questionAddUpdateReq, newDd, question);
+
+        var saved = dropdownRepository.save(newDd);
+
+        return toQuestionResDto(saved, question);
+    }
+
+    @Override
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public DropdownResDto update(UUID formId, Long questionId, DropdownAddUpdateReqDto questionAddUpdateReq) {
+        Dropdown dd = dropdownRepository.findByQuestionId(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.DROPDOWN, questionId));
 
-        updateQuestion(formId, questionId, crudDto);
+        var question = updateQuestion(questionId, questionAddUpdateReq);
 
         Map<Long, DropdownOption> existingOptions = dd.getOptions().stream()
                 .collect(Collectors.toMap(DropdownOption::getId, option -> option));
-        Set<Long> requestOptionIds = crudDto.getOptions().stream()
+        Set<Long> requestOptionIds = questionAddUpdateReq.getOptions().stream()
                 .map(DropdownAddUpdateReqDto.Option::getId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
         dd.getOptions().removeIf(option -> !requestOptionIds.contains(option.getId()));
 
-        for (int i = 0; i < crudDto.getOptions().size(); i++) {
-            var dto = crudDto.getOptions().get(i);
+        for (int i = 0; i < questionAddUpdateReq.getOptions().size(); i++) {
+            var dto = questionAddUpdateReq.getOptions().get(i);
 
             if (dto.getId() == null) {
                 DropdownOption option = new DropdownOption();
@@ -101,7 +101,7 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
 
         dropdownRepository.save(dd);
 
-        return toQuestionResDto(dd);
+        return toQuestionResDto(dd, question);
     }
 
     @Override
@@ -112,16 +112,21 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
     @Override
     @Transactional(transactionManager = "schemaTransactionManager")
     public void delete(UUID formId, Long questionId) {
-        dropdownRepository.deleteQuestion(formId, questionId);
+        dropdownRepository.deleteQuestion(questionId);
     }
 
     @Override
-    public DropdownResDto toQuestionResDto(Dropdown question) {
+    public DropdownResDto toQuestionResDto(Dropdown childQuestion) {
+        return toQuestionResDto(childQuestion, childQuestion.getQuestion());
+    }
+
+    @Override
+    public DropdownResDto toQuestionResDto(Dropdown childQuestion, Question parentQuestion) {
         var dd = new DropdownResDto();
 
-        populateCommonFields(question, dd);
+        populateCommonFields(parentQuestion, dd);
 
-        var options = question.getOptions().stream()
+        var options = childQuestion.getOptions().stream()
                 .map(o -> new DropdownResDto.DropdownOptionResDto(o.getId(), o.getOption(), o.getOrderIndex()))
                 .sorted(Comparator.comparingInt(DropdownResDto.DropdownOptionResDto::getOrderIndex))
                 .toList();
@@ -129,6 +134,43 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
         dd.setOptions(options);
 
         return dd;
+    }
+
+    @Override
+    public DropdownAddUpdateReqDto toQuestionAddUpdateReq(DropdownResDto questionRes) {
+        var dd = new DropdownAddUpdateReqDto();
+
+        populateCommonFields(questionRes, dd);
+
+        dd.setOptions(
+                questionRes.getOptions().stream()
+                        .map(op -> new DropdownAddUpdateReqDto.Option(null, op.getOption()))
+                        .toList()
+        );
+
+        return dd;
+    }
+
+    @Override
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public Dropdown createFromTemplate(DropdownTemplateDetails template, Form form) {
+        var d = new Dropdown();
+
+        d.setQuestion(createQuestionFromTemplate(template, form));
+        d.setOptions(
+                template.getOptions().stream().map(op -> {
+                            var res = new DropdownOption();
+
+                            res.setDropdown(d);
+                            res.setOption(op.getOption());
+                            res.setOrderIndex(op.getOrderIndex());
+
+                            return res;
+                        })
+                        .toList()
+        );
+
+        return dropdownRepository.save(d);
     }
 
     private void setPropertiesForNew(DropdownAddUpdateReqDto source, Dropdown target, Question question) {

@@ -3,15 +3,11 @@ package com.sougata.form_service.service.questionManager;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.TickBoxGridAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.TickBoxGridResDto;
+import com.sougata.form_service.dto.template.questionTemplate.TickBoxGridTemplateDetails;
 import com.sougata.form_service.exception.QuestionNotFoundException;
-import com.sougata.form_service.model.Question;
-import com.sougata.form_service.model.TickBoxGrid;
-import com.sougata.form_service.model.TickBoxGridColumn;
-import com.sougata.form_service.model.TickBoxGridRow;
+import com.sougata.form_service.model.*;
 import com.sougata.form_service.repository.QuestionRepository;
-import com.sougata.form_service.repository.TickBoxGridColumnRepository;
 import com.sougata.form_service.repository.TickBoxGridRepository;
-import com.sougata.form_service.repository.TickBoxGridRowRepository;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.QuestionManager;
 import org.springframework.stereotype.Service;
@@ -21,22 +17,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("TICK_BOX_GRID_QUESTION_MANAGER")
-public class TickBoxGridManager extends QuestionManager<TickBoxGrid, TickBoxGridAddUpdateReqDto, TickBoxGridResDto> {
+public class TickBoxGridManager extends QuestionManager<TickBoxGrid, TickBoxGridAddUpdateReqDto, TickBoxGridResDto, TickBoxGridTemplateDetails> {
 
     private final TickBoxGridRepository tickBoxGridRepository;
-    private final TickBoxGridRowRepository tickBoxGridRowRepository;
-    private final TickBoxGridColumnRepository tickBoxGridColumnRepository;
 
-    public TickBoxGridManager(TickBoxGridRepository tickBoxGridRepository, FormService formService, QuestionRepository questionRepository, TickBoxGridRowRepository tickBoxGridRowRepository, TickBoxGridColumnRepository tickBoxGridColumnRepository) {
+    public TickBoxGridManager(TickBoxGridRepository tickBoxGridRepository, FormService formService, QuestionRepository questionRepository) {
         super(questionRepository, formService);
         this.tickBoxGridRepository = tickBoxGridRepository;
-        this.tickBoxGridRowRepository = tickBoxGridRowRepository;
-        this.tickBoxGridColumnRepository = tickBoxGridColumnRepository;
     }
 
     @Override
     public TickBoxGridResDto get(UUID formId, Long questionId) {
-        return toQuestionResDto(tickBoxGridRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
+        return toQuestionResDto(tickBoxGridRepository.findByQuestionId(questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
@@ -50,42 +42,43 @@ public class TickBoxGridManager extends QuestionManager<TickBoxGrid, TickBoxGrid
 
         var savedTbg = tickBoxGridRepository.save(newTbg);
 
-        return toQuestionResDto(savedTbg);
-    }
-
-    @Override
-    public TickBoxGridResDto create(UUID formId, Long questionId, TickBoxGridAddUpdateReqDto crudDto) {
-        var newTbg = new TickBoxGrid();
-
-        var question = updateQuestion(formId, questionId, crudDto);
-
-        setPropertiesForNew(crudDto, newTbg, question);
-
-        var savedTbg = tickBoxGridRepository.save(newTbg);
-
-        return toQuestionResDto(savedTbg);
+        return toQuestionResDto(savedTbg, question);
     }
 
     @Override
     @Transactional(transactionManager = "schemaTransactionManager")
-    public TickBoxGridResDto update(UUID formId, Long questionId, TickBoxGridAddUpdateReqDto crudDto) {
-        TickBoxGrid tbg = tickBoxGridRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
+    public TickBoxGridResDto create(UUID formId, Long questionId, TickBoxGridAddUpdateReqDto questionAddUpdateReq) {
+        var newTbg = new TickBoxGrid();
+
+        var question = updateQuestion(questionId, questionAddUpdateReq);
+
+        setPropertiesForNew(questionAddUpdateReq, newTbg, question);
+
+        var savedTbg = tickBoxGridRepository.save(newTbg);
+
+        return toQuestionResDto(savedTbg, question);
+    }
+
+    @Override
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public TickBoxGridResDto update(UUID formId, Long questionId, TickBoxGridAddUpdateReqDto questionAddUpdateReq) {
+        TickBoxGrid tbg = tickBoxGridRepository.findByQuestionId(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.TICK_BOX_GRID, questionId));
 
-        updateQuestion(formId, questionId, crudDto);
-        tbg.setEachRowRequired(crudDto.getEachRowRequired());
+        var question = updateQuestion(questionId, questionAddUpdateReq);
+        tbg.setEachRowRequired(questionAddUpdateReq.getEachRowRequired());
 
         Map<Long, TickBoxGridRow> existingRows = tbg.getRows().stream()
                 .collect(Collectors.toMap(TickBoxGridRow::getId, r -> r));
-        Set<Long> requestRowIds = crudDto.getRows().stream()
+        Set<Long> requestRowIds = questionAddUpdateReq.getRows().stream()
                 .map(TickBoxGridAddUpdateReqDto.Row::getId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
         tbg.getRows().removeIf(row -> !requestRowIds.contains(row.getId()));
 
-        for (int i = 0; i < crudDto.getRows().size(); i++) {
-            var dto = crudDto.getRows().get(i);
+        for (int i = 0; i < questionAddUpdateReq.getRows().size(); i++) {
+            var dto = questionAddUpdateReq.getRows().get(i);
 
             if (dto.getId() == null) {
                 TickBoxGridRow row = new TickBoxGridRow();
@@ -108,15 +101,15 @@ public class TickBoxGridManager extends QuestionManager<TickBoxGrid, TickBoxGrid
 
         Map<Long, TickBoxGridColumn> existingColumns = tbg.getColumns().stream()
                 .collect(Collectors.toMap(TickBoxGridColumn::getId, c -> c));
-        Set<Long> requestColumnIds = crudDto.getColumns().stream()
+        Set<Long> requestColumnIds = questionAddUpdateReq.getColumns().stream()
                 .map(TickBoxGridAddUpdateReqDto.Column::getId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
         tbg.getColumns().removeIf(column -> !requestColumnIds.contains(column.getId()));
 
-        for (int i = 0; i < crudDto.getColumns().size(); i++) {
-            var dto = crudDto.getColumns().get(i);
+        for (int i = 0; i < questionAddUpdateReq.getColumns().size(); i++) {
+            var dto = questionAddUpdateReq.getColumns().get(i);
 
             if (dto.getId() == null) {
                 TickBoxGridColumn column = new TickBoxGridColumn();
@@ -139,34 +132,98 @@ public class TickBoxGridManager extends QuestionManager<TickBoxGrid, TickBoxGrid
 
         tickBoxGridRepository.save(tbg);
 
-        return toQuestionResDto(tbg);
+        return toQuestionResDto(tbg, question);
     }
 
     @Override
-    public TickBoxGridResDto toQuestionResDto(TickBoxGrid question) {
+    public TickBoxGridResDto toQuestionResDto(TickBoxGrid childQuestion) {
+        return toQuestionResDto(childQuestion, childQuestion.getQuestion());
+    }
+
+    @Override
+    public TickBoxGridResDto toQuestionResDto(TickBoxGrid childQuestion, Question parentQuestion) {
         var t = new TickBoxGridResDto();
 
-        populateCommonFields(question, t);
+        populateCommonFields(parentQuestion, t);
 
-        var rows = question.getRows().stream()
+        var rows = childQuestion.getRows().stream()
                 .map(row ->
                         new TickBoxGridResDto.TickBoxGridRowResDto(row.getId(), row.getRowName(), row.getOrderIndex())
                 )
                 .sorted(Comparator.comparingInt(TickBoxGridResDto.TickBoxGridRowResDto::getOrderIndex))
                 .toList();
 
-        var columns = question.getColumns().stream()
+        var columns = childQuestion.getColumns().stream()
                 .map(column ->
                         new TickBoxGridResDto.TickBoxGridColumnResDto(column.getId(), column.getColumnName(), column.getOrderIndex())
                 )
                 .sorted(Comparator.comparingInt(TickBoxGridResDto.TickBoxGridColumnResDto::getOrderIndex))
                 .toList();
 
-        t.setEachRowRequired(question.getEachRowRequired());
+        t.setEachRowRequired(childQuestion.getEachRowRequired());
         t.setRows(rows);
         t.setColumns(columns);
 
         return t;
+    }
+
+    @Override
+    public TickBoxGridAddUpdateReqDto toQuestionAddUpdateReq(TickBoxGridResDto questionRes) {
+        var tbg = new TickBoxGridAddUpdateReqDto();
+
+        populateCommonFields(questionRes, tbg);
+
+        tbg.setRows(
+                questionRes.getRows().stream()
+                        .map(r -> new TickBoxGridAddUpdateReqDto.Row(null, r.getRow()))
+                        .toList()
+        );
+        tbg.setColumns(
+                questionRes.getColumns().stream()
+                        .map(c -> new TickBoxGridAddUpdateReqDto.Column(null, c.getColumn()))
+                        .toList()
+        );
+        tbg.setEachRowRequired(questionRes.getEachRowRequired());
+
+        return tbg;
+    }
+
+    @Override
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public TickBoxGrid createFromTemplate(TickBoxGridTemplateDetails template, Form form) {
+        var tbg = new TickBoxGrid();
+
+        tbg.setQuestion(createQuestionFromTemplate(template, form));
+        tbg.setEachRowRequired(template.getEachRowRequired());
+
+        var rows = template.getRows().stream()
+                .map(row -> {
+                    var res = new TickBoxGridRow();
+
+                    res.setTickBoxGrid(tbg);
+                    res.setRowName(row.getRow());
+                    res.setOrderIndex(row.getOrderIndex());
+
+                    return res;
+                })
+                .toList();
+
+        var columns = template.getColumns().stream()
+                .map(column -> {
+                    var res = new TickBoxGridColumn();
+
+                    res.setTickBoxGrid(tbg);
+                    res.setColumnName(column.getColumn());
+                    res.setOrderIndex(column.getOrderIndex());
+
+                    return res;
+                })
+                .toList();
+
+        tbg.setRows(rows);
+        tbg.setColumns(columns);
+
+        return tickBoxGridRepository.save(tbg);
     }
 
     @Override
@@ -177,7 +234,7 @@ public class TickBoxGridManager extends QuestionManager<TickBoxGrid, TickBoxGrid
     @Override
     @Transactional(transactionManager = "schemaTransactionManager")
     public void delete(UUID formId, Long questionId) {
-        tickBoxGridRepository.deleteQuestion(formId, questionId);
+        tickBoxGridRepository.deleteQuestion(questionId);
     }
 
     private void setPropertiesForNew(TickBoxGridAddUpdateReqDto source, TickBoxGrid target, Question question) {

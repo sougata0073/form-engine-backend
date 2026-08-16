@@ -16,7 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-public class FileUploadTemplate extends AnyQuestionTemplateType {
+public class FileUploadTemplate extends AnyTypeQuestionTemplate {
 
     @ManyToMany
     @JoinTable(

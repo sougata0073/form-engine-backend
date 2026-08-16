@@ -7,10 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Type;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "file_types")
@@ -26,7 +22,4 @@ public class FileType {
     @Type(StringArrayType.class)
     @Column(nullable = false, columnDefinition = "text[]")
     private String[] mimeTypes;
-
-    @ManyToMany(mappedBy = "allowedFileTypes")
-    private List<FileUpload> fileUploads = new ArrayList<>();
 }

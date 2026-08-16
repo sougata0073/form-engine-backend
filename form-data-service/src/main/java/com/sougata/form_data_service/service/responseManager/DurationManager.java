@@ -3,9 +3,7 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.DurationResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.DurationResDto;
-import com.sougata.form_data_service.dto.response.individual.DropdownResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.individual.DurationResponseIndividualDto;
-import com.sougata.form_data_service.dto.response.individual.ResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.DurationResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.DurationResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
@@ -22,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service("DURATION_RESPONSE_MANAGER")
 public class DurationManager extends ResponseManager<
@@ -253,9 +250,9 @@ public class DurationManager extends ResponseManager<
             throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
         }
 
-        var h = Integer.parseInt(hours.getFirst());
-        var m = Integer.parseInt(minutes.getFirst());
-        var s = Integer.parseInt(seconds.getFirst());
+        var h = hours.getFirst() == null ? null : Integer.parseInt(hours.getFirst());
+        var m = minutes.getFirst() == null ? null : Integer.parseInt(minutes.getFirst());
+        var s = seconds.getFirst() == null ? null : Integer.parseInt(seconds.getFirst());
 
         return durationRepository.getResponseIdsByGroupedResponse(formId, questionId, h, m, s, pageable);
     }

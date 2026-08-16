@@ -3,12 +3,9 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.RatingResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.RatingResDto;
-import com.sougata.form_data_service.dto.response.individual.ParagraphResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.individual.RatingResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.RatingResponseQuestionDto;
-import com.sougata.form_data_service.dto.response.summary.CheckboxResponseSummaryDto;
 import com.sougata.form_data_service.dto.response.summary.RatingResponseSummaryDto;
-import com.sougata.form_data_service.dto.response.summary.ResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.Rating;
@@ -209,7 +206,7 @@ public class RatingManager extends ResponseManager<
             throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
         }
 
-        var groupedResponse = Integer.parseInt(rating.getFirst());
+        var groupedResponse = rating.getFirst() == null ? null : Integer.parseInt(rating.getFirst());
 
         return ratingRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
     }

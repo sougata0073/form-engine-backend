@@ -3,19 +3,14 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.MultipleChoiceGridResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.MultipleChoiceGridResDto;
-import com.sougata.form_data_service.dto.response.individual.DropdownResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.individual.MultipleChoiceGridResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.MultipleChoiceGridResponseQuestionDto;
-import com.sougata.form_data_service.dto.response.summary.CheckboxResponseSummaryDto;
 import com.sougata.form_data_service.dto.response.summary.MultipleChoiceGridResponseSummaryDto;
-import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.MultipleChoiceGrid;
 import com.sougata.form_data_service.model.MultipleChoiceGridRow;
 import com.sougata.form_data_service.projection.CommonResponseSummaryProjection;
-import com.sougata.form_data_service.repository.FormResponseRepository;
 import com.sougata.form_data_service.repository.MultipleChoiceGridRepository;
-import com.sougata.form_data_service.repository.MultipleChoiceGridRowRepository;
 import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import com.sougata.form_data_service.util.IdUtil;
 import jakarta.persistence.Tuple;
@@ -24,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -40,13 +36,11 @@ public class MultipleChoiceGridManager extends ResponseManager<
         > {
 
     private final MultipleChoiceGridRepository multipleChoiceGridRepository;
-    private final MultipleChoiceGridRowRepository multipleChoiceGridRowRepository;
 
     @Autowired
-    public MultipleChoiceGridManager(MultipleChoiceGridRepository multipleChoiceGridRepository, QuestionResponseRepository questionResponseRepository, FormResponseRepository formResponseRepository, AuthServiceFeignClient authServiceFeignClient, MultipleChoiceGridRowRepository multipleChoiceGridRowRepository) {
+    public MultipleChoiceGridManager(MultipleChoiceGridRepository multipleChoiceGridRepository, QuestionResponseRepository questionResponseRepository) {
         super(questionResponseRepository);
         this.multipleChoiceGridRepository = multipleChoiceGridRepository;
-        this.multipleChoiceGridRowRepository = multipleChoiceGridRowRepository;
     }
 
     @Override
@@ -256,7 +250,19 @@ public class MultipleChoiceGridManager extends ResponseManager<
 
     @Override
     public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
-        return List.of();
+        var map = IdUtil.reconstructCompressedEncodedId(formResponsesIdentifier);
+
+        var rowId = map.get("rowId");
+        var columnId = map.get("columnId");
+
+        if (rowId.isEmpty() || columnId.isEmpty()) {
+            throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
+        }
+
+        var rowIdResponse = rowId.getFirst() == null ? null :  Long.parseLong(rowId.getFirst());
+        var columnIdResponse = columnId.getFirst() == null ? null : Long.parseLong(columnId.getFirst());
+
+        return multipleChoiceGridRepository.getResponseIdsByGroupedResponse(formId, questionId, rowIdResponse, columnIdResponse, pageable);
     }
 
     @Override

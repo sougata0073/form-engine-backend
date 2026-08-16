@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-public class DropdownTemplate extends AnyQuestionTemplateType {
+public class DropdownTemplate extends AnyTypeQuestionTemplate {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "dropdownTemplate")
     private List<DropdownOptionTemplate> options = new ArrayList<>();

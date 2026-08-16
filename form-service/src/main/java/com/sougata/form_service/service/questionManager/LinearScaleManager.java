@@ -3,7 +3,9 @@ package com.sougata.form_service.service.questionManager;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.LinearScaleAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.LinearScaleResDto;
+import com.sougata.form_service.dto.template.questionTemplate.LinearScaleTemplateDetails;
 import com.sougata.form_service.exception.QuestionNotFoundException;
+import com.sougata.form_service.model.Form;
 import com.sougata.form_service.model.LinearScale;
 import com.sougata.form_service.model.Question;
 import com.sougata.form_service.repository.LinearScaleRepository;
@@ -16,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service("LINEAR_SCALE_QUESTION_MANAGER")
-public class LinearScaleManager extends QuestionManager<LinearScale, LinearScaleAddUpdateReqDto, LinearScaleResDto> {
+public class LinearScaleManager extends QuestionManager<LinearScale, LinearScaleAddUpdateReqDto, LinearScaleResDto, LinearScaleTemplateDetails> {
 
     private final LinearScaleRepository linearScaleRepository;
 
@@ -27,7 +29,7 @@ public class LinearScaleManager extends QuestionManager<LinearScale, LinearScale
 
     @Override
     public LinearScaleResDto get(UUID formId, Long questionId) {
-        return toQuestionResDto(linearScaleRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
+        return toQuestionResDto(linearScaleRepository.findByQuestionId(questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
@@ -41,48 +43,78 @@ public class LinearScaleManager extends QuestionManager<LinearScale, LinearScale
 
         var saved = linearScaleRepository.save(newLs);
 
-        return toQuestionResDto(saved);
-    }
-
-    @Override
-    public LinearScaleResDto create(UUID formId, Long questionId, LinearScaleAddUpdateReqDto crudDto) {
-        var newCb = new LinearScale();
-
-        var question = updateQuestion(formId, questionId, crudDto);
-
-        setPropertiesForNew(crudDto, newCb, question);
-
-        var saved = linearScaleRepository.save(newCb);
-
-        return toQuestionResDto(saved);
+        return toQuestionResDto(saved, question);
     }
 
     @Override
     @Transactional(transactionManager = "schemaTransactionManager")
-    public LinearScaleResDto update(UUID formId, Long questionId, LinearScaleAddUpdateReqDto crudDto) {
-        LinearScale ls = linearScaleRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
-                .orElseThrow(() -> new QuestionNotFoundException(QuestionType.LINEAR_SCALE, questionId));
+    public LinearScaleResDto create(UUID formId, Long questionId, LinearScaleAddUpdateReqDto questionAddUpdateReq) {
+        var newCb = new LinearScale();
 
-        updateQuestion(formId, questionId, crudDto);
+        var question = updateQuestion(questionId, questionAddUpdateReq);
 
-        ls.setFromNumber(crudDto.getFromNumber());
-        ls.setToNumber(crudDto.getToNumber());
+        setPropertiesForNew(questionAddUpdateReq, newCb, question);
 
-        linearScaleRepository.save(ls);
+        var saved = linearScaleRepository.save(newCb);
 
-        return toQuestionResDto(ls);
+        return toQuestionResDto(saved, question);
     }
 
     @Override
-    public LinearScaleResDto toQuestionResDto(LinearScale question) {
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public LinearScaleResDto update(UUID formId, Long questionId, LinearScaleAddUpdateReqDto questionAddUpdateReq) {
+        LinearScale ls = linearScaleRepository.findByQuestionId(questionId)
+                .orElseThrow(() -> new QuestionNotFoundException(QuestionType.LINEAR_SCALE, questionId));
+
+        var question = updateQuestion(questionId, questionAddUpdateReq);
+
+        ls.setFromNumber(questionAddUpdateReq.getFromNumber());
+        ls.setToNumber(questionAddUpdateReq.getToNumber());
+
+        linearScaleRepository.save(ls);
+
+        return toQuestionResDto(ls, question);
+    }
+
+    @Override
+    public LinearScaleResDto toQuestionResDto(LinearScale childQuestion) {
+        return toQuestionResDto(childQuestion, childQuestion.getQuestion());
+    }
+
+    @Override
+    public LinearScaleResDto toQuestionResDto(LinearScale childQuestion, Question parentQuestion) {
         var ls = new LinearScaleResDto();
 
-        populateCommonFields(question, ls);
+        populateCommonFields(parentQuestion, ls);
 
-        ls.setFromNumber(question.getFromNumber());
-        ls.setToNumber(question.getToNumber());
+        ls.setFromNumber(childQuestion.getFromNumber());
+        ls.setToNumber(childQuestion.getToNumber());
 
         return ls;
+    }
+
+    @Override
+    public LinearScaleAddUpdateReqDto toQuestionAddUpdateReq(LinearScaleResDto questionRes) {
+        var ls = new LinearScaleAddUpdateReqDto();
+
+        populateCommonFields(questionRes, ls);
+
+        ls.setFromNumber(questionRes.getFromNumber());
+        ls.setToNumber(questionRes.getToNumber());
+
+        return ls;
+    }
+
+    @Override
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public LinearScale createFromTemplate(LinearScaleTemplateDetails template, Form form) {
+        var ls = new LinearScale();
+
+        ls.setQuestion(createQuestionFromTemplate(template, form));
+        ls.setFromNumber(template.getFromNumber());
+        ls.setToNumber(template.getToNumber());
+
+        return linearScaleRepository.save(ls);
     }
 
     @Override
@@ -92,7 +124,7 @@ public class LinearScaleManager extends QuestionManager<LinearScale, LinearScale
 
     @Override
     public void delete(UUID formId, Long questionId) {
-        linearScaleRepository.deleteQuestion(formId, questionId);
+        linearScaleRepository.deleteQuestion(questionId);
     }
 
     private void setPropertiesForNew(LinearScaleAddUpdateReqDto source, LinearScale target, Question question) {

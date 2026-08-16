@@ -16,10 +16,6 @@ public interface FormResponseRepository extends JpaRepository<FormResponse, Long
 
     Optional<FormResponse> findByFormIdAndId(UUID formId, Long id);
 
-    Optional<FormResponse> findByFormIdAndUserId(UUID formId, UUID userId);
-
-    Optional<FormResponse> findByFormIdAndUserIdAndId(UUID formId, UUID userId, Long id);
-
     @Query("""
             select
             new com.sougata.form_data_service.dto.form.FormResponseSummaryShortDto(

@@ -27,7 +27,4 @@ public class FileTypeTemplate {
     @Type(StringArrayType.class)
     @Column(nullable = false, columnDefinition = "text[]")
     private String[] mimeTypes;
-
-    @ManyToMany(mappedBy = "allowedFileTypeTemplates")
-    private List<FileUploadTemplate> fileUploadTemplates = new ArrayList<>();
 }

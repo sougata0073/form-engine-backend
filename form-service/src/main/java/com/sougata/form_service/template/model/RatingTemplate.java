@@ -15,7 +15,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @Getter
 @Setter
-public class RatingTemplate extends AnyQuestionTemplateType {
+public class RatingTemplate extends AnyTypeQuestionTemplate {
 
     @Column(nullable = false)
     private Integer maxRatingNumber;

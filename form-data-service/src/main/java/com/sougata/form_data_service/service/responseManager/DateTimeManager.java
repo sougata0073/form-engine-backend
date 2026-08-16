@@ -3,7 +3,6 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.DateTimeResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.DateTimeResDto;
-import com.sougata.form_data_service.dto.response.individual.DateResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.individual.DateTimeResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.DateTimeResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.DateTimeResponseSummaryDto;
@@ -21,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service("DATE_TIME_RESPONSE_MANAGER")
 public class DateTimeManager extends ResponseManager<
@@ -200,7 +198,7 @@ public class DateTimeManager extends ResponseManager<
             throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
         }
 
-        var groupedResponse = Instant.parse(dateTime.getFirst());
+        var groupedResponse = dateTime.getFirst() == null ? null :  Instant.parse(dateTime.getFirst());
 
         return dateTimeRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
     }

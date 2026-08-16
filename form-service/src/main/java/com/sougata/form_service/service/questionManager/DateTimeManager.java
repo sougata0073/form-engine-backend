@@ -3,8 +3,11 @@ package com.sougata.form_service.service.questionManager;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.DateTimeAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.DateTimeResDto;
+import com.sougata.form_service.dto.template.questionTemplate.DateTimeTemplateDetails;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.DateTime;
+import com.sougata.form_service.model.Form;
+import com.sougata.form_service.model.Question;
 import com.sougata.form_service.repository.DateTimeRepository;
 import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormService;
@@ -15,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service("DATE_TIME_QUESTION_MANAGER")
-public class DateTimeManager extends QuestionManager<DateTime, DateTimeAddUpdateReqDto, DateTimeResDto> {
+public class DateTimeManager extends QuestionManager<DateTime, DateTimeAddUpdateReqDto, DateTimeResDto, DateTimeTemplateDetails> {
 
     private final DateTimeRepository dateTimeRepository;
 
@@ -26,7 +29,7 @@ public class DateTimeManager extends QuestionManager<DateTime, DateTimeAddUpdate
 
     @Override
     public DateTimeResDto get(UUID formId, Long questionId) {
-        return toQuestionResDto(dateTimeRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
+        return toQuestionResDto(dateTimeRepository.findByQuestionId(questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
@@ -40,33 +43,34 @@ public class DateTimeManager extends QuestionManager<DateTime, DateTimeAddUpdate
 
         var saved = dateTimeRepository.save(newDt);
 
-        return toQuestionResDto(saved);
+        return toQuestionResDto(saved, question);
     }
 
     @Override
-    public DateTimeResDto create(UUID formId, Long questionId, DateTimeAddUpdateReqDto crudDto) {
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public DateTimeResDto create(UUID formId, Long questionId, DateTimeAddUpdateReqDto questionAddUpdateReq) {
         var newDt = new DateTime();
 
-        var question = updateQuestion(formId, questionId, crudDto);
+        var question = updateQuestion(questionId, questionAddUpdateReq);
 
         newDt.setQuestion(question);
 
         var saved = dateTimeRepository.save(newDt);
 
-        return toQuestionResDto(saved);
+        return toQuestionResDto(saved, question);
     }
 
     @Override
     @Transactional(transactionManager = "schemaTransactionManager")
-    public DateTimeResDto update(UUID formId, Long questionId, DateTimeAddUpdateReqDto crudDto) {
-        var dt = dateTimeRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
+    public DateTimeResDto update(UUID formId, Long questionId, DateTimeAddUpdateReqDto questionAddUpdateReq) {
+        var dt = dateTimeRepository.findByQuestionId(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.DATE_TIME, questionId));
 
-        updateQuestion(formId, questionId, crudDto);
+        var question = updateQuestion(questionId, questionAddUpdateReq);
 
         dateTimeRepository.save(dt);
 
-        return toQuestionResDto(dt);
+        return toQuestionResDto(dt, question);
     }
 
     @Override
@@ -76,15 +80,39 @@ public class DateTimeManager extends QuestionManager<DateTime, DateTimeAddUpdate
 
     @Override
     public void delete(UUID formId, Long questionId) {
-        dateTimeRepository.deleteQuestion(formId, questionId);
+        dateTimeRepository.deleteQuestion(questionId);
     }
 
     @Override
-    public DateTimeResDto toQuestionResDto(DateTime question) {
+    public DateTimeResDto toQuestionResDto(DateTime childQuestion) {
+        return toQuestionResDto(childQuestion, childQuestion.getQuestion());
+    }
+
+    @Override
+    public DateTimeResDto toQuestionResDto(DateTime childQuestion, Question parentQuestion) {
         var dt = new DateTimeResDto();
 
-        populateCommonFields(question, dt);
+        populateCommonFields(parentQuestion, dt);
 
         return dt;
+    }
+
+    @Override
+    public DateTimeAddUpdateReqDto toQuestionAddUpdateReq(DateTimeResDto questionRes) {
+        var dt = new DateTimeAddUpdateReqDto();
+
+        populateCommonFields(questionRes, dt);
+
+        return dt;
+    }
+
+    @Override
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public DateTime createFromTemplate(DateTimeTemplateDetails template, Form form) {
+        var dt = new DateTime();
+
+        dt.setQuestion(createQuestionFromTemplate(template, form));
+
+        return dateTimeRepository.save(dt);
     }
 }

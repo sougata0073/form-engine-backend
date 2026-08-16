@@ -3,8 +3,6 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.TimeResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.TimeResDto;
-import com.sougata.form_data_service.dto.response.individual.ParagraphResponseIndividualDto;
-import com.sougata.form_data_service.dto.response.individual.ResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.individual.TimeResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.TimeResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.TimeResponseSummaryDto;
@@ -23,7 +21,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service("TIME_RESPONSE_MANAGER")
 public class TimeManager extends ResponseManager<
@@ -226,7 +223,7 @@ public class TimeManager extends ResponseManager<
             throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
         }
 
-        var groupedResponse = Instant.parse(time.getFirst());
+        var groupedResponse = time.getFirst() == null ? null : Instant.parse(time.getFirst());
 
         return timeRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
     }

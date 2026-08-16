@@ -3,7 +3,6 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.ShortAnswerResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.ShortAnswerResDto;
-import com.sougata.form_data_service.dto.response.individual.ParagraphResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.individual.ShortAnswerResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.ShortAnswerResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.ShortAnswerResponseSummaryDto;
@@ -22,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service("SHORT_ANSWER_RESPONSE_MANAGER")
 public class ShortAnswerManager extends ResponseManager<

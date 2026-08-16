@@ -3,6 +3,7 @@ package com.sougata.form_service.service.impl;
 import com.sougata.form_service.constant.ViewFormErrorReason;
 import com.sougata.form_service.dto.common.SuccessMessageDto;
 import com.sougata.form_service.dto.form.*;
+import com.sougata.form_service.dto.template.TemplateDetails;
 import com.sougata.form_service.exception.FormNotAcceptingResponseException;
 import com.sougata.form_service.exception.FormNotFoundException;
 import com.sougata.form_service.exception.FormResponseAlreadySubmittedException;
@@ -11,7 +12,9 @@ import com.sougata.form_service.model.Form;
 import com.sougata.form_service.repository.FormRepository;
 import com.sougata.form_service.service.FormService;
 import com.sougata.form_service.service.FormServiceCached;
+import com.sougata.form_service.service.questionManager.QuestionManagerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,20 +27,26 @@ public class FormServiceImpl implements FormService {
     private final FormRepository formRepo;
     private final FormDataServiceFeignClient formDataServiceFeignClient;
     private final FormServiceCached formServiceCached;
+    private final QuestionManagerFactory questionManagerFactory;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Autowired
     public FormServiceImpl(
             FormRepository formRepo,
-            FormDataServiceFeignClient formDataServiceFeignClient, FormServiceCached formServiceCached
+            FormDataServiceFeignClient formDataServiceFeignClient,
+            FormServiceCached formServiceCached,
+            QuestionManagerFactory questionManagerFactory, RedisTemplate<String, Object> redisTemplate
     ) {
         this.formRepo = formRepo;
         this.formDataServiceFeignClient = formDataServiceFeignClient;
         this.formServiceCached = formServiceCached;
+        this.questionManagerFactory = questionManagerFactory;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
     public FormInfoResDto createForm(FormAddUpdateReqDto dto, UUID userId) {
-        Form newForm = new Form();
+        var newForm = new Form();
 
         newForm.setUserId(userId);
         newForm.setName(dto.getName());
@@ -47,7 +56,32 @@ public class FormServiceImpl implements FormService {
         newForm.setAcceptingResponse(dto.getAcceptingResponse());
         newForm.setLastOpenedOn(Instant.now());
 
-        Form savedForm = formRepo.save(newForm);
+        var savedForm = formRepo.save(newForm);
+
+        return FormInfoResDto.create(savedForm);
+    }
+
+    @Override
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public FormInfoResDto copyForm(UUID formId, CopyFormReqDto req, UUID userId) {
+        var referenceFormDetails = formServiceCached.getFormDetails(formId);
+        var newForm = new Form();
+
+        newForm.setUserId(userId);
+        newForm.setName(req.getFormName());
+        newForm.setTitle(referenceFormDetails.getTitle());
+        newForm.setDescription(referenceFormDetails.getDescription());
+        newForm.setPublished(referenceFormDetails.getPublished());
+        newForm.setAcceptingResponse(referenceFormDetails.getAcceptingResponse());
+        newForm.setLastOpenedOn(Instant.now());
+
+        var savedForm = formRepo.save(newForm);
+
+        referenceFormDetails.getQuestions().forEach(q -> {
+            var manager = questionManagerFactory.get(q.getQuestionType());
+            var addUpdateReq = manager.toQuestionAddUpdateReq(q);
+            manager.create(savedForm.getId(), addUpdateReq);
+        });
 
         return FormInfoResDto.create(savedForm);
     }
@@ -160,6 +194,29 @@ public class FormServiceImpl implements FormService {
         formRepo.deleteById(formId);
 
         return new SuccessMessageDto("Form deleted successfully with ID: " + formId);
+    }
+
+    @Override
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public Form createFromTemplate(TemplateDetails template, UUID userId) {
+        Form f = new Form();
+
+        f.setUserId(userId);
+        f.setName(template.getName());
+        f.setTitle(template.getTitle());
+        f.setDescription(template.getDescription());
+        f.setPublished(false);
+        f.setAcceptingResponse(true);
+        f.setLastOpenedOn(Instant.now());
+
+        var savedForm = formRepo.save(f);
+
+        template.getQuestionTemplates().forEach(qt -> {
+            var questionManager = questionManagerFactory.get(qt.getQuestionType());
+            questionManager.createFromTemplate(qt, savedForm);
+        });
+
+        return savedForm;
     }
 
 }

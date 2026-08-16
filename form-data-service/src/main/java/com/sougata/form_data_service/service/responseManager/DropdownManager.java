@@ -3,10 +3,8 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.DropdownResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.DropdownResDto;
-import com.sougata.form_data_service.dto.response.individual.DateResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.individual.DropdownResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.DropdownResponseQuestionDto;
-import com.sougata.form_data_service.dto.response.summary.CheckboxResponseSummaryDto;
 import com.sougata.form_data_service.dto.response.summary.DropdownResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.Dropdown;
@@ -21,7 +19,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -197,7 +194,7 @@ public class DropdownManager extends ResponseManager<
             throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
         }
 
-        var groupedResponse = Long.parseLong(optionId.getFirst());
+        var groupedResponse = optionId.getFirst() == null ? null : Long.parseLong(optionId.getFirst());
 
         return dropdownRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
     }

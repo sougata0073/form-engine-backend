@@ -17,7 +17,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @Getter
 @Setter
-public class LinearScaleTemplate extends AnyQuestionTemplateType {
+public class LinearScaleTemplate extends AnyTypeQuestionTemplate {
 
     @Column(nullable = false)
     private Integer fromNumber;

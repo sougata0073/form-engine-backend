@@ -4,7 +4,6 @@ import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.QuestionResponseAddReq;
 import com.sougata.form_data_service.dto.question.response.QuestionRes;
 import com.sougata.form_data_service.dto.response.individual.ResponseIndividualDto;
-import com.sougata.form_data_service.dto.response.individual.ResponseIndividualResDto;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionResponse;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionSummary;
 import com.sougata.form_data_service.dto.response.question.ResponseQuestionDto;

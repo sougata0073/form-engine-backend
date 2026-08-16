@@ -1,5 +1,6 @@
 package com.sougata.form_service.controller;
 
+import com.sougata.form_service.constant.QuestionCacheNames;
 import com.sougata.form_service.dto.common.SuccessMessageDto;
 import com.sougata.form_service.dto.form.*;
 import com.sougata.form_service.dto.question.QuestionSummariesResDto;
@@ -40,10 +41,21 @@ public class FormController {
     @PostMapping
     @CacheEvict(cacheNames = "recentForms", key = "{#userId}")
     public ResponseEntity<FormInfoResDto> addForm(
-            @Valid @RequestBody FormAddUpdateReqDto dto,
+            @Valid @RequestBody FormAddUpdateReqDto req,
             @RequestHeader("auth-jwt") UUID userId
     ) {
-        var res = formService.createForm(dto, userId);
+        var res = formService.createForm(req, userId);
+        return new ResponseEntity<>(res, HttpStatus.CREATED);
+    }
+
+    @PostMapping(path = "{formId}/copy")
+    @CacheEvict(cacheNames = "recentForms", key = "{#userId}")
+    public ResponseEntity<FormInfoResDto> copyForm(
+            @Valid @RequestBody CopyFormReqDto req,
+            @PathVariable("formId") UUID formId,
+            @RequestHeader("auth-jwt") UUID userId
+    ) {
+        var res = formService.copyForm(formId, req, userId);
         return new ResponseEntity<>(res, HttpStatus.CREATED);
     }
 

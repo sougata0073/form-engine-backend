@@ -9,7 +9,6 @@ import com.sougata.form_data_service.dto.response.summary.CheckboxResponseSummar
 import com.sougata.form_data_service.model.Checkbox;
 import com.sougata.form_data_service.model.CheckboxOption;
 import com.sougata.form_data_service.model.FormResponse;
-import com.sougata.form_data_service.repository.CheckboxOptionRepository;
 import com.sougata.form_data_service.repository.CheckboxRepository;
 import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import com.sougata.form_data_service.util.IdUtil;
@@ -34,13 +33,11 @@ public class CheckboxManager extends ResponseManager<
         > {
 
     private final CheckboxRepository checkboxRepository;
-    private final CheckboxOptionRepository checkboxOptionRepository;
 
     @Autowired
-    public CheckboxManager(CheckboxRepository checkboxRepository, CheckboxOptionRepository checkboxOptionRepository, QuestionResponseRepository questionResponseRepository) {
+    public CheckboxManager(CheckboxRepository checkboxRepository, QuestionResponseRepository questionResponseRepository) {
         super(questionResponseRepository);
         this.checkboxRepository = checkboxRepository;
-        this.checkboxOptionRepository = checkboxOptionRepository;
     }
 
     @Override
@@ -201,7 +198,19 @@ public class CheckboxManager extends ResponseManager<
 
     @Override
     public List<Tuple> getFormResponseAndUserIds(UUID formId, Long questionId, String formResponsesIdentifier, Pageable pageable) {
-        return List.of();
+        var map = IdUtil.reconstructCompressedEncodedId(formResponsesIdentifier);
+
+        var optionIds = map.get("optionIds");
+
+        if (optionIds.isEmpty()) {
+            throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
+        }
+
+        var firstOptionId = optionIds.getFirst();
+
+        var groupedResponse = firstOptionId == null ? new Long[]{null} : optionIds.stream().map(Long::parseLong).toArray(Long[]::new);
+
+        return checkboxRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
     }
 
     @Override

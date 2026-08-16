@@ -4,12 +4,13 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.CheckboxAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.CheckboxResDto;
+import com.sougata.form_service.dto.template.questionTemplate.CheckboxTemplateDetails;
 import com.sougata.form_service.exception.JsonParsingException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.Checkbox;
 import com.sougata.form_service.model.CheckboxOption;
+import com.sougata.form_service.model.Form;
 import com.sougata.form_service.model.Question;
-import com.sougata.form_service.repository.CheckboxOptionRepository;
 import com.sougata.form_service.repository.CheckboxRepository;
 import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormService;
@@ -24,22 +25,20 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("CHECKBOX_QUESTION_MANAGER")
-public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdateReqDto, CheckboxResDto> {
+public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdateReqDto, CheckboxResDto, CheckboxTemplateDetails> {
 
     private final CheckboxRepository checkboxRepository;
-    private final CheckboxOptionRepository checkboxOptionRepository;
 
     @Autowired
-    public CheckboxManager(CheckboxRepository checkboxRepository, FormService formService, QuestionRepository questionRepository, CheckboxOptionRepository checkboxOptionRepository) {
+    public CheckboxManager(CheckboxRepository checkboxRepository, FormService formService, QuestionRepository questionRepository) {
         super(questionRepository, formService);
         this.checkboxRepository = checkboxRepository;
-        this.checkboxOptionRepository = checkboxOptionRepository;
     }
 
     @Override
     public CheckboxResDto get(UUID formId, Long questionId) {
         return toQuestionResDto(
-                checkboxRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
+                checkboxRepository.findByQuestionId(questionId)
                         .orElseThrow(() -> new QuestionNotFoundException(questionId))
         );
     }
@@ -55,42 +54,43 @@ public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdate
 
         var savedCb = checkboxRepository.save(newCb);
 
-        return toQuestionResDto(savedCb);
-    }
-
-    @Override
-    public CheckboxResDto create(UUID formId, Long questionId, CheckboxAddUpdateReqDto crudDto) {
-        var newCb = new Checkbox();
-
-        var question = updateQuestion(formId, questionId, crudDto);
-
-        setPropertiesForNew(crudDto, newCb, question);
-
-        var savedCb = checkboxRepository.save(newCb);
-
-        return toQuestionResDto(savedCb);
+        return toQuestionResDto(savedCb, question);
     }
 
     @Override
     @Transactional(transactionManager = "schemaTransactionManager")
-    public CheckboxResDto update(UUID formId, Long questionId, CheckboxAddUpdateReqDto crudDto) {
-        Checkbox cb = checkboxRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
+    public CheckboxResDto create(UUID formId, Long questionId, CheckboxAddUpdateReqDto questionAddUpdateReq) {
+        var newCb = new Checkbox();
+
+        var question = updateQuestion(questionId, questionAddUpdateReq);
+
+        setPropertiesForNew(questionAddUpdateReq, newCb, question);
+
+        var savedCb = checkboxRepository.save(newCb);
+
+        return toQuestionResDto(savedCb, question);
+    }
+
+    @Override
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public CheckboxResDto update(UUID formId, Long questionId, CheckboxAddUpdateReqDto questionAddUpdateReq) {
+        Checkbox cb = checkboxRepository.findByQuestionId(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.CHECKBOX, questionId));
 
-        updateQuestion(formId, questionId, crudDto);
-        cb.setValidationConfig(JsonUtil.objectToOldJsonNode(crudDto.getValidationConfig()));
+        var question = updateQuestion(questionId, questionAddUpdateReq);
+        cb.setValidationConfig(JsonUtil.objectToOldJsonNode(questionAddUpdateReq.getValidationConfig()));
 
         Map<Long, CheckboxOption> existingOptions = cb.getOptions().stream()
                 .collect(Collectors.toMap(CheckboxOption::getId, option -> option));
-        Set<Long> requestOptionIds = crudDto.getOptions().stream()
+        Set<Long> requestOptionIds = questionAddUpdateReq.getOptions().stream()
                 .map(CheckboxAddUpdateReqDto.Option::getId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
         cb.getOptions().removeIf(option -> !requestOptionIds.contains(option.getId()));
 
-        for (int i = 0; i < crudDto.getOptions().size(); i++) {
-            var dto = crudDto.getOptions().get(i);
+        for (int i = 0; i < questionAddUpdateReq.getOptions().size(); i++) {
+            var dto = questionAddUpdateReq.getOptions().get(i);
 
             if (dto.getId() == null) {
                 CheckboxOption option = new CheckboxOption();
@@ -111,16 +111,21 @@ public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdate
 
         checkboxRepository.save(cb);
 
-        return toQuestionResDto(cb);
+        return toQuestionResDto(cb, question);
     }
 
     @Override
-    public CheckboxResDto toQuestionResDto(Checkbox question) {
+    public CheckboxResDto toQuestionResDto(Checkbox childQuestion) {
+        return toQuestionResDto(childQuestion, childQuestion.getQuestion());
+    }
+
+    @Override
+    public CheckboxResDto toQuestionResDto(Checkbox childQuestion, Question parentQuestion) {
         var cb = new CheckboxResDto();
 
-        populateCommonFields(question, cb);
+        populateCommonFields(parentQuestion, cb);
 
-        var options = question.getOptions().stream()
+        var options = childQuestion.getOptions().stream()
                 .map(o ->
                         new CheckboxResDto.CheckboxOptionResDto(o.getId(), o.getOption(), o.getOrderIndex())
                 )
@@ -131,13 +136,51 @@ public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdate
 
         try {
             cb.setValidationConfig(
-                    JsonUtil.oldJsonNodeToObject(question.getValidationConfig(), ValidationConfig.class)
+                    JsonUtil.oldJsonNodeToObject(childQuestion.getValidationConfig(), ValidationConfig.class)
             );
         } catch (JsonProcessingException e) {
-            throw new JsonParsingException(JsonUtil.oldJsonNodeToString(question.getValidationConfig()));
+            throw new JsonParsingException(JsonUtil.oldJsonNodeToString(childQuestion.getValidationConfig()));
         }
 
         return cb;
+    }
+
+    @Override
+    public CheckboxAddUpdateReqDto toQuestionAddUpdateReq(CheckboxResDto questionRes) {
+        var cb = new CheckboxAddUpdateReqDto();
+
+        populateCommonFields(questionRes, cb);
+
+        cb.setOptions(
+                questionRes.getOptions().stream()
+                        .map(op -> new CheckboxAddUpdateReqDto.Option(null, op.getOption()))
+                        .toList()
+        );
+        cb.setValidationConfig(questionRes.getValidationConfig());
+
+        return cb;
+    }
+
+    @Override
+    public Checkbox createFromTemplate(CheckboxTemplateDetails template, Form form) {
+        var cb = new Checkbox();
+
+        cb.setQuestion(createQuestionFromTemplate(template, form));
+        cb.setValidationConfig(JsonUtil.objectToOldJsonNode(template.getValidationConfig()));
+        cb.setOptions(
+                template.getOptions().stream().map(op -> {
+                            var res = new CheckboxOption();
+
+                            res.setCheckbox(cb);
+                            res.setOption(op.getOption());
+                            res.setOrderIndex(op.getOrderIndex());
+
+                            return res;
+                        })
+                        .toList()
+        );
+
+        return checkboxRepository.save(cb);
     }
 
     @Override
@@ -148,7 +191,7 @@ public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdate
     @Override
     @Transactional(transactionManager = "schemaTransactionManager")
     public void delete(UUID formId, Long questionId) {
-        checkboxRepository.deleteQuestion(formId, questionId);
+        checkboxRepository.deleteQuestion(questionId);
     }
 
     private void setPropertiesForNew(CheckboxAddUpdateReqDto source, Checkbox target, Question question) {

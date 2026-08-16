@@ -3,8 +3,11 @@ package com.sougata.form_service.service.questionManager;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.DurationAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.DurationResDto;
+import com.sougata.form_service.dto.template.questionTemplate.DurationTemplateDetails;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.Duration;
+import com.sougata.form_service.model.Form;
+import com.sougata.form_service.model.Question;
 import com.sougata.form_service.repository.DurationRepository;
 import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormService;
@@ -15,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service("DURATION_QUESTION_MANAGER")
-public class DurationManager extends QuestionManager<Duration, DurationAddUpdateReqDto, DurationResDto> {
+public class DurationManager extends QuestionManager<Duration, DurationAddUpdateReqDto, DurationResDto, DurationTemplateDetails> {
 
     private final DurationRepository durationRepository;
 
@@ -26,7 +29,7 @@ public class DurationManager extends QuestionManager<Duration, DurationAddUpdate
 
     @Override
     public DurationResDto get(UUID formId, Long questionId) {
-        return toQuestionResDto(durationRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
+        return toQuestionResDto(durationRepository.findByQuestionId(questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
@@ -40,33 +43,34 @@ public class DurationManager extends QuestionManager<Duration, DurationAddUpdate
 
         var saved = durationRepository.save(newD);
 
-        return toQuestionResDto(saved);
+        return toQuestionResDto(saved, question);
     }
 
     @Override
-    public DurationResDto create(UUID formId, Long questionId, DurationAddUpdateReqDto crudDto) {
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public DurationResDto create(UUID formId, Long questionId, DurationAddUpdateReqDto questionAddUpdateReq) {
         var newD = new Duration();
 
-        var question = updateQuestion(formId, questionId, crudDto);
+        var question = updateQuestion(questionId, questionAddUpdateReq);
 
         newD.setQuestion(question);
 
         var saved = durationRepository.save(newD);
 
-        return toQuestionResDto(saved);
+        return toQuestionResDto(saved, question);
     }
 
     @Override
     @Transactional(transactionManager = "schemaTransactionManager")
-    public DurationResDto update(UUID formId, Long questionId, DurationAddUpdateReqDto crudDto) {
-        Duration dur = durationRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
+    public DurationResDto update(UUID formId, Long questionId, DurationAddUpdateReqDto questionAddUpdateReq) {
+        Duration dur = durationRepository.findByQuestionId(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.DURATION, questionId));
 
-        updateQuestion(formId, questionId, crudDto);
+        var question = updateQuestion(questionId, questionAddUpdateReq);
 
         durationRepository.save(dur);
 
-        return toQuestionResDto(dur);
+        return toQuestionResDto(dur, question);
     }
 
     @Override
@@ -76,15 +80,39 @@ public class DurationManager extends QuestionManager<Duration, DurationAddUpdate
 
     @Override
     public void delete(UUID formId, Long questionId) {
-        durationRepository.deleteQuestion(formId, questionId);
+        durationRepository.deleteQuestion(questionId);
     }
 
     @Override
-    public DurationResDto toQuestionResDto(Duration question) {
+    public DurationResDto toQuestionResDto(Duration childQuestion) {
+        return toQuestionResDto(childQuestion, childQuestion.getQuestion());
+    }
+
+    @Override
+    public DurationResDto toQuestionResDto(Duration childQuestion, Question parentQuestion) {
         var d = new DurationResDto();
 
-        populateCommonFields(question, d);
+        populateCommonFields(parentQuestion, d);
 
         return d;
+    }
+
+    @Override
+    public DurationAddUpdateReqDto toQuestionAddUpdateReq(DurationResDto questionRes) {
+        var d = new DurationAddUpdateReqDto();
+
+        populateCommonFields(questionRes, d);
+
+        return d;
+    }
+
+    @Override
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public Duration createFromTemplate(DurationTemplateDetails template, Form form) {
+        var d = new Duration();
+
+        d.setQuestion(createQuestionFromTemplate(template, form));
+
+        return durationRepository.save(d);
     }
 }

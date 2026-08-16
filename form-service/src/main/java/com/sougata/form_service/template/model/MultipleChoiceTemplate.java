@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-public class MultipleChoiceTemplate extends AnyQuestionTemplateType {
+public class MultipleChoiceTemplate extends AnyTypeQuestionTemplate {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "multipleChoiceTemplate")
     private List<MultipleChoiceOptionTemplate> options = new ArrayList<>();

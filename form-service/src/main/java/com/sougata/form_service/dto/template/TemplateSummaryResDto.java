@@ -7,8 +7,6 @@ import lombok.Setter;
 import tools.jackson.databind.annotation.JsonSerialize;
 import tools.jackson.databind.ser.std.ToStringSerializer;
 
-import java.util.UUID;
-
 @Getter
 @Setter
 @NoArgsConstructor

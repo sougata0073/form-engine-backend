@@ -40,18 +40,6 @@ public interface DurationRepository extends AnyTypeQuestionResponseRepository<Du
 
     @Query(value = """
             select
-            count(distinct (coalesce(d.hours, -1), coalesce(d.minutes, -1), coalesce(d.seconds, -1)))
-            from form_responses fr
-            left join question_responses qr
-            on fr.id = qr.form_response_id and qr.question_id = :questionId
-            left join durations d
-            on qr.id = d.question_response_id
-            where fr.form_id = :formId
-            """, nativeQuery = true)
-    Long getDistinctResponseCount(UUID formId, Long questionId);
-
-    @Query(value = """
-            select
             d.hours hours,
             d.minutes minutes,
             d.seconds seconds,
@@ -68,7 +56,6 @@ public interface DurationRepository extends AnyTypeQuestionResponseRepository<Du
             """, nativeQuery = true)
     List<Tuple> groupedByDuration(UUID formId, long questionId, Pageable pageable);
 
-
     @Query("""
             select
             d.questionResponse.questionId questionId,
@@ -76,8 +63,7 @@ public interface DurationRepository extends AnyTypeQuestionResponseRepository<Du
             d.minutes minutes,
             d.seconds seconds
             from Duration d
-            where d.questionResponse.formResponse.formId = :formId
-            and d.questionResponse.formResponse.id = :formResponseId
+            where d.questionResponse.formResponse.id = :formResponseId
             """)
     List<Tuple> getDurationsByFormResponse(UUID formId, long formResponseId);
 
@@ -101,7 +87,7 @@ public interface DurationRepository extends AnyTypeQuestionResponseRepository<Du
                 (:seconds is null and d.seconds is null)
                 or d.seconds = :seconds
             )
-            order by fr.created_at
+            order by fr.created_at, fr.id
             """, nativeQuery = true)
     List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, Integer hours, Integer minutes, Integer seconds, Pageable pageable);
 }

@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-public class MultipleChoiceGridTemplate extends AnyQuestionTemplateType {
+public class MultipleChoiceGridTemplate extends AnyTypeQuestionTemplate {
 
     @Column(nullable = false)
     private Boolean eachRowRequired;

@@ -4,8 +4,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.ParagraphAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.ParagraphResDto;
+import com.sougata.form_service.dto.template.questionTemplate.ParagraphTemplateDetails;
 import com.sougata.form_service.exception.JsonParsingException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
+import com.sougata.form_service.model.Form;
 import com.sougata.form_service.model.Paragraph;
 import com.sougata.form_service.model.Question;
 import com.sougata.form_service.repository.ParagraphRepository;
@@ -20,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service("PARAGRAPH_QUESTION_MANAGER")
-public class ParagraphManager extends QuestionManager<Paragraph, ParagraphAddUpdateReqDto, ParagraphResDto> {
+public class ParagraphManager extends QuestionManager<Paragraph, ParagraphAddUpdateReqDto, ParagraphResDto, ParagraphTemplateDetails> {
 
     private final ParagraphRepository paragraphRepository;
 
@@ -31,7 +33,7 @@ public class ParagraphManager extends QuestionManager<Paragraph, ParagraphAddUpd
 
     @Override
     public ParagraphResDto get(UUID formId, Long questionId) {
-        return toQuestionResDto(paragraphRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
+        return toQuestionResDto(paragraphRepository.findByQuestionId(questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
@@ -45,49 +47,77 @@ public class ParagraphManager extends QuestionManager<Paragraph, ParagraphAddUpd
 
         var saved = paragraphRepository.save(newP);
 
-        return toQuestionResDto(saved);
-    }
-
-    @Override
-    public ParagraphResDto create(UUID formId, Long questionId, ParagraphAddUpdateReqDto crudDto) {
-        var newP = new Paragraph();
-
-        var question = updateQuestion(formId, questionId, crudDto);
-
-        setPropertiesForNew(crudDto, newP, question);
-
-        var saved = paragraphRepository.save(newP);
-
-        return toQuestionResDto(saved);
+        return toQuestionResDto(saved, question);
     }
 
     @Override
     @Transactional(transactionManager = "schemaTransactionManager")
-    public ParagraphResDto update(UUID formId, Long questionId, ParagraphAddUpdateReqDto crudDto) {
-        Paragraph p = paragraphRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
-                .orElseThrow(() -> new QuestionNotFoundException(QuestionType.PARAGRAPH, questionId));
+    public ParagraphResDto create(UUID formId, Long questionId, ParagraphAddUpdateReqDto questionAddUpdateReq) {
+        var newP = new Paragraph();
 
-        updateQuestion(formId, questionId, crudDto);
-        p.setValidationConfig(JsonUtil.objectToOldJsonNode(crudDto.getValidationConfig()));
+        var question = updateQuestion(questionId, questionAddUpdateReq);
 
-        paragraphRepository.save(p);
+        setPropertiesForNew(questionAddUpdateReq, newP, question);
 
-        return toQuestionResDto(p);
+        var saved = paragraphRepository.save(newP);
+
+        return toQuestionResDto(saved, question);
     }
 
     @Override
-    public ParagraphResDto toQuestionResDto(Paragraph question) {
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public ParagraphResDto update(UUID formId, Long questionId, ParagraphAddUpdateReqDto questionAddUpdateReq) {
+        Paragraph p = paragraphRepository.findByQuestionId(questionId)
+                .orElseThrow(() -> new QuestionNotFoundException(QuestionType.PARAGRAPH, questionId));
+
+        var question = updateQuestion(questionId, questionAddUpdateReq);
+        p.setValidationConfig(JsonUtil.objectToOldJsonNode(questionAddUpdateReq.getValidationConfig()));
+
+        paragraphRepository.save(p);
+
+        return toQuestionResDto(p, question);
+    }
+
+    @Override
+    public ParagraphResDto toQuestionResDto(Paragraph childQuestion) {
+        return toQuestionResDto(childQuestion, childQuestion.getQuestion());
+    }
+
+    @Override
+    public ParagraphResDto toQuestionResDto(Paragraph childQuestion, Question parentQuestion) {
         var p = new ParagraphResDto();
 
-        populateCommonFields(question, p);
+        populateCommonFields(parentQuestion, p);
 
         try {
-            p.setValidationConfig(JsonUtil.oldJsonNodeToObject(question.getValidationConfig(), ValidationConfig.class));
+            p.setValidationConfig(JsonUtil.oldJsonNodeToObject(childQuestion.getValidationConfig(), ValidationConfig.class));
         } catch (JsonProcessingException e) {
-            throw new JsonParsingException(JsonUtil.oldJsonNodeToString(question.getValidationConfig()));
+            throw new JsonParsingException(JsonUtil.oldJsonNodeToString(childQuestion.getValidationConfig()));
         }
 
         return p;
+    }
+
+    @Override
+    public ParagraphAddUpdateReqDto toQuestionAddUpdateReq(ParagraphResDto questionRes) {
+        var p = new ParagraphAddUpdateReqDto();
+
+        populateCommonFields(questionRes, p);
+
+        p.setValidationConfig(questionRes.getValidationConfig());
+
+        return p;
+    }
+
+    @Override
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public Paragraph createFromTemplate(ParagraphTemplateDetails template, Form form) {
+        var p = new Paragraph();
+
+        p.setQuestion(createQuestionFromTemplate(template, form));
+        p.setValidationConfig(JsonUtil.objectToOldJsonNode(template.getValidationConfig()));
+
+        return paragraphRepository.save(p);
     }
 
     @Override
@@ -97,7 +127,7 @@ public class ParagraphManager extends QuestionManager<Paragraph, ParagraphAddUpd
 
     @Override
     public void delete(UUID formId, Long questionId) {
-        paragraphRepository.deleteQuestion(formId, questionId);
+        paragraphRepository.deleteQuestion(questionId);
     }
 
     private void setPropertiesForNew(ParagraphAddUpdateReqDto source, Paragraph target, Question question) {

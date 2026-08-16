@@ -3,7 +3,6 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.DateResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.DateResDto;
-import com.sougata.form_data_service.dto.response.individual.CheckboxResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.individual.DateResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.DateResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.DateResponseSummaryDto;
@@ -19,8 +18,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 
 @Service("DATE_RESPONSE_MANAGER")
 public class DateManager extends ResponseManager<
@@ -226,7 +229,7 @@ public class DateManager extends ResponseManager<
             throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
         }
 
-        var groupedResponse = Instant.parse(date.getFirst());
+        var groupedResponse = date.getFirst() == null ? null :  Instant.parse(date.getFirst());
 
         return dateRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
     }

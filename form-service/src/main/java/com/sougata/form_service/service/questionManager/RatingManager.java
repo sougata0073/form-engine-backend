@@ -3,7 +3,9 @@ package com.sougata.form_service.service.questionManager;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.RatingAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.RatingResDto;
+import com.sougata.form_service.dto.template.questionTemplate.RatingTemplateDetails;
 import com.sougata.form_service.exception.QuestionNotFoundException;
+import com.sougata.form_service.model.Form;
 import com.sougata.form_service.model.Question;
 import com.sougata.form_service.model.Rating;
 import com.sougata.form_service.repository.QuestionRepository;
@@ -16,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service("RATING_QUESTION_MANAGER")
-public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto, RatingResDto> {
+public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto, RatingResDto, RatingTemplateDetails> {
 
     private final RatingRepository ratingRepository;
 
@@ -27,7 +29,7 @@ public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto
 
     @Override
     public RatingResDto get(UUID formId, Long questionId) {
-        return toQuestionResDto(ratingRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
+        return toQuestionResDto(ratingRepository.findByQuestionId(questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
@@ -41,47 +43,78 @@ public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto
 
         var saved = ratingRepository.save(newR);
 
-        return toQuestionResDto(saved);
-    }
-
-    @Override
-    public RatingResDto create(UUID formId, Long questionId, RatingAddUpdateReqDto crudDto) {
-        var newR = new Rating();
-
-        var question = updateQuestion(formId, questionId, crudDto);
-
-        setPropertiesForNew(crudDto, newR, question);
-
-        var saved = ratingRepository.save(newR);
-
-        return toQuestionResDto(saved);
+        return toQuestionResDto(saved, question);
     }
 
     @Override
     @Transactional(transactionManager = "schemaTransactionManager")
-    public RatingResDto update(UUID formId, Long questionId, RatingAddUpdateReqDto crudDto) {
-        Rating r = ratingRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
-                .orElseThrow(() -> new QuestionNotFoundException(QuestionType.RATING, questionId));
-        updateQuestion(formId, questionId, crudDto);
+    public RatingResDto create(UUID formId, Long questionId, RatingAddUpdateReqDto questionAddUpdateReq) {
+        var newR = new Rating();
 
-        r.setMaxRatingNumber(crudDto.getMaxRatingNumber());
-        r.setRatingIcon(crudDto.getRatingIcon());
+        var question = updateQuestion(questionId, questionAddUpdateReq);
 
-        ratingRepository.save(r);
+        setPropertiesForNew(questionAddUpdateReq, newR, question);
 
-        return toQuestionResDto(r);
+        var saved = ratingRepository.save(newR);
+
+        return toQuestionResDto(saved, question);
     }
 
     @Override
-    public RatingResDto toQuestionResDto(Rating question) {
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public RatingResDto update(UUID formId, Long questionId, RatingAddUpdateReqDto questionAddUpdateReq) {
+        Rating r = ratingRepository.findByQuestionId(questionId)
+                .orElseThrow(() -> new QuestionNotFoundException(getQuestionType(), questionId));
+
+        var question = updateQuestion(questionId, questionAddUpdateReq);
+
+        r.setMaxRatingNumber(questionAddUpdateReq.getMaxRatingNumber());
+        r.setRatingIcon(questionAddUpdateReq.getRatingIcon());
+
+        ratingRepository.save(r);
+
+        return toQuestionResDto(r, question);
+    }
+
+    @Override
+    public RatingResDto toQuestionResDto(Rating childQuestion) {
+        return toQuestionResDto(childQuestion, childQuestion.getQuestion());
+    }
+
+    @Override
+    public RatingResDto toQuestionResDto(Rating childQuestion, Question parentQuestion) {
         var r = new RatingResDto();
 
-        populateCommonFields(question, r);
+        populateCommonFields(parentQuestion, r);
 
-        r.setRatingIcon(question.getRatingIcon());
-        r.setMaxRatingNumber(question.getMaxRatingNumber());
+        r.setRatingIcon(childQuestion.getRatingIcon());
+        r.setMaxRatingNumber(childQuestion.getMaxRatingNumber());
 
         return r;
+    }
+
+    @Override
+    public RatingAddUpdateReqDto toQuestionAddUpdateReq(RatingResDto questionRes) {
+        var r = new RatingAddUpdateReqDto();
+
+        populateCommonFields(questionRes, r);
+
+        r.setMaxRatingNumber(questionRes.getMaxRatingNumber());
+        r.setRatingIcon(questionRes.getRatingIcon());
+
+        return r;
+    }
+
+    @Override
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public Rating createFromTemplate(RatingTemplateDetails template, Form form) {
+        var r = new Rating();
+
+        r.setQuestion(createQuestionFromTemplate(template, form));
+        r.setMaxRatingNumber(template.getMaxRatingNumber());
+        r.setRatingIcon(template.getRatingIcon());
+
+        return ratingRepository.save(r);
     }
 
     @Override
@@ -91,7 +124,7 @@ public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto
 
     @Override
     public void delete(UUID formId, Long questionId) {
-        ratingRepository.deleteQuestion(formId, questionId);
+        ratingRepository.deleteQuestion(questionId);
     }
 
     private void setPropertiesForNew(RatingAddUpdateReqDto source, Rating target, Question question) {

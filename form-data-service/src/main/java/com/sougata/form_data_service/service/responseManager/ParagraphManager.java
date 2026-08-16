@@ -3,9 +3,7 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.ParagraphResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.ParagraphResDto;
-import com.sougata.form_data_service.dto.response.individual.LinearScaleResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.individual.ParagraphResponseIndividualDto;
-import com.sougata.form_data_service.dto.response.individual.ResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.ParagraphResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.ParagraphResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
@@ -23,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service("PARAGRAPH_RESPONSE_MANAGER")
 public class ParagraphManager extends ResponseManager<

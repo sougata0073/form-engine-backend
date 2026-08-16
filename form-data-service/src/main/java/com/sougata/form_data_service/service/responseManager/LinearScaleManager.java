@@ -3,12 +3,9 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.LinearScaleResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.LinearScaleResDto;
-import com.sougata.form_data_service.dto.response.individual.DropdownResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.individual.LinearScaleResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.LinearScaleResponseQuestionDto;
-import com.sougata.form_data_service.dto.response.summary.CheckboxResponseSummaryDto;
 import com.sougata.form_data_service.dto.response.summary.LinearScaleResponseSummaryDto;
-import com.sougata.form_data_service.dto.response.summary.ResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.LinearScale;
@@ -201,7 +198,7 @@ public class LinearScaleManager extends ResponseManager<
             throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
         }
 
-        var groupedResponse = Integer.parseInt(scale.getFirst());
+        var groupedResponse = scale.getFirst() == null ? null : Integer.parseInt(scale.getFirst());
 
         return linearScaleRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
     }

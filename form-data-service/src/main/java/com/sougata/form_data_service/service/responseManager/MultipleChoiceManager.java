@@ -3,13 +3,9 @@ package com.sougata.form_data_service.service.responseManager;
 import com.sougata.form_data_service.constant.QuestionType;
 import com.sougata.form_data_service.dto.question.request.MultipleChoiceResponseAddReqDto;
 import com.sougata.form_data_service.dto.question.response.MultipleChoiceResDto;
-import com.sougata.form_data_service.dto.response.individual.LinearScaleResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.individual.MultipleChoiceResponseIndividualDto;
-import com.sougata.form_data_service.dto.response.individual.ResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.MultipleChoiceResponseQuestionDto;
-import com.sougata.form_data_service.dto.response.summary.CheckboxResponseSummaryDto;
 import com.sougata.form_data_service.dto.response.summary.MultipleChoiceResponseSummaryDto;
-import com.sougata.form_data_service.dto.response.summary.ResponseSummaryDto;
 import com.sougata.form_data_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_data_service.model.FormResponse;
 import com.sougata.form_data_service.model.MultipleChoice;
@@ -199,7 +195,7 @@ public class MultipleChoiceManager extends ResponseManager<
             throw new IllegalArgumentException("Invalid Form Responses Identifier. Identifier: " + formResponsesIdentifier);
         }
 
-        var groupedResponse = Long.parseLong(optionId.getFirst());
+        var groupedResponse = optionId.getFirst() == null ? null : Long.parseLong(optionId.getFirst());
 
         return multipleChoiceRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
     }

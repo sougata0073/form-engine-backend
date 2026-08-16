@@ -7,13 +7,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Repository
 public interface QuestionResponseRepository extends JpaRepository<QuestionResponse, Long> {
-
-    List<QuestionResponse> findByFormResponseFormIdAndFormResponseId(UUID formId, Long formResponseId);
 
     @Modifying
     @Transactional

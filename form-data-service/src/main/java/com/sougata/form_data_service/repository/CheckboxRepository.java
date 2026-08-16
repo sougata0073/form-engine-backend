@@ -25,29 +25,6 @@ public interface CheckboxRepository extends AnyTypeQuestionResponseRepository<Ch
     List<Tuple> getResponseOptionCount(UUID formId);
 
     @Query(value = """
-            select count(*)
-            from (
-                select option_ids
-                from (
-                    select
-                    array_agg(co.response_option_id order by co.response_option_id) option_ids
-                    from form_responses fr
-                    left join question_responses qr
-                    on qr.form_response_id = fr.id
-                    and qr.question_id = :questionId
-                    left join checkboxes c
-                    on qr.id = c.question_response_id
-                    left join checkbox_options co
-                    on co.checkbox_id = c.question_response_id
-                    where fr.form_id = :formId
-                    group by c.question_response_id
-                ) responses
-                group by option_ids
-            ) t
-            """, nativeQuery = true)
-    long getDistinctResponseCount(UUID formId, long questionId);
-
-    @Query(value = """            
             select
             case
                 when array_position(optionIds, null) = 1 and array_length(optionIds, 1) = 1 then null
@@ -66,7 +43,7 @@ public interface CheckboxRepository extends AnyTypeQuestionResponseRepository<Ch
                 left join checkbox_options co
                 on co.checkbox_id = c.question_response_id
                 where fr.form_id = :formId
-                group by c.question_response_id, fr.id
+                group by fr.id
                 order by optionIds
             ) responses
             group by optionIds
@@ -85,9 +62,36 @@ public interface CheckboxRepository extends AnyTypeQuestionResponseRepository<Ch
             on cb.question_response_id = qr.id
             join form_responses fr
             on fr.id = qr.form_response_id
-            where fr.form_id = :formId
-            and fr.id = :formResponseId
+            where fr.id = :formResponseId
             group by qr.question_id
             """, nativeQuery = true)
     List<Tuple> getOptionIdsByFormResponse(UUID formId, long formResponseId);
+
+    @Query(value = """
+            select
+              fr.id responseId,
+              fr.user_id userId
+            from
+              form_responses fr
+              left join question_responses qr on qr.form_response_id = fr.id
+              and qr.question_id = :questionId
+              left join checkboxes c on qr.id = c.question_response_id
+              left join checkbox_options co on co.checkbox_id = c.question_response_id
+            where fr.form_id = :formId
+            group by
+              fr.id
+            having
+              array_agg(
+                co.response_option_id
+                order by
+                  co.response_option_id
+              ) = case
+                when (cardinality(:response) = 1 and :response[1] is null) then array[null::bigint]
+                else :response
+            end
+            order by
+              fr.created_at,
+              fr.id
+            """, nativeQuery = true)
+    List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, Long[] response, Pageable pageable);
 }

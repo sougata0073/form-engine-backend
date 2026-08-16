@@ -20,7 +20,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-public class CheckboxTemplate extends AnyQuestionTemplateType {
+public class CheckboxTemplate extends AnyTypeQuestionTemplate {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, mappedBy = "checkboxTemplate")
     private List<CheckboxOptionTemplate> options = new ArrayList<>();

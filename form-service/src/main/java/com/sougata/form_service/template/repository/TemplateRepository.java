@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.UUID;
+import java.util.Optional;
 
 @Repository
 public interface TemplateRepository extends JpaRepository<Template, Long> {
@@ -25,4 +25,6 @@ public interface TemplateRepository extends JpaRepository<Template, Long> {
             """)
     List<TemplateSummaryResDto> getAllTemplateSummaries();
 
+    @Query("select t from Template t where t.id = :templateId")
+    Optional<Template> findByTemplateId(Long templateId);
 }

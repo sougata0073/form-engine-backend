@@ -39,18 +39,6 @@ public interface TimeRepository extends AnyTypeQuestionResponseRepository<Time, 
 
     @Query(value = """
             select
-            count(distinct coalesce(t.time, '0001-01-01 00:00:00+00'::timestamptz))
-            from form_responses fr
-            left join question_responses qr
-            on fr.id = qr.form_response_id and qr.question_id = :questionId
-            left join times t
-            on qr.id = t.question_response_id
-            where fr.form_id = :formId
-            """, nativeQuery = true)
-    Long getDistinctResponseCount(UUID formId, Long questionId);
-
-    @Query(value = """
-            select
             t.time time,
             count(*) responseCount
             from form_responses fr
@@ -89,7 +77,7 @@ public interface TimeRepository extends AnyTypeQuestionResponseRepository<Time, 
                 (cast(:response as timestamp with time zone) is null and t.time is null)
                 or t.time = :response
             )
-            order by fr.created_at
+            order by fr.created_at, fr.id
             """, nativeQuery = true)
     List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, Instant response, Pageable pageable);
 

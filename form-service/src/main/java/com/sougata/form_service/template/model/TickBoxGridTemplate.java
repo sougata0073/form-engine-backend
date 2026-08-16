@@ -17,7 +17,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-public class TickBoxGridTemplate extends AnyQuestionTemplateType {
+public class TickBoxGridTemplate extends AnyTypeQuestionTemplate {
 
     @Column(nullable = false)
     private Boolean eachRowRequired;

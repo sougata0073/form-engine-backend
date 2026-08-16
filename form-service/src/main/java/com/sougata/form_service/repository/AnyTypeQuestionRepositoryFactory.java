@@ -23,7 +23,7 @@ public class AnyTypeQuestionRepositoryFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends AnyTypeQuestion, ID, QRD extends QuestionRes> AnyTypeQuestionRepository<T, ID, QRD>
+    public <T extends AnyTypeQuestion, ID, QRD extends QuestionRes> AnyTypeQuestionRepository<T, ID>
     get(QuestionType questionType) {
         try {
             return applicationContext.getBean(
@@ -36,8 +36,8 @@ public class AnyTypeQuestionRepositoryFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends AnyTypeQuestion, ID, QRD extends QuestionRes> List<AnyTypeQuestionRepository<T, ID, QRD>> getAll() {
-        List<AnyTypeQuestionRepository<T, ID, QRD>> repos = new ArrayList<>();
+    public <T extends AnyTypeQuestion, ID, QRD extends QuestionRes> List<AnyTypeQuestionRepository<T, ID>> getAll() {
+        List<AnyTypeQuestionRepository<T, ID>> repos = new ArrayList<>();
 
         for (QuestionType questionType : QuestionType.values()) {
             var repo = applicationContext.getBean(

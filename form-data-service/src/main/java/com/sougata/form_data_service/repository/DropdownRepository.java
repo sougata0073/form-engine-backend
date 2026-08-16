@@ -25,18 +25,6 @@ public interface DropdownRepository extends AnyTypeQuestionResponseRepository<Dr
 
     @Query(value = """
             select
-            count(distinct coalesce(dd.response_option_id, -1))
-            from form_responses fr
-            left join question_responses qr
-            on fr.id = qr.form_response_id and qr.question_id = :questionId
-            left join dropdowns dd
-            on qr.id = dd.question_response_id
-            where fr.form_id = :formId
-            """, nativeQuery = true)
-    Long getDistinctResponseCount(UUID formId, Long questionId);
-
-    @Query(value = """
-            select
             d.response_option_id optionId,
             count(*) responseCount
             from form_responses fr
@@ -56,8 +44,7 @@ public interface DropdownRepository extends AnyTypeQuestionResponseRepository<Dr
             d.questionResponse.questionId questionId,
             d.responseOptionId optionId
             from Dropdown d
-            where d.questionResponse.formResponse.formId = :formId
-            and d.questionResponse.formResponse.id = :formResponseId
+            where d.questionResponse.formResponse.id = :formResponseId
             """)
     List<Tuple> getOptionIdsByFormResponse(UUID formId, long formResponseId);
 
@@ -75,7 +62,7 @@ public interface DropdownRepository extends AnyTypeQuestionResponseRepository<Dr
                 (:response is null and d.response_option_id is null)
                 or d.response_option_id = :response
             )
-            order by fr.created_at
+            order by fr.created_at, fr.id
             """, nativeQuery = true)
-    List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, long response, Pageable pageable);
+    List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, Long response, Pageable pageable);
 }

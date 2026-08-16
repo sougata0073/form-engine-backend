@@ -8,5 +8,5 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Entity
 @Table(name = "date_templates")
 @EntityListeners(AuditingEntityListener.class)
-public class DateTemplate extends AnyQuestionTemplateType {
+public class DateTemplate extends AnyTypeQuestionTemplate {
 }

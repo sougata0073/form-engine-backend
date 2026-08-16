@@ -46,7 +46,7 @@ public class QuestionServiceImpl implements QuestionService {
     @Transactional(transactionManager = "schemaTransactionManager")
     public QuestionRes updateQuestion(UUID formId, Long questionId, QuestionAddUpdateReq dto) {
 
-        var prevQType = questionRepository.findQuestionTypeByFormIdAndId(formId, questionId)
+        var prevQType = questionRepository.findQuestionTypeById(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(questionId))
                 .getQuestionType();
 
@@ -68,7 +68,7 @@ public class QuestionServiceImpl implements QuestionService {
     @Transactional(transactionManager = "schemaTransactionManager")
     public SuccessMessageDto deleteQuestion(UUID formId, Long questionId) {
 
-        var question = questionRepository.findQuestionSummaryByFormIdAndId(formId, questionId)
+        var question = questionRepository.findQuestionSummaryById(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(questionId));
 
         // TODO: Message broker will handle this
@@ -84,7 +84,7 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public QuestionRes getQuestion(UUID formId, Long questionId) {
 
-        var qType = questionRepository.findQuestionTypeByFormIdAndId(formId, questionId)
+        var qType = questionRepository.findQuestionTypeById(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(questionId))
                 .getQuestionType();
 
@@ -113,7 +113,7 @@ public class QuestionServiceImpl implements QuestionService {
     @Override
     public QuestionSummaryDto getQuestionSummary(UUID formId, Long questionId) {
 
-        var q = questionRepository.findQuestionSummaryByFormIdAndId(formId, questionId)
+        var q = questionRepository.findQuestionSummaryById(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(questionId));
 
         return new QuestionSummaryDto(q.getId(), q.getQuestion(), q.getQuestionType(), q.getOrderIndex());

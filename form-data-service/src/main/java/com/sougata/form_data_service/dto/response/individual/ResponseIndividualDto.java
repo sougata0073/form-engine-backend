@@ -4,15 +4,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.sougata.form_data_service.constant.QuestionType;
-import com.sougata.form_data_service.dto.response.summary.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import tools.jackson.databind.annotation.JsonSerialize;
 import tools.jackson.databind.ser.std.ToStringSerializer;
-
-import java.util.List;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,

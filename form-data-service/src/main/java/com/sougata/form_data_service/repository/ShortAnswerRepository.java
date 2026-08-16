@@ -25,18 +25,6 @@ public interface ShortAnswerRepository extends AnyTypeQuestionResponseRepository
 
     @Query(value = """
             select
-            count(distinct coalesce(sa.text, chr(1)))
-            from form_responses fr
-            left join question_responses qr
-            on fr.id = qr.form_response_id and qr.question_id = :questionId
-            left join short_answers sa
-            on qr.id = sa.question_response_id
-            where fr.form_id = :formId
-            """, nativeQuery = true)
-    Long getDistinctResponseCount(UUID formId, Long questionId);
-
-    @Query(value = """
-            select
             sa.text text,
             count(*) responseCount
             from form_responses fr
@@ -65,7 +53,7 @@ public interface ShortAnswerRepository extends AnyTypeQuestionResponseRepository
                 (:response is null and sa.text is null)
                 or sa.text = :response
             )
-            order by fr.created_at
+            order by fr.created_at, fr.id
             """, nativeQuery = true)
     List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, String response, Pageable pageable);
 
@@ -74,8 +62,7 @@ public interface ShortAnswerRepository extends AnyTypeQuestionResponseRepository
             sa.questionResponse.questionId questionId,
             sa.text text
             from ShortAnswer sa
-            where sa.questionResponse.formResponse.formId = :formId
-            and sa.questionResponse.formResponse.id = :formResponseId
+            where sa.questionResponse.formResponse.id = :formResponseId
             """)
     List<Tuple> getTextsByFormResponse(UUID formId, long formResponseId);
 }

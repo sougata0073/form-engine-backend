@@ -27,18 +27,6 @@ public interface RatingRepository extends AnyTypeQuestionResponseRepository<Rati
 
     @Query(value = """
             select
-            count(distinct coalesce(r.rating, -1))
-            from form_responses fr
-            left join question_responses qr
-            on fr.id = qr.form_response_id and qr.question_id = :questionId
-            left join ratings r
-            on qr.id = r.question_response_id
-            where fr.form_id = :formId
-            """, nativeQuery = true)
-    Long getDistinctResponseCount(UUID formId, Long questionId);
-
-    @Query(value = """
-            select
             r.rating rating,
             count(*) responseCount
             from form_responses fr
@@ -58,8 +46,7 @@ public interface RatingRepository extends AnyTypeQuestionResponseRepository<Rati
             r.questionResponse.questionId questionId,
             r.rating rating
             from Rating r
-            where r.questionResponse.formResponse.formId = :formId
-            and r.questionResponse.formResponse.id = :formResponseId
+            where r.questionResponse.formResponse.id = :formResponseId
             """)
     List<Tuple> getRatingsByFormResponse(UUID formId, long formResponseId);
 
@@ -77,7 +64,7 @@ public interface RatingRepository extends AnyTypeQuestionResponseRepository<Rati
                 (:response is null and r.rating is null)
                 or r.rating = :response
             )
-            order by fr.created_at
+            order by fr.created_at, fr.id
             """, nativeQuery = true)
     List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, Integer response, Pageable pageable);
 }

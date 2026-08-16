@@ -27,23 +27,6 @@ public interface FileUploadRepository extends AnyTypeQuestionResponseRepository<
 
     @Query(value = """
             select
-            count(distinct (
-                            coalesce(f.file_name, 'default_filename'),
-                            coalesce(f.file_url, 'default_url'),
-                            coalesce(f.file_mime_type, 'default_mime_type')
-                        )
-            )
-            from form_responses fr
-            left join question_responses qr
-            on fr.id = qr.form_response_id and qr.question_id = :questionId
-            left join file_uploads f
-            on qr.id = f.question_response_id
-            where fr.form_id = :formId
-            """, nativeQuery = true)
-    Long getDistinctResponseCount(UUID formId, Long questionId);
-
-    @Query(value = """
-            select
             f.file_name fileName,
             f.file_url fileUrl,
             f.file_mime_type fileMimeType,
@@ -67,8 +50,7 @@ public interface FileUploadRepository extends AnyTypeQuestionResponseRepository<
             f.fileUrl fileUrl,
             f.fileMimeType fileMimeType
             from FileUpload f
-            where f.questionResponse.formResponse.formId = :formId
-            and f.questionResponse.formResponse.id = :formResponseId
+            where f.questionResponse.formResponse.id = :formResponseId
             """)
     List<Tuple> getFileUploadsByFormResponse(UUID formId, long formResponseId);
 
@@ -92,7 +74,7 @@ public interface FileUploadRepository extends AnyTypeQuestionResponseRepository<
                 (:fileMimeType is null and f.file_mime_type is null)
                 or f.file_mime_type = :fileMimeType
             )
-            order by fr.created_at
+            order by fr.created_at, fr.id
             """, nativeQuery = true)
     List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, String fileName, String fileUrl, String fileMimeType, Pageable pageable);
 

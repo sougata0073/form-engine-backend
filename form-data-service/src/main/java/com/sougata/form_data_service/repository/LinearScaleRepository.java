@@ -25,18 +25,6 @@ public interface LinearScaleRepository extends AnyTypeQuestionResponseRepository
 
     @Query(value = """
             select
-            count(distinct coalesce(ls.scale, -1))
-            from form_responses fr
-            left join question_responses qr
-            on fr.id = qr.form_response_id and qr.question_id = :questionId
-            left join linear_scales ls
-            on qr.id = ls.question_response_id
-            where fr.form_id = :formId
-            """, nativeQuery = true)
-    Long getDistinctResponseCount(UUID formId, Long questionId);
-
-    @Query(value = """
-            select
             ls.scale scale,
             count(*) responseCount
             from form_responses fr
@@ -56,8 +44,7 @@ public interface LinearScaleRepository extends AnyTypeQuestionResponseRepository
             ls.questionResponse.questionId questionId,
             ls.scale scale
             from LinearScale ls
-            where ls.questionResponse.formResponse.formId = :formId
-            and ls.questionResponse.formResponse.id = :formResponseId
+            where ls.questionResponse.formResponse.id = :formResponseId
             """)
     List<Tuple> getScalesByFormResponse(UUID formId, long formResponseId);
 
@@ -75,7 +62,7 @@ public interface LinearScaleRepository extends AnyTypeQuestionResponseRepository
                 (:response is null and ls.scale is null)
                 or ls.scale = :response
             )
-            order by fr.created_at
+            order by fr.created_at, fr.id
             """, nativeQuery = true)
     List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, Integer response, Pageable pageable);
 

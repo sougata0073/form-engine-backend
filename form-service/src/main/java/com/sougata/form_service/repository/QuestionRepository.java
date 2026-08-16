@@ -1,6 +1,7 @@
 package com.sougata.form_service.repository;
 
 import com.sougata.form_service.model.Question;
+import com.sougata.form_service.projection.QuestionIdAndTypeProjection;
 import com.sougata.form_service.projection.QuestionIdProjection;
 import com.sougata.form_service.projection.QuestionSummaryProjection;
 import com.sougata.form_service.projection.QuestionTypeProjection;
@@ -17,27 +18,28 @@ import java.util.UUID;
 @Repository
 public interface QuestionRepository extends JpaRepository<Question, Long> {
 
-    List<Question> findByFormId(UUID id);
-
-    List<QuestionTypeProjection> findQuestionTypesByFormId(UUID formId);
-
-    Optional<Question> findByFormIdAndId(UUID formId, Long questionId);
+    List<Question> findAllByFormId(UUID formId);
 
     List<QuestionSummaryProjection> findQuestionSummariesByFormId(UUID formId);
 
-    Optional<QuestionSummaryProjection> findQuestionSummaryByFormIdAndId(UUID formId, Long questionId);
+    List<QuestionIdAndTypeProjection> findQuestionIdAndTypesByFormId(UUID formId);
 
-    List<QuestionIdProjection> findByFormIdAndRequired(UUID formId, Boolean required);
+    List<QuestionIdProjection> findQuestionIdsByFormId(UUID formId);
 
-    Optional<QuestionTypeProjection> findQuestionTypeByFormIdAndId(UUID formId, Long questionId);
+    Optional<QuestionSummaryProjection> findQuestionSummaryById(Long id);
+
+    Optional<QuestionTypeProjection> findQuestionTypeById(Long id);
+
+    Optional<QuestionIdAndTypeProjection> findQuestionIdAndTypeById(Long id);
+
 
     @Modifying
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     @Query("delete from Question q where q.id = :questionId")
     void deleteQuestion(long questionId);
 
     @Modifying
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     @Query(value = """
             update
             questions q
@@ -53,7 +55,7 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
     Integer getNextQuestionIndex(UUID formId);
 
     @Modifying
-    @Transactional
+    @Transactional(transactionManager = "schemaTransactionManager")
     @Query(value = """
             update
             questions q

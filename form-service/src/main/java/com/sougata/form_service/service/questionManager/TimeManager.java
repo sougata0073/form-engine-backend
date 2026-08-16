@@ -3,7 +3,10 @@ package com.sougata.form_service.service.questionManager;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.dto.question.request.TimeAddUpdateReqDto;
 import com.sougata.form_service.dto.question.response.TimeResDto;
+import com.sougata.form_service.dto.template.questionTemplate.TimeTemplateDetails;
 import com.sougata.form_service.exception.QuestionNotFoundException;
+import com.sougata.form_service.model.Form;
+import com.sougata.form_service.model.Question;
 import com.sougata.form_service.model.Time;
 import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.repository.TimeRepository;
@@ -15,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service("TIME_QUESTION_MANAGER")
-public class TimeManager extends QuestionManager<Time, TimeAddUpdateReqDto, TimeResDto> {
+public class TimeManager extends QuestionManager<Time, TimeAddUpdateReqDto, TimeResDto, TimeTemplateDetails> {
 
     private final TimeRepository timeRepository;
 
@@ -26,7 +29,7 @@ public class TimeManager extends QuestionManager<Time, TimeAddUpdateReqDto, Time
 
     @Override
     public TimeResDto get(UUID formId, Long questionId) {
-        return toQuestionResDto(timeRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
+        return toQuestionResDto(timeRepository.findByQuestionId(questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
@@ -40,42 +43,67 @@ public class TimeManager extends QuestionManager<Time, TimeAddUpdateReqDto, Time
 
         var saved = timeRepository.save(newTime);
 
-        return toQuestionResDto(saved);
+        return toQuestionResDto(saved, question);
     }
 
     @Override
-    public TimeResDto create(UUID formId, Long questionId, TimeAddUpdateReqDto crudDto) {
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public TimeResDto create(UUID formId, Long questionId, TimeAddUpdateReqDto questionAddUpdateReq) {
         var newTime = new Time();
 
-        var question = updateQuestion(formId, questionId, crudDto);
+        var question = updateQuestion(questionId, questionAddUpdateReq);
 
         newTime.setQuestion(question);
 
         var saved = timeRepository.save(newTime);
 
-        return toQuestionResDto(saved);
+        return toQuestionResDto(saved, question);
     }
 
     @Override
     @Transactional(transactionManager = "schemaTransactionManager")
-    public TimeResDto update(UUID formId, Long questionId, TimeAddUpdateReqDto crudDto) {
-        Time t = timeRepository.findByQuestion_FormIdAndQuestion_Id(formId, questionId)
+    public TimeResDto update(UUID formId, Long questionId, TimeAddUpdateReqDto questionAddUpdateReq) {
+        Time t = timeRepository.findByQuestionId(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.TIME, questionId));
 
-        updateQuestion(formId, questionId, crudDto);
+        var question = updateQuestion(questionId, questionAddUpdateReq);
 
         timeRepository.save(t);
 
-        return toQuestionResDto(t);
+        return toQuestionResDto(t, question);
     }
 
     @Override
-    public TimeResDto toQuestionResDto(Time question) {
+    public TimeResDto toQuestionResDto(Time childQuestion) {
+        return toQuestionResDto(childQuestion, childQuestion.getQuestion());
+    }
+
+    @Override
+    public TimeResDto toQuestionResDto(Time childQuestion, Question parentQuestion) {
         var t = new TimeResDto();
 
-        populateCommonFields(question, t);
+        populateCommonFields(parentQuestion, t);
 
         return t;
+    }
+
+    @Override
+    public TimeAddUpdateReqDto toQuestionAddUpdateReq(TimeResDto questionRes) {
+        var t = new TimeAddUpdateReqDto();
+
+        populateCommonFields(questionRes, t);
+
+        return t;
+    }
+
+    @Override
+    @Transactional(transactionManager = "schemaTransactionManager")
+    public Time createFromTemplate(TimeTemplateDetails template, Form form) {
+        var t = new Time();
+
+        t.setQuestion(createQuestionFromTemplate(template, form));
+
+        return timeRepository.save(t);
     }
 
     @Override
@@ -85,6 +113,6 @@ public class TimeManager extends QuestionManager<Time, TimeAddUpdateReqDto, Time
 
     @Override
     public void delete(UUID formId, Long questionId) {
-        timeRepository.deleteQuestion(formId, questionId);
+        timeRepository.deleteQuestion(questionId);
     }
 }

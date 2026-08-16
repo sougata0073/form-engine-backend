@@ -20,7 +20,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @NoArgsConstructor
 @Getter
 @Setter
-public class ShortAnswerTemplate extends AnyQuestionTemplateType {
+public class ShortAnswerTemplate extends AnyTypeQuestionTemplate {
 
     @Type(JsonBinaryType.class)
     @Column(columnDefinition = "jsonb")

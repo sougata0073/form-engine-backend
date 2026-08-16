@@ -25,18 +25,6 @@ public interface MultipleChoiceRepository extends AnyTypeQuestionResponseReposit
 
     @Query(value = """
             select
-            count(distinct coalesce(mc.response_option_id, -1))
-            from form_responses fr
-            left join question_responses qr
-            on fr.id = qr.form_response_id and qr.question_id = :questionId
-            left join multiple_choices mc
-            on qr.id = mc.question_response_id
-            where fr.form_id = :formId
-            """, nativeQuery = true)
-    Long getDistinctResponseCount(UUID formId, Long questionId);
-
-    @Query(value = """
-            select
             mc.response_option_id optionId,
             count(*) responseCount
             from form_responses fr
@@ -56,8 +44,7 @@ public interface MultipleChoiceRepository extends AnyTypeQuestionResponseReposit
             mc.questionResponse.questionId questionId,
             mc.responseOptionId optionId
             from MultipleChoice mc
-            where mc.questionResponse.formResponse.formId = :formId
-            and mc.questionResponse.formResponse.id = :formResponseId
+            where mc.questionResponse.formResponse.id = :formResponseId
             """)
     List<Tuple> getOptionIdsByFormResponse(UUID formId, long formResponseId);
 
@@ -75,7 +62,7 @@ public interface MultipleChoiceRepository extends AnyTypeQuestionResponseReposit
                 (:response is null and mc.response_option_id is null)
                 or mc.response_option_id = :response
             )
-            order by fr.created_at
+            order by fr.created_at, fr.id
             """, nativeQuery = true)
     List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, Long response, Pageable pageable);
 }

@@ -41,18 +41,6 @@ public interface DateRepository extends AnyTypeQuestionResponseRepository<Date, 
 
     @Query(value = """
             select
-            count(distinct coalesce(d.date, '0001-01-01 00:00:00+00'::timestamptz))
-            from form_responses fr
-            left join question_responses qr
-            on fr.id = qr.form_response_id and qr.question_id = :questionId
-            left join dates d
-            on qr.id = d.question_response_id
-            where fr.form_id = :formId
-            """, nativeQuery = true)
-    Long getDistinctResponseCount(UUID formId, Long questionId);
-
-    @Query(value = """
-            select
             d.date date,
             count(*) responseCount
             from form_responses fr
@@ -72,8 +60,7 @@ public interface DateRepository extends AnyTypeQuestionResponseRepository<Date, 
             d.questionResponse.questionId questionId,
             d.date date
             from Date d
-            where d.questionResponse.formResponse.formId = :formId
-            and d.questionResponse.formResponse.id = :formResponseId
+            where d.questionResponse.formResponse.id = :formResponseId
             """)
     List<Tuple> getDatesByFormResponse(UUID formId, long formResponseId);
 
@@ -91,7 +78,7 @@ public interface DateRepository extends AnyTypeQuestionResponseRepository<Date, 
                 (cast(:response as timestamp with time zone) is null and d.date is null)
                 or d.date = :response
             )
-            order by fr.created_at
+            order by fr.created_at, fr.id
             """, nativeQuery = true)
     List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, Instant response, Pageable pageable);
 }

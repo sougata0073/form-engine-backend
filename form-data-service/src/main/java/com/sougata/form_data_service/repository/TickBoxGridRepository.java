@@ -75,9 +75,39 @@ public interface TickBoxGridRepository extends AnyTypeQuestionResponseRepository
             	on tbg.question_response_id = qr.id
             	join form_responses fr
             	on fr.id = qr.form_response_id
-            	where fr.form_id = :formId
-                and fr.id = :formResponseId
+            	where fr.id = :formResponseId
             	group by qr.question_id, tbgr.row_id
             """, nativeQuery = true)
     List<Tuple> getRowColumnIdsByFormResponse(UUID formId, long formResponseId);
+
+    @Query(value = """
+        select
+            fr.id responseId,
+            fr.user_id userId
+        from
+            form_responses fr
+            left join question_responses qr
+                on qr.form_response_id = fr.id
+                and qr.question_id = :questionId
+            left join tick_box_grids tbg
+                on qr.id = tbg.question_response_id
+            left join tick_box_grid_rows tbgr
+                on tbg.question_response_id = tbgr.tick_box_grid_id
+                and tbgr.row_id = :rowId
+            left join tick_box_grid_columns tbgc
+                on tbgc.tick_box_grid_row_id = tbgr.id
+        group by
+            fr.id
+        having array_agg(
+                tbgc.response_option_id
+                order by tbgc.response_option_id
+            ) = case
+                    when cardinality(:response) = 1 and (:response)[1] is null then array[null::bigint]
+                    else :response
+            end
+        order by
+            fr.created_at,
+            fr.id
+    """, nativeQuery = true)
+    List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, Long rowId, Long[] response, Pageable pageable);
 }
