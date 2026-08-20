@@ -1,6 +1,5 @@
 package com.sougata.form_service.controller;
 
-import com.sougata.form_service.constant.QuestionCacheNames;
 import com.sougata.form_service.dto.common.SuccessMessageDto;
 import com.sougata.form_service.dto.form.*;
 import com.sougata.form_service.dto.question.QuestionSummariesResDto;
@@ -39,7 +38,6 @@ public class FormController {
     }
 
     @PostMapping
-    @CacheEvict(cacheNames = "recentForms", key = "{#userId}")
     public ResponseEntity<FormInfoResDto> addForm(
             @Valid @RequestBody FormAddUpdateReqDto req,
             @RequestHeader("auth-jwt") UUID userId
@@ -49,7 +47,6 @@ public class FormController {
     }
 
     @PostMapping(path = "{formId}/copy")
-    @CacheEvict(cacheNames = "recentForms", key = "{#userId}")
     public ResponseEntity<FormInfoResDto> copyForm(
             @Valid @RequestBody CopyFormReqDto req,
             @PathVariable("formId") UUID formId,
@@ -62,20 +59,15 @@ public class FormController {
     @DeleteMapping(path = "{formId}")
     @Caching(evict = {
             @CacheEvict(cacheNames = {"formDetails", "formInfo"}, key = "#formId"),
-            @CacheEvict(cacheNames = "recentForms", key = "{#userId}")
     })
     public SuccessMessageDto deleteForm(
             @PathVariable("formId") UUID formId,
             @RequestHeader("auth-jwt") UUID userId
     ) {
-        return formService.deleteForm(formId);
+        return formService.deleteForm(formId, userId);
     }
 
     @PutMapping(path = "{formId}")
-    @Caching(evict = {
-            @CacheEvict(cacheNames = {"formDetails", "formInfo"}, key = "#formId"),
-            @CacheEvict(cacheNames = "recentForms", key = "{#userId}")
-    })
     public FormInfoResDto updateForm(
             @PathVariable("formId") UUID formId,
             @Valid @RequestBody FormAddUpdateReqDto dto,
@@ -85,35 +77,27 @@ public class FormController {
     }
 
     @PatchMapping(path = "{formId}/rename")
-    @Caching(evict = {
-            @CacheEvict(cacheNames = {"formDetails", "formInfo"}, key = "#formId"),
-            @CacheEvict(cacheNames = "recentForms", key = "{#userId}")
-    })
     public SuccessMessageDto renameForm(
             @PathVariable("formId") UUID formId,
             @RequestBody FormRenameReqDto body,
             @RequestHeader("auth-jwt") UUID userId
     ) {
-        return formService.renameForm(formId, body);
+        return formService.renameForm(formId, body, userId);
     }
 
-    // Cached in service
     @GetMapping(path = "{formId}")
-    @CacheEvict(cacheNames = {"recentForms"}, key = "#userId")
     public FormResponseDto getForm(
             @PathVariable("formId") UUID formId,
             @RequestHeader("auth-jwt") UUID userId
     ) {
-        return formService.getForm(formId);
+        return formService.getForm(formId, userId);
     }
 
-    // Cached in service
     @GetMapping(path = "{formId}/details")
     public FormResponseDto getFormDetails(@PathVariable("formId") UUID formId) {
         return formServiceCached.getFormDetails(formId);
     }
 
-    // Cached in service
     @GetMapping(path = "{formId}/view")
     public FormResponseDto viewForm(
             @PathVariable("formId") UUID formId,
@@ -135,7 +119,7 @@ public class FormController {
     }
 
     @GetMapping(path = "{formId}/questions/{questionId}/summary")
-    @Cacheable(cacheNames = {"questionSummary"}, key = "{#formId, #questionId}")
+    @Cacheable(cacheNames = {"questionSummary"}, key = "#questionId")
     public QuestionSummaryDto getQuestionSummary(
             @PathVariable("formId") UUID formId,
             @PathVariable("questionId") Long questionId
@@ -144,7 +128,7 @@ public class FormController {
     }
 
     @GetMapping(path = "{formId}/questions/{questionId}")
-    @Cacheable(cacheNames = {"questionDetails"}, key = "{#formId, #questionId}")
+    @Cacheable(cacheNames = {"questionDetails"}, key = "#questionId")
     public QuestionRes getQuestion(
             @PathVariable("formId") UUID formId,
             @PathVariable("questionId") Long questionId
@@ -153,7 +137,6 @@ public class FormController {
     }
 
     @PostMapping(path = "{formId}/questions")
-    @CacheEvict(cacheNames = {"formDetails", "questionSummaries"}, key = "#formId")
     public ResponseEntity<QuestionRes> addQuestion(
             @PathVariable("formId") UUID formId,
             @Valid @RequestBody QuestionAddUpdateReq body
@@ -163,10 +146,6 @@ public class FormController {
     }
 
     @PutMapping(path = "{formId}/questions/{questionId}")
-    @Caching(evict = {
-            @CacheEvict(cacheNames = {"formDetails", "questionSummaries"}, key = "#formId"),
-            @CacheEvict(cacheNames = {"questionDetails", "questionSummary"}, key = "{#formId, #questionId}")
-    })
     public QuestionRes updateQuestion(
             @PathVariable("formId") UUID formId,
             @PathVariable("questionId") Long questionId,
@@ -177,8 +156,7 @@ public class FormController {
 
     @DeleteMapping(path = "{formId}/questions/{questionId}")
     @Caching(evict = {
-            @CacheEvict(cacheNames = {"formDetails", "questionSummaries"}, key = "#formId"),
-            @CacheEvict(cacheNames = {"questionDetails", "questionSummary"}, key = "{#formId, #questionId}")
+            @CacheEvict(cacheNames = {"questionDetails", "questionSummary"}, key = "#questionId")
     })
     public SuccessMessageDto deleteQuestion(
             @PathVariable("formId") UUID formId,
@@ -198,7 +176,7 @@ public class FormController {
     @PatchMapping(path = "{formId}/questions/{questionId}/order")
     @Caching(evict = {
             @CacheEvict(cacheNames = {"formDetails", "questionSummaries"}, key = "#formId"),
-            @CacheEvict(cacheNames = {"questionSummary", "questionDetails"}, key = "{#formId, #questionId}")
+            @CacheEvict(cacheNames = {"questionSummary", "questionDetails"}, key = "#questionId")
     })
     public SuccessMessageDto updateQuestionIndex(
             @PathVariable("formId") UUID formId,

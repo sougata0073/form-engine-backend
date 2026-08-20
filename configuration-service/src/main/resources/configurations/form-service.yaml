@@ -19,7 +19,6 @@ spring:
       connection-timeout: 60000
       max-lifetime: 1800000
       idle-timeout: 600000
-      leak-detection-threshold: 10000
   jpa:
     hibernate:
       ddl-auto: update

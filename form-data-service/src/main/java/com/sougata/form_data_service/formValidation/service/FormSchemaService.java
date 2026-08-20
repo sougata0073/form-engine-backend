@@ -2,9 +2,9 @@ package com.sougata.form_data_service.formValidation.service;
 
 import com.sougata.form_data_service.constant.ValidationMessages;
 import com.sougata.form_data_service.dto.common.SuccessMessageDto;
+import com.sougata.form_data_service.dto.form.FormResponseDto;
 import com.sougata.form_data_service.dto.question.response.QuestionRes;
 import com.sougata.form_data_service.dto.validation.ResponseValidationRequestDto;
-import com.sougata.form_data_service.feignClient.FormServiceFeignClient;
 import com.sougata.form_data_service.formValidation.exception.QuestionSchemaNotFoundException;
 import com.sougata.form_data_service.formValidation.exception.RequiredQuestionResponseNotFoundException;
 import com.sougata.form_data_service.formValidation.exception.ResponseValidationException;
@@ -19,17 +19,15 @@ import java.util.stream.Collectors;
 public class FormSchemaService {
 
     private final QuestionSchemaManagerFactory questionSchemaManagerFactory;
-    private final FormServiceFeignClient formServiceFeignClient;
 
     @Autowired
-    public FormSchemaService(QuestionSchemaManagerFactory questionSchemaManagerFactory, FormServiceFeignClient formServiceFeignClient) {
-        this.formServiceFeignClient = formServiceFeignClient;
+    public FormSchemaService(QuestionSchemaManagerFactory questionSchemaManagerFactory) {
         this.questionSchemaManagerFactory = questionSchemaManagerFactory;
     }
 
-    public SuccessMessageDto validateResponse(UUID formId, ResponseValidationRequestDto dto) {
+    public SuccessMessageDto validateResponse(UUID formId, FormResponseDto formDetails, ResponseValidationRequestDto dto) {
 
-        var questionResList = formServiceFeignClient.getFormDetails(formId).getQuestions();
+        var questionResList = formDetails.getQuestions();
 
         // Getting IDs of questions which are marked as required
         List<Long> requiredQuestionIds = questionResList.stream().filter(QuestionRes::getRequired).map(QuestionRes::getId).toList();

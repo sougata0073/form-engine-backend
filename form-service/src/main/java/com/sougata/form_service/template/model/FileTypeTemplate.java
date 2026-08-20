@@ -9,9 +9,6 @@ import lombok.Setter;
 import org.hibernate.annotations.Type;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Entity
 @Table(name = "file_type_templates")
 @NoArgsConstructor

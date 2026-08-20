@@ -62,32 +62,28 @@ public class FormResponseServiceImpl implements FormResponseService {
     @Transactional
     public FormResponseAddResDto saveResponse(UUID formId, FormResponseAddReqDto req, UUID userId) {
 
-        if (formResponseRepository.existsByFormIdAndUserId(formId, userId)) {
-            throw new FormSubmitException("Form Response already submitted for User ID: " + userId);
-        }
+        var formDetails = formServiceFeignClient.getFormDetails(formId);
 
-        var formInfo = formServiceFeignClient.getFormInfo(formId);
-
-        if (!formInfo.getPublished()) {
+        if (!formDetails.getPublished()) {
             throw new FormSubmitException("This form is not published yet. Form ID: " + formId);
         }
 
         boolean isAcceptingDateExceeded =
-                formInfo.getStopAcceptingResponseOn() != null &&
-                        Instant.now().isAfter(formInfo.getStopAcceptingResponseOn());
+                formDetails.getStopAcceptingResponseOn() != null &&
+                        Instant.now().isAfter(formDetails.getStopAcceptingResponseOn());
 
-        boolean isNumberOfResponseExceeded = formInfo.getStopAcceptingResponseAfterResponse() != null &&
-                getFormResponseSummaryShort(formId).getResponseCount() >= Integer.toUnsignedLong(formInfo.getStopAcceptingResponseAfterResponse());
+        boolean isNumberOfResponseExceeded = formDetails.getStopAcceptingResponseAfterResponse() != null &&
+                getFormResponseSummaryShort(formId).getResponseCount() >= Integer.toUnsignedLong(formDetails.getStopAcceptingResponseAfterResponse());
 
-        if (!formInfo.getAcceptingResponse() || isAcceptingDateExceeded || isNumberOfResponseExceeded) {
+        if (!formDetails.getAcceptingResponse() || isAcceptingDateExceeded || isNumberOfResponseExceeded) {
             throw new FormSubmitException("This form is not accepting response. Form ID: " + formId);
         }
 
         var validationBody = new ResponseValidationRequestDto(req.getResponses());
 
-        var validationResponse = formSchemaService.validateResponse(formId, validationBody);
+        var validationResponse = formSchemaService.validateResponse(formId, formDetails, validationBody);
 
-        FormResponse formResponse = new FormResponse();
+        var formResponse = new FormResponse();
 
         formResponse.setFormId(formId);
         formResponse.setUserId(userId);
