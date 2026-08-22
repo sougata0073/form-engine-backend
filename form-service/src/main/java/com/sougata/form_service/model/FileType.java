@@ -12,7 +12,7 @@ import lombok.Setter;
 import org.hibernate.annotations.Type;
 
 @Entity
-@Table(name = "file_types")
+@Table(name = "file_types", schema = "public")
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter

@@ -1,6 +1,6 @@
 package com.sougata.form_service.dto.form;
 
-import com.sougata.form_service.model.Form;
+import com.sougata.form_service.model.formSchema.Form;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

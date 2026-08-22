@@ -1,4 +1,4 @@
-INSERT INTO "form_schema"."file_types" ("category", "mime_types")
+INSERT INTO "public"."file_types" ("category", "mime_types")
 VALUES ('Audio', ARRAY['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4']),
        ('Document',
         ARRAY['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
