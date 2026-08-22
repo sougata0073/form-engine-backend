@@ -30,7 +30,7 @@ public class TemplateController {
 
     @PostMapping(path = "{templateId}/build-form")
     @CacheEvict(cacheNames = {"recentlyUsedTemplates"}, key = "#userId")
-    public ResponseEntity<TemplateToFormBuildResDto> getTemplate(
+    public ResponseEntity<TemplateToFormBuildResDto> buildFormFromTemplate(
             @PathVariable Long templateId,
             @RequestHeader("auth-jwt") UUID userId
     ) {

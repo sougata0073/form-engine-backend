@@ -12,6 +12,7 @@ import com.sougata.form_service.template.service.TemplateService;
 import com.sougata.form_service.template.service.TemplateServiceCached;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -46,15 +47,17 @@ public class TemplateServiceImpl implements TemplateService {
     }
 
     @Override
+    @Transactional(transactionManager = "templateTransactionManager")
     public TemplateToFormBuildResDto buildFormFromTemplate(Long templateId, UUID userId) {
-        var savedForm = formService.createFromTemplate(templateServiceCached.getTemplateDetails(templateId), userId);
+        var template = templateRepository.findById(templateId)
+                .orElseThrow(() -> new TemplateNotFoundException(templateId));
+
+        var savedForm = formService.createFromTemplate(templateServiceCached.getTemplateDetails(template), userId);
 
         RecentlyUsedTemplate rt = new RecentlyUsedTemplate();
 
         rt.setUserId(userId);
-        rt.setTemplate(templateRepository.findById(templateId)
-                .orElseThrow(() -> new TemplateNotFoundException(templateId))
-        );
+        rt.setTemplate(template);
 
         if (recentlyUsedTemplateRepository.existsByUserIdAndTemplateId(userId, templateId)) {
             recentlyUsedTemplateRepository.deleteByUserAndTemplate(userId, templateId);

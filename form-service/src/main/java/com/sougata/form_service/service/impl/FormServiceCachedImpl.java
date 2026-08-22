@@ -10,9 +10,9 @@ import com.sougata.form_service.repository.FormRepository;
 import com.sougata.form_service.repository.QuestionRepository;
 import com.sougata.form_service.service.FormServiceCached;
 import com.sougata.form_service.service.questionManager.QuestionManagerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,36 +26,39 @@ import java.util.stream.Collectors;
 @Service
 public class FormServiceCachedImpl implements FormServiceCached {
 
-    @Value("${app.cache.default-ttl-minutes}")
-    private long cacheDefaultTtlMinutes;
-
     private final FormRepository formRepository;
     private final QuestionManagerFactory questionManagerFactory;
     private final AnyTypeQuestionRepositoryFactory anyTypeQuestionRepositoryFactory;
     private final QuestionRepository questionRepository;
-    private final RedisTemplate<String, Object> redisTemplate;
 
-    public FormServiceCachedImpl(FormRepository formRepository, QuestionManagerFactory questionManagerFactory, AnyTypeQuestionRepositoryFactory anyTypeQuestionRepositoryFactory, QuestionRepository questionRepository, RedisTemplate<String, Object> redisTemplate) {
+    @Autowired
+    @Lazy
+    private FormServiceCached self;
+
+    public FormServiceCachedImpl(FormRepository formRepository, QuestionManagerFactory questionManagerFactory, AnyTypeQuestionRepositoryFactory anyTypeQuestionRepositoryFactory, QuestionRepository questionRepository) {
         this.formRepository = formRepository;
         this.questionManagerFactory = questionManagerFactory;
         this.anyTypeQuestionRepositoryFactory = anyTypeQuestionRepositoryFactory;
         this.questionRepository = questionRepository;
-        this.redisTemplate = redisTemplate;
     }
 
     @Override
-    @Cacheable(cacheNames = "formDetails", key = "#id")
+    @Cacheable(cacheNames = {"formDetails"}, key = "#formId", sync = true)
+    public FormResponseDto getFormDetails(UUID formId) {
+        return self.loadFormDetailsFromDb(formId);
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     @Transactional(transactionManager = "schemaTransactionManager", readOnly = true)
-    public FormResponseDto getFormDetails(UUID id) {
+    public FormResponseDto loadFormDetailsFromDb(UUID formId) {
+        System.out.println("From Database");
 
-        System.out.println("Form details");
-
-        Form f = formRepository.findById(id).orElseThrow(() -> new FormNotFoundException(id));
+        Form f = formRepository.findById(formId).orElseThrow(() -> new FormNotFoundException(formId));
 
         List<QuestionRes> questionResponses = new ArrayList<>();
 
-        var questions = questionRepository.findAllByFormId(id);
+        var questions = questionRepository.findAllByFormId(formId);
         var questionIdMap = questions.stream().collect(Collectors.toMap(
                 Question::getId,
                 Function.identity()

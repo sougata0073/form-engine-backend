@@ -6,6 +6,7 @@ import com.sougata.form_service.dto.template.TemplateSummaryResDto;
 import com.sougata.form_service.dto.template.questionTemplate.QuestionTemplateDetails;
 import com.sougata.form_service.dto.template.questionTemplate.QuestionTemplateSummary;
 import com.sougata.form_service.exception.TemplateNotFoundException;
+import com.sougata.form_service.template.model.Template;
 import com.sougata.form_service.template.repository.AnyQuestionTemplateRepositoryFactory;
 import com.sougata.form_service.template.repository.QuestionTemplateRepository;
 import com.sougata.form_service.template.repository.RecentlyUsedTemplateRepository;
@@ -45,14 +46,11 @@ public class TemplateServiceCachedImpl implements TemplateServiceCached {
         return recentlyUsedTemplateRepository.getByUserId(userId);
     }
 
-    @Cacheable(cacheNames = {"templateDetails"}, key = "#templateId")
+    @Cacheable(cacheNames = {"templateDetails"}, key = "#template.id")
     @Override
     @SuppressWarnings("unchecked")
     @Transactional(transactionManager = "templateTransactionManager", readOnly = true)
-    public TemplateDetails getTemplateDetails(Long templateId) {
-        var template = templateRepository.findById(templateId)
-                .orElseThrow(() -> new TemplateNotFoundException(templateId));
-
+    public TemplateDetails getTemplateDetails(Template template) {
         var templateDetails = new TemplateDetails();
 
         templateDetails.setId(template.getId());
@@ -64,7 +62,7 @@ public class TemplateServiceCachedImpl implements TemplateServiceCached {
         templateDetails.setCategory(new TemplateCategoryDetails(category.getId(), category.getName()));
 
         List<QuestionTemplateDetails> questionTemplates = new ArrayList<>();
-        var questions = questionTemplateRepository.findQuestionTemplateSummariesByTemplateId(templateId);
+        var questions = questionTemplateRepository.findQuestionTemplateSummariesByTemplateId(template.getId());
         var questionTypeMap = questions.stream().collect(Collectors.groupingBy(QuestionTemplateSummary::getQuestionType));
 
         questionTypeMap.keySet().forEach(qType -> {

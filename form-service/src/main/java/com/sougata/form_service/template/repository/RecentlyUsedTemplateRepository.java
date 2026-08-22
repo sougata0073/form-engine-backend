@@ -40,7 +40,7 @@ public interface RecentlyUsedTemplateRepository extends JpaRepository<RecentlyUs
                         id,
                         ROW_NUMBER() OVER (
                             PARTITION BY user_id
-                            ORDER BY created_at DESC
+                            ORDER BY created_at DESC, id DESC
                         ) rn
                     FROM recently_used_templates
                     WHERE user_id = :userId

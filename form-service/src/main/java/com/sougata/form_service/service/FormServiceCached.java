@@ -6,6 +6,8 @@ import java.util.UUID;
 
 public interface FormServiceCached {
 
-    FormResponseDto getFormDetails(UUID id);
+    FormResponseDto getFormDetails(UUID formId);
+
+    FormResponseDto loadFormDetailsFromDb(UUID formId);
 
 }
