@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
-import com.sougata.form_data_service.dto.question.request.ParagraphResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.ParagraphResDto;
+import com.sougata.form_data_service.dto.question.request.ParagraphResponsePutReqDto;
+import com.sougata.form_data_service.dto.question.response.ParagraphDetailsDto;
 import com.sougata.form_data_service.dto.response.individual.ParagraphResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.ParagraphResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.ParagraphResponseSummaryDto;
@@ -24,9 +24,9 @@ import java.util.*;
 
 @Service("PARAGRAPH_RESPONSE_MANAGER")
 public class ParagraphManager extends ResponseManager<
-        ParagraphResponseAddReqDto,
+        ParagraphResponsePutReqDto,
         ParagraphResponseSummaryDto,
-        ParagraphResDto,
+        ParagraphDetailsDto,
         ParagraphResponseQuestionDto,
         ParagraphResponseQuestionDto.Response,
         ParagraphResponseQuestionDto.Summary,
@@ -43,7 +43,7 @@ public class ParagraphManager extends ResponseManager<
 
     @Override
     @Transactional
-    public void create(ParagraphResponseAddReqDto response, FormResponse formResponse) {
+    public void create(ParagraphResponsePutReqDto response, FormResponse formResponse) {
         Paragraph paragraph = new Paragraph();
 
         var qr = createQuestionResponse(response.getQuestionId(), formResponse);
@@ -55,7 +55,7 @@ public class ParagraphManager extends ResponseManager<
     }
 
     @Override
-    public List<ParagraphResponseSummaryDto> getResponseSummaries(UUID formId, List<ParagraphResDto> questionResponses) {
+    public List<ParagraphResponseSummaryDto> getResponseSummaries(UUID formId, List<ParagraphDetailsDto> questionResponses) {
         var responseSummaries = paragraphRepository.getResponseSummaries(formId);
         var result = new ArrayList<ParagraphResponseSummaryDto>();
 
@@ -98,9 +98,9 @@ public class ParagraphManager extends ResponseManager<
     }
 
     @Override
-    public ParagraphResponseSummaryDto getResponseSummary(UUID formId, Long questionId, ParagraphResDto questionRes, Pageable pageable) {
+    public ParagraphResponseSummaryDto getResponseSummary(UUID formId, Long questionId, ParagraphDetailsDto questionRes, Pageable pageable) {
         var responseSummary = paragraphRepository.getResponseSummary(formId, questionId);
-        var texts = paragraphRepository.getResponseTexts(formId, questionId, pageable);
+        var texts = paragraphRepository.getResponseTexts(questionId, pageable);
 
         var p = new ParagraphResponseSummaryDto();
 
@@ -115,13 +115,13 @@ public class ParagraphManager extends ResponseManager<
     }
 
     @Override
-    public ParagraphResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, ParagraphResDto questionResponse) {
+    public ParagraphResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, ParagraphDetailsDto questionResponse) {
         return new ParagraphResponseQuestionDto.Summary();
     }
 
     @Override
     public ParagraphResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
-        var grouped = paragraphRepository.groupedByText(formId, questionId, pageable);
+        var grouped = paragraphRepository.groupedByText(questionId, pageable);
 
         var p = new ParagraphResponseQuestionDto();
 
@@ -151,7 +151,7 @@ public class ParagraphManager extends ResponseManager<
 
     @Override
     public List<ParagraphResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
-        var responses = paragraphRepository.getTextsByFormResponse(formId, formResponseId);
+        var responses = paragraphRepository.getTextsByFormResponse(formResponseId);
 
         return responses.stream().map(tuple -> {
             var qId = tuple.get("questionId", Long.class);
@@ -179,7 +179,7 @@ public class ParagraphManager extends ResponseManager<
 
         var groupedResponse = text.getFirst();
 
-        return paragraphRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
+        return paragraphRepository.getResponseIdsByGroupedResponse(questionId, groupedResponse, pageable);
     }
 
     @Override

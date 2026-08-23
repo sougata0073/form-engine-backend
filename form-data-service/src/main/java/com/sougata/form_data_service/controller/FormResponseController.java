@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.controller;
 
 import com.sougata.form_data_service.dto.common.SuccessMessageDto;
-import com.sougata.form_data_service.dto.form.FormResponseAddReqDto;
-import com.sougata.form_data_service.dto.form.FormResponseAddResDto;
+import com.sougata.form_data_service.dto.form.FormResponsePutReqDto;
+import com.sougata.form_data_service.dto.form.FormResponsePutResDto;
 import com.sougata.form_data_service.dto.form.FormResponseSummariesDto;
 import com.sougata.form_data_service.dto.form.FormResponseSummaryShortDto;
 import com.sougata.form_data_service.dto.response.individual.ResponseIndividualResDto;
@@ -54,9 +54,9 @@ public class FormResponseController {
                     allEntries = true
             )
     })
-    public ResponseEntity<FormResponseAddResDto> addFormResponse(
+    public ResponseEntity<FormResponsePutResDto> addFormResponse(
             @PathVariable("formId") UUID formId,
-            @Valid @RequestBody FormResponseAddReqDto dto,
+            @Valid @RequestBody FormResponsePutReqDto dto,
             @RequestHeader("auth-jwt") UUID authJwt
     ) {
         var res = formResponseService.saveResponse(formId, dto, authJwt);
@@ -151,7 +151,7 @@ public class FormResponseController {
             @PathVariable("formId") UUID formId,
             @QueryParam("page") Long page
     ) {
-        return formResponseService.getIndividualFormResponseByOPage(formId, page);
+        return formResponseService.getIndividualFormResponseByPage(formId, page);
     }
 
     @GetMapping(path = "{formId}/is-response-already-submitted", params = "userId")

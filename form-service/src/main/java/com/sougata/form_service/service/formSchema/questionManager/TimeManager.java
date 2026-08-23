@@ -1,8 +1,8 @@
 package com.sougata.form_service.service.formSchema.questionManager;
 
 import com.sougata.form_service.constant.QuestionType;
-import com.sougata.form_service.dto.question.request.TimeAddUpdateReqDto;
-import com.sougata.form_service.dto.question.response.TimeResDto;
+import com.sougata.form_service.dto.question.request.TimePutReqDto;
+import com.sougata.form_service.dto.question.response.TimeDetailsDto;
 import com.sougata.form_service.dto.template.questionTemplate.TimeTemplateDetails;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.formSchema.Form;
@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service("TIME_QUESTION_MANAGER")
-public class TimeManager extends QuestionManager<Time, TimeAddUpdateReqDto, TimeResDto, TimeTemplateDetails> {
+public class TimeManager extends QuestionManager<Time, TimePutReqDto, TimeDetailsDto, TimeTemplateDetails> {
 
     private final TimeRepository timeRepository;
 
@@ -28,13 +28,13 @@ public class TimeManager extends QuestionManager<Time, TimeAddUpdateReqDto, Time
     }
 
     @Override
-    public TimeResDto get(UUID formId, Long questionId) {
+    public TimeDetailsDto get(UUID formId, Long questionId) {
         return toQuestionResDto(timeRepository.findByQuestionId(questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
     @Transactional
-    public TimeResDto create(UUID formId, TimeAddUpdateReqDto crudDto) {
+    public TimeDetailsDto create(UUID formId, TimePutReqDto crudDto) {
         var newTime = new Time();
 
         var question = createQuestion(crudDto, formId);
@@ -48,7 +48,7 @@ public class TimeManager extends QuestionManager<Time, TimeAddUpdateReqDto, Time
 
     @Override
     @Transactional
-    public TimeResDto create(UUID formId, Long questionId, TimeAddUpdateReqDto questionAddUpdateReq) {
+    public TimeDetailsDto create(UUID formId, Long questionId, TimePutReqDto questionAddUpdateReq) {
         var newTime = new Time();
 
         var question = updateQuestion(questionId, questionAddUpdateReq);
@@ -62,7 +62,7 @@ public class TimeManager extends QuestionManager<Time, TimeAddUpdateReqDto, Time
 
     @Override
     @Transactional
-    public TimeResDto update(UUID formId, Long questionId, TimeAddUpdateReqDto questionAddUpdateReq) {
+    public TimeDetailsDto update(UUID formId, Long questionId, TimePutReqDto questionAddUpdateReq) {
         Time t = timeRepository.findByQuestionId(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.TIME, questionId));
 
@@ -74,13 +74,13 @@ public class TimeManager extends QuestionManager<Time, TimeAddUpdateReqDto, Time
     }
 
     @Override
-    public TimeResDto toQuestionResDto(Time childQuestion) {
+    public TimeDetailsDto toQuestionResDto(Time childQuestion) {
         return toQuestionResDto(childQuestion, childQuestion.getQuestion());
     }
 
     @Override
-    public TimeResDto toQuestionResDto(Time childQuestion, Question parentQuestion) {
-        var t = new TimeResDto();
+    public TimeDetailsDto toQuestionResDto(Time childQuestion, Question parentQuestion) {
+        var t = new TimeDetailsDto();
 
         populateCommonFields(parentQuestion, t);
 
@@ -88,8 +88,8 @@ public class TimeManager extends QuestionManager<Time, TimeAddUpdateReqDto, Time
     }
 
     @Override
-    public TimeAddUpdateReqDto toQuestionAddUpdateReq(TimeResDto questionRes) {
-        var t = new TimeAddUpdateReqDto();
+    public TimePutReqDto toQuestionAddUpdateReq(TimeDetailsDto questionRes) {
+        var t = new TimePutReqDto();
 
         populateCommonFields(questionRes, t);
 

@@ -1,8 +1,8 @@
 package com.sougata.form_service.service.formSchema.questionManager;
 
 import com.sougata.form_service.constant.QuestionType;
-import com.sougata.form_service.dto.question.request.MultipleChoiceGridAddUpdateReqDto;
-import com.sougata.form_service.dto.question.response.MultipleChoiceGridResDto;
+import com.sougata.form_service.dto.question.request.MultipleChoiceGridPutReqDto;
+import com.sougata.form_service.dto.question.response.MultipleChoiceGridDetailsDto;
 import com.sougata.form_service.dto.template.questionTemplate.MultipleChoiceGridTemplateDetails;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.formSchema.*;
@@ -17,7 +17,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("MULTIPLE_CHOICE_GRID_QUESTION_MANAGER")
-public class MultipleChoiceGridManager extends QuestionManager<MultipleChoiceGrid, MultipleChoiceGridAddUpdateReqDto, MultipleChoiceGridResDto, MultipleChoiceGridTemplateDetails> {
+public class MultipleChoiceGridManager extends QuestionManager<MultipleChoiceGrid, MultipleChoiceGridPutReqDto, MultipleChoiceGridDetailsDto, MultipleChoiceGridTemplateDetails> {
 
     private final MultipleChoiceGridRepository multipleChoiceGridRepository;
 
@@ -27,13 +27,13 @@ public class MultipleChoiceGridManager extends QuestionManager<MultipleChoiceGri
     }
 
     @Override
-    public MultipleChoiceGridResDto get(UUID formId, Long questionId) {
+    public MultipleChoiceGridDetailsDto get(UUID formId, Long questionId) {
         return toQuestionResDto(multipleChoiceGridRepository.findByQuestionId(questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
     @Transactional
-    public MultipleChoiceGridResDto create(UUID formId, MultipleChoiceGridAddUpdateReqDto crudDto) {
+    public MultipleChoiceGridDetailsDto create(UUID formId, MultipleChoiceGridPutReqDto crudDto) {
         var newMcg = new MultipleChoiceGrid();
 
         var question = createQuestion(crudDto, formId);
@@ -47,7 +47,7 @@ public class MultipleChoiceGridManager extends QuestionManager<MultipleChoiceGri
 
     @Override
     @Transactional
-    public MultipleChoiceGridResDto create(UUID formId, Long questionId, MultipleChoiceGridAddUpdateReqDto questionAddUpdateReq) {
+    public MultipleChoiceGridDetailsDto create(UUID formId, Long questionId, MultipleChoiceGridPutReqDto questionAddUpdateReq) {
         var newMcg = new MultipleChoiceGrid();
 
         var question = updateQuestion(questionId, questionAddUpdateReq);
@@ -61,7 +61,7 @@ public class MultipleChoiceGridManager extends QuestionManager<MultipleChoiceGri
 
     @Override
     @Transactional
-    public MultipleChoiceGridResDto update(UUID formId, Long questionId, MultipleChoiceGridAddUpdateReqDto questionAddUpdateReq) {
+    public MultipleChoiceGridDetailsDto update(UUID formId, Long questionId, MultipleChoiceGridPutReqDto questionAddUpdateReq) {
         MultipleChoiceGrid mcg = multipleChoiceGridRepository.findByQuestionId(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.MULTIPLE_CHOICE_GRID, questionId));
 
@@ -71,7 +71,7 @@ public class MultipleChoiceGridManager extends QuestionManager<MultipleChoiceGri
         Map<Long, MultipleChoiceGridRow> existingRows = mcg.getRows().stream()
                 .collect(Collectors.toMap(MultipleChoiceGridRow::getId, row -> row));
         Set<Long> requestRowIds = questionAddUpdateReq.getRows().stream()
-                .map(MultipleChoiceGridAddUpdateReqDto.Row::getId)
+                .map(MultipleChoiceGridPutReqDto.Row::getId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
@@ -102,7 +102,7 @@ public class MultipleChoiceGridManager extends QuestionManager<MultipleChoiceGri
         Map<Long, MultipleChoiceGridColumn> existingColumns = mcg.getColumns().stream()
                 .collect(Collectors.toMap(MultipleChoiceGridColumn::getId, column -> column));
         Set<Long> requestColumnIds = questionAddUpdateReq.getColumns().stream()
-                .map(MultipleChoiceGridAddUpdateReqDto.Column::getId)
+                .map(MultipleChoiceGridPutReqDto.Column::getId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
@@ -136,28 +136,28 @@ public class MultipleChoiceGridManager extends QuestionManager<MultipleChoiceGri
     }
 
     @Override
-    public MultipleChoiceGridResDto toQuestionResDto(MultipleChoiceGrid childQuestion) {
+    public MultipleChoiceGridDetailsDto toQuestionResDto(MultipleChoiceGrid childQuestion) {
         return toQuestionResDto(childQuestion, childQuestion.getQuestion());
     }
 
     @Override
-    public MultipleChoiceGridResDto toQuestionResDto(MultipleChoiceGrid childQuestion, Question parentQuestion) {
-        var mc = new MultipleChoiceGridResDto();
+    public MultipleChoiceGridDetailsDto toQuestionResDto(MultipleChoiceGrid childQuestion, Question parentQuestion) {
+        var mc = new MultipleChoiceGridDetailsDto();
 
         populateCommonFields(parentQuestion, mc);
 
         var rows = childQuestion.getRows().stream()
                 .map(row ->
-                        new MultipleChoiceGridResDto.MultipleChoiceGridRowResDto(row.getId(), row.getRowName(), row.getOrderIndex())
+                        new MultipleChoiceGridDetailsDto.Row(row.getId(), row.getRowName(), row.getOrderIndex())
                 )
-                .sorted(Comparator.comparingInt(MultipleChoiceGridResDto.MultipleChoiceGridRowResDto::getOrderIndex))
+                .sorted(Comparator.comparingInt(MultipleChoiceGridDetailsDto.Row::getOrderIndex))
                 .toList();
 
         var columns = childQuestion.getColumns().stream()
                 .map(column ->
-                        new MultipleChoiceGridResDto.MultipleChoiceGridColumnResDto(column.getId(), column.getColumnName(), column.getOrderIndex())
+                        new MultipleChoiceGridDetailsDto.Column(column.getId(), column.getColumnName(), column.getOrderIndex())
                 )
-                .sorted(Comparator.comparingInt(MultipleChoiceGridResDto.MultipleChoiceGridColumnResDto::getOrderIndex))
+                .sorted(Comparator.comparingInt(MultipleChoiceGridDetailsDto.Column::getOrderIndex))
                 .toList();
 
         mc.setEachRowRequired(childQuestion.getEachRowRequired());
@@ -168,19 +168,19 @@ public class MultipleChoiceGridManager extends QuestionManager<MultipleChoiceGri
     }
 
     @Override
-    public MultipleChoiceGridAddUpdateReqDto toQuestionAddUpdateReq(MultipleChoiceGridResDto questionRes) {
-        var mcg = new MultipleChoiceGridAddUpdateReqDto();
+    public MultipleChoiceGridPutReqDto toQuestionAddUpdateReq(MultipleChoiceGridDetailsDto questionRes) {
+        var mcg = new MultipleChoiceGridPutReqDto();
 
         populateCommonFields(questionRes, mcg);
 
         mcg.setRows(
                 questionRes.getRows().stream()
-                        .map(r -> new MultipleChoiceGridAddUpdateReqDto.Row(null, r.getRow()))
+                        .map(r -> new MultipleChoiceGridPutReqDto.Row(null, r.getRow()))
                         .toList()
         );
         mcg.setColumns(
                 questionRes.getColumns().stream()
-                        .map(c -> new MultipleChoiceGridAddUpdateReqDto.Column(null, c.getColumn()))
+                        .map(c -> new MultipleChoiceGridPutReqDto.Column(null, c.getColumn()))
                         .toList()
         );
         mcg.setEachRowRequired(questionRes.getEachRowRequired());
@@ -237,7 +237,7 @@ public class MultipleChoiceGridManager extends QuestionManager<MultipleChoiceGri
         multipleChoiceGridRepository.deleteQuestion(questionId);
     }
 
-    private void setPropertiesForNew(MultipleChoiceGridAddUpdateReqDto source, MultipleChoiceGrid target, Question question) {
+    private void setPropertiesForNew(MultipleChoiceGridPutReqDto source, MultipleChoiceGrid target, Question question) {
         var rows = new ArrayList<MultipleChoiceGridRow>();
         var columns = new ArrayList<MultipleChoiceGridColumn>();
 

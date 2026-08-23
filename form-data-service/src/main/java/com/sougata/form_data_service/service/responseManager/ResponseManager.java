@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
-import com.sougata.form_data_service.dto.question.request.QuestionResponseAddReq;
-import com.sougata.form_data_service.dto.question.response.QuestionRes;
+import com.sougata.form_data_service.dto.question.request.QuestionResponsePutReqDto;
+import com.sougata.form_data_service.dto.question.response.QuestionDetailsDto;
 import com.sougata.form_data_service.dto.response.individual.ResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionResponse;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionSummary;
@@ -19,9 +19,9 @@ import java.util.Map;
 import java.util.UUID;
 
 public abstract class ResponseManager<
-        QR extends QuestionResponseAddReq,
+        QR extends QuestionResponsePutReqDto,
         RS extends ResponseSummaryDto<?>,
-        QRes extends QuestionRes,
+        QRes extends QuestionDetailsDto,
         ResByQ extends ResponseQuestionDto<ResByQRes>,
         ResByQRes extends ResponseByQuestionResponse,
         ResByQSumm extends ResponseByQuestionSummary,
@@ -62,10 +62,6 @@ public abstract class ResponseManager<
         qr.setQuestionType(getQuestionType());
 
         return questionResponseRepository.save(qr);
-    }
-
-    public Long getTotalResponseCount(UUID formId, Long questionId) {
-        return questionResponseRepository.getTotalResponseCount(formId, questionId);
     }
 
 }

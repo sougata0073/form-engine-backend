@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.formValidation.service.questionSchemaManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
-import com.sougata.form_data_service.dto.question.request.QuestionResponseAddReq;
-import com.sougata.form_data_service.dto.question.response.QuestionRes;
+import com.sougata.form_data_service.dto.question.request.QuestionResponsePutReqDto;
+import com.sougata.form_data_service.dto.question.response.QuestionDetailsDto;
 import com.sougata.form_data_service.formValidation.service.QuestionSchemaManager;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -21,7 +21,7 @@ public class QuestionSchemaManagerFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public <QR extends QuestionRes, V extends QuestionResponseAddReq>
+    public <QR extends QuestionDetailsDto, V extends QuestionResponsePutReqDto>
     QuestionSchemaManager<QR, V> get(QuestionType questionType) {
         try {
             return applicationContext.getBean(
@@ -34,7 +34,7 @@ public class QuestionSchemaManagerFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public <QR extends QuestionRes, V extends QuestionResponseAddReq>
+    public <QR extends QuestionDetailsDto, V extends QuestionResponsePutReqDto>
     List<QuestionSchemaManager<QR, V>> getAll() {
 
         List<QuestionSchemaManager<QR, V>> repos = new ArrayList<>();

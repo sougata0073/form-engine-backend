@@ -1,7 +1,7 @@
 package com.sougata.form_service.service.formSchema.impl;
 
 import com.sougata.form_service.configuration.AppConfiguration;
-import com.sougata.form_service.constant.CommonCacheNames;
+import com.sougata.form_service.constant.cacheNames.CommonCacheNames;
 import com.sougata.form_service.constant.ViewFormErrorReason;
 import com.sougata.form_service.constant.cacheNames.FormCacheNames;
 import com.sougata.form_service.dto.common.SuccessMessageDto;
@@ -16,7 +16,8 @@ import com.sougata.form_service.repository.formSchema.FormRepository;
 import com.sougata.form_service.service.formSchema.FormService;
 import com.sougata.form_service.service.formSchema.FormServiceCached;
 import com.sougata.form_service.service.formSchema.questionManager.QuestionManagerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.sougata.form_service.util.CacheUtil;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +28,7 @@ import java.util.Comparator;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class FormServiceImpl implements FormService {
 
     private final FormRepository formRepo;
@@ -36,23 +38,8 @@ public class FormServiceImpl implements FormService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final AppConfiguration appConfiguration;
 
-    @Autowired
-    public FormServiceImpl(
-            FormRepository formRepo,
-            FormDataServiceFeignClient formDataServiceFeignClient,
-            FormServiceCached formServiceCached,
-            QuestionManagerFactory questionManagerFactory, RedisTemplate<String, Object> redisTemplate, AppConfiguration appConfiguration
-    ) {
-        this.formRepo = formRepo;
-        this.formDataServiceFeignClient = formDataServiceFeignClient;
-        this.formServiceCached = formServiceCached;
-        this.questionManagerFactory = questionManagerFactory;
-        this.redisTemplate = redisTemplate;
-        this.appConfiguration = appConfiguration;
-    }
-
     @Override
-    public FormInfoResDto createForm(FormAddUpdateReqDto dto, UUID userId) {
+    public FormInfoDto createForm(FormPutReqDto dto, UUID userId) {
         var newForm = new Form();
 
         newForm.setUserId(userId);
@@ -65,7 +52,7 @@ public class FormServiceImpl implements FormService {
 
         var savedForm = formRepo.save(newForm);
 
-        var formInfo = FormInfoResDto.create(savedForm);
+        var formInfo = FormInfoDto.create(savedForm);
 
         addFirstInRecentForms(userId, formInfo);
 
@@ -74,7 +61,7 @@ public class FormServiceImpl implements FormService {
 
     @Override
     @Transactional
-    public FormInfoResDto copyForm(UUID formId, CopyFormReqDto req, UUID userId) {
+    public FormInfoDto copyForm(UUID formId, CopyFormReqDto req, UUID userId) {
         var referenceFormDetails = formServiceCached.getFormDetails(formId);
         var newForm = new Form();
 
@@ -94,7 +81,7 @@ public class FormServiceImpl implements FormService {
             manager.create(savedForm.getId(), addUpdateReq);
         });
 
-        var formInfo = FormInfoResDto.create(savedForm);
+        var formInfo = FormInfoDto.create(savedForm);
 
         addFirstInRecentForms(userId, formInfo);
 
@@ -102,7 +89,7 @@ public class FormServiceImpl implements FormService {
     }
 
     @Override
-    public FormInfoResDto updateForm(UUID formId, FormAddUpdateReqDto dto, UUID userId) {
+    public FormInfoDto updateForm(UUID formId, FormPutReqDto dto, UUID userId) {
         Form f = getFormById(formId);
 
         f.setUserId(userId);
@@ -117,7 +104,7 @@ public class FormServiceImpl implements FormService {
 
         Form savedForm = formRepo.save(f);
 
-        var formInfo = FormInfoResDto.create(savedForm);
+        var formInfo = FormInfoDto.create(savedForm);
 
         updateRecentForms(userId, formInfo);
         updateFormDetails(formInfo);
@@ -128,41 +115,38 @@ public class FormServiceImpl implements FormService {
 
     @Override
     @Transactional
-    public FormResponseDto getForm(UUID formId, UUID userId) {
+    public FormDetailsDto getForm(UUID formId, UUID userId) {
 
         var currTime = Instant.now();
 
         formRepo.updateLastOpenedOn(formId, currTime);
 
-        var recentFormsCacheKey = CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + FormCacheNames.RECENT_FORMS + CommonCacheNames.SEPARATOR + userId;
-
+        var recentFormsCacheKey = CacheUtil.buildKey(FormCacheNames.RECENT_FORMS, userId);
         if (redisTemplate.hasKey(recentFormsCacheKey)) {
-            var formSummaries = (FormSummariesRes) redisTemplate.opsForValue().get(recentFormsCacheKey);
+            var formSummaries = (FormSummariesDto) redisTemplate.opsForValue().get(recentFormsCacheKey);
 
             formSummaries.getForms().forEach(f -> {
                 if (f.getId().equals(formId)) {
                     f.setLastOpenedOn(currTime);
                 }
             });
-            formSummaries.getForms().sort(Comparator.comparing(FormSummaryResDto::getLastOpenedOn));
+            formSummaries.getForms().sort(Comparator.comparing(FormSummaryDto::getLastOpenedOn));
 
             redisTemplate.opsForValue().set(recentFormsCacheKey, formSummaries, Duration.ofMinutes(appConfiguration.getCacheDefaultTtlMinutes()));
         }
 
-        var formDetailsCacheKey = CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + FormCacheNames.FORM_DETAILS + CommonCacheNames.SEPARATOR + formId;
-
+        var formDetailsCacheKey = CacheUtil.buildKey(FormCacheNames.FORM_DETAILS, formId);
         if (redisTemplate.hasKey(formDetailsCacheKey)) {
-            var formDetails = (FormResponseDto) redisTemplate.opsForValue().get(formDetailsCacheKey);
+            var formDetails = (FormDetailsDto) redisTemplate.opsForValue().get(formDetailsCacheKey);
 
             formDetails.setLastOpenedOn(currTime);
 
             redisTemplate.opsForValue().set(formDetailsCacheKey, formDetails, Duration.ofMinutes(appConfiguration.getCacheDefaultTtlMinutes()));
         }
 
-        var formInfoCacheKey = CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + FormCacheNames.FORM_INFO + CommonCacheNames.SEPARATOR + formId;
-
+        var formInfoCacheKey = CacheUtil.buildKey(FormCacheNames.FORM_INFO, formId);
         if (redisTemplate.hasKey(formInfoCacheKey)) {
-            var prevFormInfo = (FormInfoResDto) redisTemplate.opsForValue().get(formInfoCacheKey);
+            var prevFormInfo = (FormInfoDto) redisTemplate.opsForValue().get(formInfoCacheKey);
 
             prevFormInfo.setLastOpenedOn(currTime);
 
@@ -173,7 +157,7 @@ public class FormServiceImpl implements FormService {
     }
 
     @Override
-    public FormResponseDto viewForm(UUID id, UUID userId) {
+    public FormDetailsDto viewForm(UUID id, UUID userId) {
         var f = formServiceCached.getFormDetails(id);
 
         if (!f.getPublished()) {
@@ -217,14 +201,14 @@ public class FormServiceImpl implements FormService {
     }
 
     @Override
-    public FormSummariesRes getFormsSummaries(UUID userId) {
+    public FormSummariesDto getFormsSummaries(UUID userId) {
         var forms = formRepo.findByUserIdOrderByLastOpenedOnDesc(userId)
                 .stream()
                 .map(f ->
-                        new FormSummaryResDto(f.getId(), f.getName(), f.getLastOpenedOn())
+                        new FormSummaryDto(f.getId(), f.getName(), f.getLastOpenedOn())
                 ).toList();
 
-        return new FormSummariesRes(forms);
+        return new FormSummariesDto(forms);
     }
 
     @Override
@@ -238,9 +222,8 @@ public class FormServiceImpl implements FormService {
         formRepo.renameForm(formId, dto.getNewName());
 
         var recentFormsCacheKey = CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + FormCacheNames.RECENT_FORMS + CommonCacheNames.SEPARATOR + userId;
-
         if (redisTemplate.hasKey(recentFormsCacheKey)) {
-            var formSummaries = (FormSummariesRes) redisTemplate.opsForValue().get(recentFormsCacheKey);
+            var formSummaries = (FormSummariesDto) redisTemplate.opsForValue().get(recentFormsCacheKey);
 
             formSummaries.getForms().forEach(f -> {
                 if (f.getId().equals(formId)) {
@@ -253,9 +236,8 @@ public class FormServiceImpl implements FormService {
 
 
         var formDetailsCacheKey = CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + FormCacheNames.FORM_DETAILS + CommonCacheNames.SEPARATOR + formId;
-
         if (redisTemplate.hasKey(formDetailsCacheKey)) {
-            var formDetails = (FormResponseDto) redisTemplate.opsForValue().get(formDetailsCacheKey);
+            var formDetails = (FormDetailsDto) redisTemplate.opsForValue().get(formDetailsCacheKey);
 
             formDetails.setName(dto.getNewName());
 
@@ -263,9 +245,8 @@ public class FormServiceImpl implements FormService {
         }
 
         var formInfoCacheKey = CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + FormCacheNames.FORM_INFO + CommonCacheNames.SEPARATOR + formId;
-
         if (redisTemplate.hasKey(formInfoCacheKey)) {
-            var prevFormInfo = (FormInfoResDto) redisTemplate.opsForValue().get(formInfoCacheKey);
+            var prevFormInfo = (FormInfoDto) redisTemplate.opsForValue().get(formInfoCacheKey);
 
             prevFormInfo.setName(dto.getNewName());
 
@@ -276,10 +257,10 @@ public class FormServiceImpl implements FormService {
     }
 
     @Override
-    public FormInfoResDto getFormInfo(UUID formId) {
+    public FormInfoDto getFormInfo(UUID formId) {
         Form f = getFormById(formId);
 
-        return FormInfoResDto.create(f);
+        return FormInfoDto.create(f);
     }
 
     @Override
@@ -311,18 +292,18 @@ public class FormServiceImpl implements FormService {
             questionManager.createFromTemplate(qt, savedForm);
         });
 
-        addFirstInRecentForms(userId, FormInfoResDto.create(savedForm));
+        addFirstInRecentForms(userId, FormInfoDto.create(savedForm));
 
         return savedForm;
     }
 
-    private void addFirstInRecentForms(UUID userId, FormInfoResDto formInfo) {
+    private void addFirstInRecentForms(UUID userId, FormInfoDto formInfo) {
         var cacheKey = CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + FormCacheNames.RECENT_FORMS + CommonCacheNames.SEPARATOR + userId;
 
         if (redisTemplate.hasKey(cacheKey)) {
-            var formSummaries = (FormSummariesRes) redisTemplate.opsForValue().get(cacheKey);
+            var formSummaries = (FormSummariesDto) redisTemplate.opsForValue().get(cacheKey);
 
-            formSummaries.getForms().addFirst(new FormSummaryResDto(formInfo.getId(), formInfo.getName(), formInfo.getLastOpenedOn()));
+            formSummaries.getForms().addFirst(new FormSummaryDto(formInfo.getId(), formInfo.getName(), formInfo.getLastOpenedOn()));
 
             redisTemplate.opsForValue().set(cacheKey, formSummaries, Duration.ofMinutes(appConfiguration.getCacheDefaultTtlMinutes()));
         }
@@ -332,7 +313,7 @@ public class FormServiceImpl implements FormService {
         var cacheKey = CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + FormCacheNames.RECENT_FORMS + CommonCacheNames.SEPARATOR + userId;
 
         if (redisTemplate.hasKey(cacheKey)) {
-            var formSummaries = (FormSummariesRes) redisTemplate.opsForValue().get(cacheKey);
+            var formSummaries = (FormSummariesDto) redisTemplate.opsForValue().get(cacheKey);
 
             formSummaries.getForms().removeIf(f -> f.getId().equals(formId));
 
@@ -340,11 +321,11 @@ public class FormServiceImpl implements FormService {
         }
     }
 
-    private void updateRecentForms(UUID userId, FormInfoResDto formInfo) {
+    private void updateRecentForms(UUID userId, FormInfoDto formInfo) {
         var cacheKey = CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + FormCacheNames.RECENT_FORMS + CommonCacheNames.SEPARATOR + userId;
 
         if (redisTemplate.hasKey(cacheKey)) {
-            var formSummaries = (FormSummariesRes) redisTemplate.opsForValue().get(cacheKey);
+            var formSummaries = (FormSummariesDto) redisTemplate.opsForValue().get(cacheKey);
 
             formSummaries.getForms().forEach(f -> {
                 if (f.getId().equals(formInfo.getId())) {
@@ -356,11 +337,11 @@ public class FormServiceImpl implements FormService {
         }
     }
 
-    private void updateFormDetails(FormInfoResDto formInfo) {
+    private void updateFormDetails(FormInfoDto formInfo) {
         var cacheKey = CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + FormCacheNames.FORM_DETAILS + CommonCacheNames.SEPARATOR + formInfo.getId();
 
         if (redisTemplate.hasKey(cacheKey)) {
-            var formDetails = (FormResponseDto) redisTemplate.opsForValue().get(cacheKey);
+            var formDetails = (FormDetailsDto) redisTemplate.opsForValue().get(cacheKey);
 
             formDetails.setName(formInfo.getName());
             formDetails.setTitle(formInfo.getTitle());
@@ -376,7 +357,7 @@ public class FormServiceImpl implements FormService {
         }
     }
 
-    private void updateFormInfo(FormInfoResDto formInfo) {
+    private void updateFormInfo(FormInfoDto formInfo) {
         var cacheKey = CommonCacheNames.PREFIX + CommonCacheNames.SEPARATOR + FormCacheNames.FORM_INFO + CommonCacheNames.SEPARATOR + formInfo.getId();
 
         redisTemplate.opsForValue().set(cacheKey, formInfo, Duration.ofMinutes(appConfiguration.getCacheDefaultTtlMinutes()));

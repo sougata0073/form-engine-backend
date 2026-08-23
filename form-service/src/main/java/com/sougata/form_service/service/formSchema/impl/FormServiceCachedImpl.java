@@ -1,15 +1,16 @@
 package com.sougata.form_service.service.formSchema.impl;
 
-import com.sougata.form_service.dto.form.FormResponseDto;
-import com.sougata.form_service.dto.question.response.QuestionRes;
+import com.sougata.form_service.constant.cacheNames.FormCacheNames;
+import com.sougata.form_service.dto.form.FormDetailsDto;
+import com.sougata.form_service.dto.question.response.QuestionDetails;
 import com.sougata.form_service.exception.FormNotFoundException;
 import com.sougata.form_service.model.formSchema.Form;
 import com.sougata.form_service.model.formSchema.Question;
-import com.sougata.form_service.repository.formSchema.AnyTypeQuestionRepositoryFactory;
 import com.sougata.form_service.repository.formSchema.FormRepository;
 import com.sougata.form_service.repository.formSchema.QuestionRepository;
 import com.sougata.form_service.service.formSchema.FormServiceCached;
-import com.sougata.form_service.service.formSchema.questionManager.QuestionManagerFactory;
+import com.sougata.form_service.service.formSchema.QuestionService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
@@ -20,81 +21,67 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Function;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class FormServiceCachedImpl implements FormServiceCached {
 
     private final FormRepository formRepository;
-    private final QuestionManagerFactory questionManagerFactory;
-    private final AnyTypeQuestionRepositoryFactory anyTypeQuestionRepositoryFactory;
     private final QuestionRepository questionRepository;
+    private final QuestionService questionService;
 
     @Autowired
     @Lazy
     private FormServiceCached self;
 
-    public FormServiceCachedImpl(FormRepository formRepository, QuestionManagerFactory questionManagerFactory, AnyTypeQuestionRepositoryFactory anyTypeQuestionRepositoryFactory, QuestionRepository questionRepository) {
-        this.formRepository = formRepository;
-        this.questionManagerFactory = questionManagerFactory;
-        this.anyTypeQuestionRepositoryFactory = anyTypeQuestionRepositoryFactory;
-        this.questionRepository = questionRepository;
-    }
-
     @Override
-    @Cacheable(cacheNames = {"formDetails"}, key = "#formId", sync = true)
-    public FormResponseDto getFormDetails(UUID formId) {
+    @Cacheable(cacheNames = {FormCacheNames.FORM_DETAILS}, key = "#formId", sync = true)
+    public FormDetailsDto getFormDetails(UUID formId) {
         return self.loadFormDetailsFromDb(formId);
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     @Transactional(readOnly = true)
-    public FormResponseDto loadFormDetailsFromDb(UUID formId) {
+    public FormDetailsDto loadFormDetailsFromDb(UUID formId) {
 
-        Form f = formRepository.findById(formId).orElseThrow(() -> new FormNotFoundException(formId));
+        Form form = formRepository.findById(formId).orElseThrow(() -> new FormNotFoundException(formId));
 
-        List<QuestionRes> questionResponses = new ArrayList<>();
+        var parentQuestions = questionRepository.findAllByFormId(formId);
 
-        var questions = questionRepository.findAllByFormId(formId);
-        var questionIdMap = questions.stream().collect(Collectors.toMap(
-                Question::getId,
-                Function.identity()
-        ));
+        var questionTypeMap = parentQuestions.stream().collect(Collectors.groupingBy(Question::getQuestionType));
 
-        var questionTypeMap = questions.stream().collect(Collectors.groupingBy(Question::getQuestionType));
+        var questionsFutures = new ArrayList<CompletableFuture<List<QuestionDetails>>>();
 
-        questionTypeMap.keySet().forEach(qType -> {
-            var repo = anyTypeQuestionRepositoryFactory.get(qType);
-            var manager = questionManagerFactory.get(qType);
+        questionTypeMap.forEach((qType, pQuestions) -> {
+            var questionsFuture = CompletableFuture.supplyAsync(() ->
+                    questionService.getSimilarTypeQuestions(qType, pQuestions)
+            );
 
-            var qIds = questionTypeMap.get(qType).stream().map(Question::getId).collect(Collectors.toList());
-
-            var qs = repo.findAllById((Iterable<Object>) (Iterable<?>) qIds).stream()
-                    .map(q -> {
-                        var parentQuestion = questionIdMap.get(q.getQuestionId());
-                        return manager.toQuestionResDto(q, parentQuestion);
-                    })
-                    .toList();
-
-            questionResponses.addAll(qs);
+            questionsFutures.add(questionsFuture);
         });
 
-        questionResponses.sort(Comparator.comparingInt(QuestionRes::getOrderIndex));
+        List<QuestionDetails> questionDetailsList = CompletableFuture.allOf(questionsFutures.toArray(new CompletableFuture[0]))
+                .thenApply(v ->
+                        questionsFutures.stream()
+                                .flatMap(f -> f.join().stream())
+                                .sorted(Comparator.comparingInt(QuestionDetails::getOrderIndex))
+                                .toList()
+                ).join();
 
-        return new FormResponseDto(
-                f.getId(),
-                f.getName(),
-                f.getTitle(),
-                f.getDescription(),
-                f.getPublished(),
-                f.getAcceptingResponse(),
-                f.getNotAcceptingResponseMessage(),
-                f.getStopAcceptingResponseOn(),
-                f.getStopAcceptingResponseAfterResponse(),
-                f.getLastOpenedOn(),
-                questionResponses
+        return new FormDetailsDto(
+                form.getId(),
+                form.getName(),
+                form.getTitle(),
+                form.getDescription(),
+                form.getPublished(),
+                form.getAcceptingResponse(),
+                form.getNotAcceptingResponseMessage(),
+                form.getStopAcceptingResponseOn(),
+                form.getStopAcceptingResponseAfterResponse(),
+                form.getLastOpenedOn(),
+                questionDetailsList
         );
     }
 }

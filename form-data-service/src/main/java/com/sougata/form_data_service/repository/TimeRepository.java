@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 @Repository("TIME_RESPONSE_REPOSITORY")
 public interface TimeRepository extends AnyTypeQuestionResponseRepository<Time, Long> {
@@ -28,14 +27,13 @@ public interface TimeRepository extends AnyTypeQuestionResponseRepository<Time, 
                 on t.question_response_id = qr.id
                 join form_responses fr
                 on fr.id = qr.form_response_id
-                where fr.form_id = :formId
-                and qr.question_id = :questionId
+                where qr.question_id = :questionId
                 group by hour, time
             ) x
             group by x.hour
             order by x.hour
             """, nativeQuery = true)
-    List<Tuple> getResponseTimes(UUID formId, long questionId, Pageable pageable);
+    List<Tuple> getResponseTimes(long questionId, Pageable pageable);
 
     @Query(value = """
             select
@@ -47,21 +45,19 @@ public interface TimeRepository extends AnyTypeQuestionResponseRepository<Time, 
             and qr.question_id = :questionId
             left join times t
             on qr.id = t.question_response_id
-            where fr.form_id = :formId
             group by t.time
             order by responseCount desc, t.time asc
             """, nativeQuery = true)
-    List<Tuple> groupedByTime(UUID formId, long questionId, Pageable pageable);
+    List<Tuple> groupedByTime(long questionId, Pageable pageable);
 
     @Query("""
             select
             t.questionResponse.questionId questionId,
             t.time time
             from Time t
-            where t.questionResponse.formResponse.formId = :formId
-            and t.questionResponse.formResponse.id = :formResponseId
+            where t.questionResponse.formResponse.id = :formResponseId
             """)
-    List<Tuple> getTimesByFormResponse(UUID formId, long formResponseId);
+    List<Tuple> getTimesByFormResponse(long formResponseId);
 
     @Query(value = """
             select
@@ -73,12 +69,12 @@ public interface TimeRepository extends AnyTypeQuestionResponseRepository<Time, 
             and qr.question_id = :questionId
             left join times t
             on qr.id = t.question_response_id
-            where fr.form_id = :formId and (
+            where (
                 (cast(:response as timestamp with time zone) is null and t.time is null)
                 or t.time = :response
             )
             order by fr.created_at, fr.id
             """, nativeQuery = true)
-    List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, Instant response, Pageable pageable);
+    List<Tuple> getResponseIdsByGroupedResponse(long questionId, Instant response, Pageable pageable);
 
 }

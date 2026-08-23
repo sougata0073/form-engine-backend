@@ -1,8 +1,8 @@
 package com.sougata.form_service.service.formSchema.questionManager;
 
 import com.sougata.form_service.constant.QuestionType;
-import com.sougata.form_service.dto.question.request.DropdownAddUpdateReqDto;
-import com.sougata.form_service.dto.question.response.DropdownResDto;
+import com.sougata.form_service.dto.question.request.DropdownPutReqDto;
+import com.sougata.form_service.dto.question.response.DropdownDetailsDto;
 import com.sougata.form_service.dto.template.questionTemplate.DropdownTemplateDetails;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.formSchema.Dropdown;
@@ -20,7 +20,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("DROPDOWN_QUESTION_MANAGER")
-public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdateReqDto, DropdownResDto, DropdownTemplateDetails> {
+public class DropdownManager extends QuestionManager<Dropdown, DropdownPutReqDto, DropdownDetailsDto, DropdownTemplateDetails> {
 
     private final DropdownRepository dropdownRepository;
 
@@ -30,13 +30,13 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
     }
 
     @Override
-    public DropdownResDto get(UUID formId, Long questionId) {
+    public DropdownDetailsDto get(UUID formId, Long questionId) {
         return toQuestionResDto(dropdownRepository.findByQuestionId(questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
     @Transactional
-    public DropdownResDto create(UUID formId, DropdownAddUpdateReqDto crudDto) {
+    public DropdownDetailsDto create(UUID formId, DropdownPutReqDto crudDto) {
         var newDd = new Dropdown();
 
         var question = createQuestion(crudDto, formId);
@@ -50,7 +50,7 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
 
     @Override
     @Transactional
-    public DropdownResDto create(UUID formId, Long questionId, DropdownAddUpdateReqDto questionAddUpdateReq) {
+    public DropdownDetailsDto create(UUID formId, Long questionId, DropdownPutReqDto questionAddUpdateReq) {
         var newDd = new Dropdown();
 
         var question = updateQuestion(questionId, questionAddUpdateReq);
@@ -64,7 +64,7 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
 
     @Override
     @Transactional
-    public DropdownResDto update(UUID formId, Long questionId, DropdownAddUpdateReqDto questionAddUpdateReq) {
+    public DropdownDetailsDto update(UUID formId, Long questionId, DropdownPutReqDto questionAddUpdateReq) {
         Dropdown dd = dropdownRepository.findByQuestionId(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.DROPDOWN, questionId));
 
@@ -73,7 +73,7 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
         Map<Long, DropdownOption> existingOptions = dd.getOptions().stream()
                 .collect(Collectors.toMap(DropdownOption::getId, option -> option));
         Set<Long> requestOptionIds = questionAddUpdateReq.getOptions().stream()
-                .map(DropdownAddUpdateReqDto.Option::getId)
+                .map(DropdownPutReqDto.Option::getId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
@@ -116,19 +116,19 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
     }
 
     @Override
-    public DropdownResDto toQuestionResDto(Dropdown childQuestion) {
+    public DropdownDetailsDto toQuestionResDto(Dropdown childQuestion) {
         return toQuestionResDto(childQuestion, childQuestion.getQuestion());
     }
 
     @Override
-    public DropdownResDto toQuestionResDto(Dropdown childQuestion, Question parentQuestion) {
-        var dd = new DropdownResDto();
+    public DropdownDetailsDto toQuestionResDto(Dropdown childQuestion, Question parentQuestion) {
+        var dd = new DropdownDetailsDto();
 
         populateCommonFields(parentQuestion, dd);
 
         var options = childQuestion.getOptions().stream()
-                .map(o -> new DropdownResDto.DropdownOptionResDto(o.getId(), o.getOption(), o.getOrderIndex()))
-                .sorted(Comparator.comparingInt(DropdownResDto.DropdownOptionResDto::getOrderIndex))
+                .map(o -> new DropdownDetailsDto.Option(o.getId(), o.getOption(), o.getOrderIndex()))
+                .sorted(Comparator.comparingInt(DropdownDetailsDto.Option::getOrderIndex))
                 .toList();
 
         dd.setOptions(options);
@@ -137,14 +137,14 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
     }
 
     @Override
-    public DropdownAddUpdateReqDto toQuestionAddUpdateReq(DropdownResDto questionRes) {
-        var dd = new DropdownAddUpdateReqDto();
+    public DropdownPutReqDto toQuestionAddUpdateReq(DropdownDetailsDto questionRes) {
+        var dd = new DropdownPutReqDto();
 
         populateCommonFields(questionRes, dd);
 
         dd.setOptions(
                 questionRes.getOptions().stream()
-                        .map(op -> new DropdownAddUpdateReqDto.Option(null, op.getOption()))
+                        .map(op -> new DropdownPutReqDto.Option(null, op.getOption()))
                         .toList()
         );
 
@@ -173,7 +173,7 @@ public class DropdownManager extends QuestionManager<Dropdown, DropdownAddUpdate
         return dropdownRepository.save(d);
     }
 
-    private void setPropertiesForNew(DropdownAddUpdateReqDto source, Dropdown target, Question question) {
+    private void setPropertiesForNew(DropdownPutReqDto source, Dropdown target, Question question) {
         var options = new ArrayList<DropdownOption>();
 
         for (int i = 0; i < source.getOptions().size(); i++) {

@@ -2,8 +2,8 @@ package com.sougata.form_service.service.formSchema.questionManager;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sougata.form_service.constant.QuestionType;
-import com.sougata.form_service.dto.question.request.CheckboxAddUpdateReqDto;
-import com.sougata.form_service.dto.question.response.CheckboxResDto;
+import com.sougata.form_service.dto.question.request.CheckboxPutReqDto;
+import com.sougata.form_service.dto.question.response.CheckboxDetailsDto;
 import com.sougata.form_service.dto.template.questionTemplate.CheckboxTemplateDetails;
 import com.sougata.form_service.exception.JsonParsingException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service("CHECKBOX_QUESTION_MANAGER")
-public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdateReqDto, CheckboxResDto, CheckboxTemplateDetails> {
+public class CheckboxManager extends QuestionManager<Checkbox, CheckboxPutReqDto, CheckboxDetailsDto, CheckboxTemplateDetails> {
 
     private final CheckboxRepository checkboxRepository;
 
@@ -36,7 +36,7 @@ public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdate
     }
 
     @Override
-    public CheckboxResDto get(UUID formId, Long questionId) {
+    public CheckboxDetailsDto get(UUID formId, Long questionId) {
         return toQuestionResDto(
                 checkboxRepository.findByQuestionId(questionId)
                         .orElseThrow(() -> new QuestionNotFoundException(questionId))
@@ -45,7 +45,7 @@ public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdate
 
     @Override
     @Transactional
-    public CheckboxResDto create(UUID formId, CheckboxAddUpdateReqDto crudDto) {
+    public CheckboxDetailsDto create(UUID formId, CheckboxPutReqDto crudDto) {
         var newCb = new Checkbox();
 
         var question = createQuestion(crudDto, formId);
@@ -59,7 +59,7 @@ public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdate
 
     @Override
     @Transactional
-    public CheckboxResDto create(UUID formId, Long questionId, CheckboxAddUpdateReqDto questionAddUpdateReq) {
+    public CheckboxDetailsDto create(UUID formId, Long questionId, CheckboxPutReqDto questionAddUpdateReq) {
         var newCb = new Checkbox();
 
         var question = updateQuestion(questionId, questionAddUpdateReq);
@@ -73,7 +73,7 @@ public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdate
 
     @Override
     @Transactional
-    public CheckboxResDto update(UUID formId, Long questionId, CheckboxAddUpdateReqDto questionAddUpdateReq) {
+    public CheckboxDetailsDto update(UUID formId, Long questionId, CheckboxPutReqDto questionAddUpdateReq) {
         Checkbox cb = checkboxRepository.findByQuestionId(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.CHECKBOX, questionId));
 
@@ -83,7 +83,7 @@ public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdate
         Map<Long, CheckboxOption> existingOptions = cb.getOptions().stream()
                 .collect(Collectors.toMap(CheckboxOption::getId, option -> option));
         Set<Long> requestOptionIds = questionAddUpdateReq.getOptions().stream()
-                .map(CheckboxAddUpdateReqDto.Option::getId)
+                .map(CheckboxPutReqDto.Option::getId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
 
@@ -115,21 +115,21 @@ public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdate
     }
 
     @Override
-    public CheckboxResDto toQuestionResDto(Checkbox childQuestion) {
+    public CheckboxDetailsDto toQuestionResDto(Checkbox childQuestion) {
         return toQuestionResDto(childQuestion, childQuestion.getQuestion());
     }
 
     @Override
-    public CheckboxResDto toQuestionResDto(Checkbox childQuestion, Question parentQuestion) {
-        var cb = new CheckboxResDto();
+    public CheckboxDetailsDto toQuestionResDto(Checkbox childQuestion, Question parentQuestion) {
+        var cb = new CheckboxDetailsDto();
 
         populateCommonFields(parentQuestion, cb);
 
         var options = childQuestion.getOptions().stream()
                 .map(o ->
-                        new CheckboxResDto.CheckboxOptionResDto(o.getId(), o.getOption(), o.getOrderIndex())
+                        new CheckboxDetailsDto.Option(o.getId(), o.getOption(), o.getOrderIndex())
                 )
-                .sorted(Comparator.comparingInt(CheckboxResDto.CheckboxOptionResDto::getOrderIndex))
+                .sorted(Comparator.comparingInt(CheckboxDetailsDto.Option::getOrderIndex))
                 .toList();
 
         cb.setOptions(options);
@@ -146,14 +146,14 @@ public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdate
     }
 
     @Override
-    public CheckboxAddUpdateReqDto toQuestionAddUpdateReq(CheckboxResDto questionRes) {
-        var cb = new CheckboxAddUpdateReqDto();
+    public CheckboxPutReqDto toQuestionAddUpdateReq(CheckboxDetailsDto questionRes) {
+        var cb = new CheckboxPutReqDto();
 
         populateCommonFields(questionRes, cb);
 
         cb.setOptions(
                 questionRes.getOptions().stream()
-                        .map(op -> new CheckboxAddUpdateReqDto.Option(null, op.getOption()))
+                        .map(op -> new CheckboxPutReqDto.Option(null, op.getOption()))
                         .toList()
         );
         cb.setValidationConfig(questionRes.getValidationConfig());
@@ -194,7 +194,7 @@ public class CheckboxManager extends QuestionManager<Checkbox, CheckboxAddUpdate
         checkboxRepository.deleteQuestion(questionId);
     }
 
-    private void setPropertiesForNew(CheckboxAddUpdateReqDto source, Checkbox target, Question question) {
+    private void setPropertiesForNew(CheckboxPutReqDto source, Checkbox target, Question question) {
         var options = new ArrayList<CheckboxOption>();
 
         for (int i = 0; i < source.getOptions().size(); i++) {

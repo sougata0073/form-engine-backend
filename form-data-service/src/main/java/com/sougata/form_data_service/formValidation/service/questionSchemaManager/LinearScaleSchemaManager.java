@@ -2,17 +2,17 @@ package com.sougata.form_data_service.formValidation.service.questionSchemaManag
 
 import com.sougata.form_data_service.constant.ExceptionMessages;
 import com.sougata.form_data_service.constant.QuestionType;
-import com.sougata.form_data_service.dto.question.request.LinearScaleResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.LinearScaleResDto;
+import com.sougata.form_data_service.dto.question.request.LinearScaleResponsePutReqDto;
+import com.sougata.form_data_service.dto.question.response.LinearScaleDetailsDto;
 import com.sougata.form_data_service.formValidation.exception.ResponseValidationException;
 import com.sougata.form_data_service.formValidation.service.QuestionSchemaManager;
 import org.springframework.stereotype.Service;
 
 @Service("LINEAR_SCALE_QUESTION_SCHEMA_MANAGER")
-public class LinearScaleSchemaManager extends QuestionSchemaManager<LinearScaleResDto, LinearScaleResponseAddReqDto> {
+public class LinearScaleSchemaManager extends QuestionSchemaManager<LinearScaleDetailsDto, LinearScaleResponsePutReqDto> {
 
     @Override
-    public boolean validateResponse(LinearScaleResponseAddReqDto validationDto, LinearScaleResDto ls) {
+    public boolean validateResponse(LinearScaleResponsePutReqDto validationDto, LinearScaleDetailsDto ls) {
         Integer toNumber = ls.getToNumber();
 
         if (validationDto.getScale() > toNumber) {

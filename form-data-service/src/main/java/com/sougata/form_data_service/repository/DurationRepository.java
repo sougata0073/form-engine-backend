@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.UUID;
 
 @Repository("DURATION_RESPONSE_REPOSITORY")
 public interface DurationRepository extends AnyTypeQuestionResponseRepository<Duration, Long> {
@@ -29,14 +28,13 @@ public interface DurationRepository extends AnyTypeQuestionResponseRepository<Du
                 on d.question_response_id = qr.id
                 join form_responses fr
                 on fr.id = qr.form_response_id
-                where fr.form_id = :formId
-                and qr.question_id = :questionId
+                where qr.question_id = :questionId
                 group by d.hours, d.minutes, d.seconds
             ) x
             group by x.hours
             order by x.hours
             """, nativeQuery = true)
-    List<Tuple> getResponseDurations(UUID formId, long questionId, Pageable pageable);
+    List<Tuple> getResponseDurations(long questionId, Pageable pageable);
 
     @Query(value = """
             select
@@ -50,11 +48,10 @@ public interface DurationRepository extends AnyTypeQuestionResponseRepository<Du
             and qr.question_id = :questionId
             left join durations d
             on qr.id = d.question_response_id
-            where fr.form_id = :formId
             group by d.hours, d.minutes, d.seconds
             order by responseCount desc, d.hours asc, d.minutes asc, d.seconds asc
             """, nativeQuery = true)
-    List<Tuple> groupedByDuration(UUID formId, long questionId, Pageable pageable);
+    List<Tuple> groupedByDuration(long questionId, Pageable pageable);
 
     @Query("""
             select
@@ -65,7 +62,7 @@ public interface DurationRepository extends AnyTypeQuestionResponseRepository<Du
             from Duration d
             where d.questionResponse.formResponse.id = :formResponseId
             """)
-    List<Tuple> getDurationsByFormResponse(UUID formId, long formResponseId);
+    List<Tuple> getDurationsByFormResponse(long formResponseId);
 
     @Query(value = """
             select
@@ -77,7 +74,7 @@ public interface DurationRepository extends AnyTypeQuestionResponseRepository<Du
             and qr.question_id = :questionId
             left join durations d
             on qr.id = d.question_response_id
-            where fr.form_id = :formId and (
+            where (
                 (:hours is null and d.hours is null)
                 or d.hours = :hours
             ) and (
@@ -89,5 +86,5 @@ public interface DurationRepository extends AnyTypeQuestionResponseRepository<Du
             )
             order by fr.created_at, fr.id
             """, nativeQuery = true)
-    List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, Integer hours, Integer minutes, Integer seconds, Pageable pageable);
+    List<Tuple> getResponseIdsByGroupedResponse(long questionId, Integer hours, Integer minutes, Integer seconds, Pageable pageable);
 }

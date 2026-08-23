@@ -2,8 +2,8 @@ package com.sougata.form_service.service.formSchema.questionManager;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sougata.form_service.constant.QuestionType;
-import com.sougata.form_service.dto.question.request.ParagraphAddUpdateReqDto;
-import com.sougata.form_service.dto.question.response.ParagraphResDto;
+import com.sougata.form_service.dto.question.request.ParagraphPutReqDto;
+import com.sougata.form_service.dto.question.response.ParagraphDetailsDto;
 import com.sougata.form_service.dto.template.questionTemplate.ParagraphTemplateDetails;
 import com.sougata.form_service.exception.JsonParsingException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service("PARAGRAPH_QUESTION_MANAGER")
-public class ParagraphManager extends QuestionManager<Paragraph, ParagraphAddUpdateReqDto, ParagraphResDto, ParagraphTemplateDetails> {
+public class ParagraphManager extends QuestionManager<Paragraph, ParagraphPutReqDto, ParagraphDetailsDto, ParagraphTemplateDetails> {
 
     private final ParagraphRepository paragraphRepository;
 
@@ -32,13 +32,13 @@ public class ParagraphManager extends QuestionManager<Paragraph, ParagraphAddUpd
     }
 
     @Override
-    public ParagraphResDto get(UUID formId, Long questionId) {
+    public ParagraphDetailsDto get(UUID formId, Long questionId) {
         return toQuestionResDto(paragraphRepository.findByQuestionId(questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
     @Transactional
-    public ParagraphResDto create(UUID formId, ParagraphAddUpdateReqDto crudDto) {
+    public ParagraphDetailsDto create(UUID formId, ParagraphPutReqDto crudDto) {
         var newP = new Paragraph();
 
         var question = createQuestion(crudDto, formId);
@@ -52,7 +52,7 @@ public class ParagraphManager extends QuestionManager<Paragraph, ParagraphAddUpd
 
     @Override
     @Transactional
-    public ParagraphResDto create(UUID formId, Long questionId, ParagraphAddUpdateReqDto questionAddUpdateReq) {
+    public ParagraphDetailsDto create(UUID formId, Long questionId, ParagraphPutReqDto questionAddUpdateReq) {
         var newP = new Paragraph();
 
         var question = updateQuestion(questionId, questionAddUpdateReq);
@@ -66,7 +66,7 @@ public class ParagraphManager extends QuestionManager<Paragraph, ParagraphAddUpd
 
     @Override
     @Transactional
-    public ParagraphResDto update(UUID formId, Long questionId, ParagraphAddUpdateReqDto questionAddUpdateReq) {
+    public ParagraphDetailsDto update(UUID formId, Long questionId, ParagraphPutReqDto questionAddUpdateReq) {
         Paragraph p = paragraphRepository.findByQuestionId(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.PARAGRAPH, questionId));
 
@@ -79,13 +79,13 @@ public class ParagraphManager extends QuestionManager<Paragraph, ParagraphAddUpd
     }
 
     @Override
-    public ParagraphResDto toQuestionResDto(Paragraph childQuestion) {
+    public ParagraphDetailsDto toQuestionResDto(Paragraph childQuestion) {
         return toQuestionResDto(childQuestion, childQuestion.getQuestion());
     }
 
     @Override
-    public ParagraphResDto toQuestionResDto(Paragraph childQuestion, Question parentQuestion) {
-        var p = new ParagraphResDto();
+    public ParagraphDetailsDto toQuestionResDto(Paragraph childQuestion, Question parentQuestion) {
+        var p = new ParagraphDetailsDto();
 
         populateCommonFields(parentQuestion, p);
 
@@ -99,8 +99,8 @@ public class ParagraphManager extends QuestionManager<Paragraph, ParagraphAddUpd
     }
 
     @Override
-    public ParagraphAddUpdateReqDto toQuestionAddUpdateReq(ParagraphResDto questionRes) {
-        var p = new ParagraphAddUpdateReqDto();
+    public ParagraphPutReqDto toQuestionAddUpdateReq(ParagraphDetailsDto questionRes) {
+        var p = new ParagraphPutReqDto();
 
         populateCommonFields(questionRes, p);
 
@@ -130,7 +130,7 @@ public class ParagraphManager extends QuestionManager<Paragraph, ParagraphAddUpd
         paragraphRepository.deleteQuestion(questionId);
     }
 
-    private void setPropertiesForNew(ParagraphAddUpdateReqDto source, Paragraph target, Question question) {
+    private void setPropertiesForNew(ParagraphPutReqDto source, Paragraph target, Question question) {
         target.setQuestion(question);
         target.setValidationConfig(JsonUtil.objectToOldJsonNode(source.getValidationConfig()));
     }

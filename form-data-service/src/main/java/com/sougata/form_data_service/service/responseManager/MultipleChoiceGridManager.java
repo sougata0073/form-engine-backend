@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
-import com.sougata.form_data_service.dto.question.request.MultipleChoiceGridResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.MultipleChoiceGridResDto;
+import com.sougata.form_data_service.dto.question.request.MultipleChoiceGridResponsePutReqDto;
+import com.sougata.form_data_service.dto.question.response.MultipleChoiceGridDetailsDto;
 import com.sougata.form_data_service.dto.response.individual.MultipleChoiceGridResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.MultipleChoiceGridResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.MultipleChoiceGridResponseSummaryDto;
@@ -19,16 +19,15 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service("MULTIPLE_CHOICE_GRID_RESPONSE_MANAGER")
 public class MultipleChoiceGridManager extends ResponseManager<
-        MultipleChoiceGridResponseAddReqDto,
+        MultipleChoiceGridResponsePutReqDto,
         MultipleChoiceGridResponseSummaryDto,
-        MultipleChoiceGridResDto,
+        MultipleChoiceGridDetailsDto,
         MultipleChoiceGridResponseQuestionDto,
         MultipleChoiceGridResponseQuestionDto.Response,
         MultipleChoiceGridResponseQuestionDto.Summary,
@@ -45,7 +44,7 @@ public class MultipleChoiceGridManager extends ResponseManager<
 
     @Override
     @Transactional
-    public void create(MultipleChoiceGridResponseAddReqDto response, FormResponse formResponse) {
+    public void create(MultipleChoiceGridResponsePutReqDto response, FormResponse formResponse) {
         MultipleChoiceGrid multipleChoiceGrid = new MultipleChoiceGrid();
 
         var qr = createQuestionResponse(response.getQuestionId(), formResponse);
@@ -53,8 +52,8 @@ public class MultipleChoiceGridManager extends ResponseManager<
         var responses = response.getRows().stream().map(r -> {
             var row = new MultipleChoiceGridRow();
 
-            row.setRowId(r.rowId());
-            row.setResponseColumnId(r.responseColumnId());
+            row.setRowId(r.getRowId());
+            row.setResponseColumnId(r.getResponseColumnId());
             row.setMultipleChoiceGrid(multipleChoiceGrid);
 
             return row;
@@ -69,7 +68,7 @@ public class MultipleChoiceGridManager extends ResponseManager<
     @Override
     public List<MultipleChoiceGridResponseSummaryDto> getResponseSummaries(
             UUID formId,
-            List<MultipleChoiceGridResDto> questionResponses) {
+            List<MultipleChoiceGridDetailsDto> questionResponses) {
 
         var responseSummaries = multipleChoiceGridRepository.getResponseSummaries(formId);
 
@@ -142,7 +141,7 @@ public class MultipleChoiceGridManager extends ResponseManager<
     }
 
     @Override
-    public MultipleChoiceGridResponseSummaryDto getResponseSummary(UUID formId, Long questionId, MultipleChoiceGridResDto questionRes, Pageable pageable) {
+    public MultipleChoiceGridResponseSummaryDto getResponseSummary(UUID formId, Long questionId, MultipleChoiceGridDetailsDto questionRes, Pageable pageable) {
         var responseSummary = multipleChoiceGridRepository.getResponseSummary(formId, questionId);
         var res = new MultipleChoiceGridResponseSummaryDto();
 
@@ -157,7 +156,7 @@ public class MultipleChoiceGridManager extends ResponseManager<
     }
 
     @Override
-    public MultipleChoiceGridResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, MultipleChoiceGridResDto questionResponse) {
+    public MultipleChoiceGridResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, MultipleChoiceGridDetailsDto questionResponse) {
         var sum = new MultipleChoiceGridResponseQuestionDto.Summary();
 
         sum.setRows(questionResponse.getRows());
@@ -184,7 +183,6 @@ public class MultipleChoiceGridManager extends ResponseManager<
         }
 
         var grouped = multipleChoiceGridRepository.groupedByResponseRowColumn(
-                formId,
                 questionId,
                 rowId,
                 pageable
@@ -220,7 +218,7 @@ public class MultipleChoiceGridManager extends ResponseManager<
 
     @Override
     public List<MultipleChoiceGridResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
-        var responses = multipleChoiceGridRepository.getRowColumnIdsByFormResponse(formId, formResponseId);
+        var responses = multipleChoiceGridRepository.getRowColumnIdsByFormResponse(formResponseId);
 
         return responses.stream().map(tuple -> {
             var qId = tuple.get("questionId", Long.class);
@@ -232,11 +230,11 @@ public class MultipleChoiceGridManager extends ResponseManager<
             res.setQuestionId(qId);
             res.setQuestionType(getQuestionType());
 
-            var rows = new ArrayList<MultipleChoiceGridResponseIndividualDto.MultipleChoiceGridResponseIndividualDtoRow>();
+            var rows = new ArrayList<MultipleChoiceGridResponseIndividualDto.Row>();
 
             for (int i = 0; i < rowIds.length; i++) {
                 rows.add(
-                        new MultipleChoiceGridResponseIndividualDto.MultipleChoiceGridResponseIndividualDtoRow(
+                        new MultipleChoiceGridResponseIndividualDto.Row(
                                 rowIds[i], columnIds[i]
                         )
                 );
@@ -262,7 +260,7 @@ public class MultipleChoiceGridManager extends ResponseManager<
         var rowIdResponse = rowId.getFirst() == null ? null :  Long.parseLong(rowId.getFirst());
         var columnIdResponse = columnId.getFirst() == null ? null : Long.parseLong(columnId.getFirst());
 
-        return multipleChoiceGridRepository.getResponseIdsByGroupedResponse(formId, questionId, rowIdResponse, columnIdResponse, pageable);
+        return multipleChoiceGridRepository.getResponseIdsByGroupedResponse(questionId, rowIdResponse, columnIdResponse, pageable);
     }
 
     @Override

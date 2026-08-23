@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
-import com.sougata.form_data_service.dto.question.request.DurationResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.DurationResDto;
+import com.sougata.form_data_service.dto.question.request.DurationResponsePutReqDto;
+import com.sougata.form_data_service.dto.question.response.DurationDetailsDto;
 import com.sougata.form_data_service.dto.response.individual.DurationResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.DurationResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.DurationResponseSummaryDto;
@@ -23,9 +23,9 @@ import java.util.*;
 
 @Service("DURATION_RESPONSE_MANAGER")
 public class DurationManager extends ResponseManager<
-        DurationResponseAddReqDto,
+        DurationResponsePutReqDto,
         DurationResponseSummaryDto,
-        DurationResDto,
+        DurationDetailsDto,
         DurationResponseQuestionDto,
         DurationResponseQuestionDto.Response,
         DurationResponseQuestionDto.Summary,
@@ -42,7 +42,7 @@ public class DurationManager extends ResponseManager<
 
     @Override
     @Transactional
-    public void create(DurationResponseAddReqDto response, FormResponse formResponse) {
+    public void create(DurationResponsePutReqDto response, FormResponse formResponse) {
         Duration duration = new Duration();
 
         var qr = createQuestionResponse(response.getQuestionId(), formResponse);
@@ -56,7 +56,7 @@ public class DurationManager extends ResponseManager<
     }
 
     @Override
-    public List<DurationResponseSummaryDto> getResponseSummaries(UUID formId, List<DurationResDto> questionResponses) {
+    public List<DurationResponseSummaryDto> getResponseSummaries(UUID formId, List<DurationDetailsDto> questionResponses) {
         var responseSummaries = durationRepository.getResponseSummaries(formId);
         var result = new ArrayList<DurationResponseSummaryDto>();
 
@@ -127,9 +127,9 @@ public class DurationManager extends ResponseManager<
     }
 
     @Override
-    public DurationResponseSummaryDto getResponseSummary(UUID formId, Long questionId, DurationResDto questionRes, Pageable pageable) {
+    public DurationResponseSummaryDto getResponseSummary(UUID formId, Long questionId, DurationDetailsDto questionRes, Pageable pageable) {
         var responseSummary = durationRepository.getResponseSummary(formId, questionId);
-        var durations = durationRepository.getResponseDurations(formId, questionId, pageable);
+        var durations = durationRepository.getResponseDurations(questionId, pageable);
 
         var d = new DurationResponseSummaryDto();
 
@@ -173,13 +173,13 @@ public class DurationManager extends ResponseManager<
     }
 
     @Override
-    public DurationResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, DurationResDto questionResponse) {
+    public DurationResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, DurationDetailsDto questionResponse) {
         return new DurationResponseQuestionDto.Summary();
     }
 
     @Override
     public DurationResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
-        var grouped = durationRepository.groupedByDuration(formId, questionId, pageable);
+        var grouped = durationRepository.groupedByDuration(questionId, pageable);
 
         var d = new DurationResponseQuestionDto();
 
@@ -218,7 +218,7 @@ public class DurationManager extends ResponseManager<
 
     @Override
     public List<DurationResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
-        var responses = durationRepository.getDurationsByFormResponse(formId, formResponseId);
+        var responses = durationRepository.getDurationsByFormResponse(formResponseId);
 
         return responses.stream().map(tuple -> {
             var qId = tuple.get("questionId", Long.class);
@@ -254,7 +254,7 @@ public class DurationManager extends ResponseManager<
         var m = minutes.getFirst() == null ? null : Integer.parseInt(minutes.getFirst());
         var s = seconds.getFirst() == null ? null : Integer.parseInt(seconds.getFirst());
 
-        return durationRepository.getResponseIdsByGroupedResponse(formId, questionId, h, m, s, pageable);
+        return durationRepository.getResponseIdsByGroupedResponse(questionId, h, m, s, pageable);
     }
 
     @Override

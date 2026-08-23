@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
-import com.sougata.form_data_service.dto.question.request.TickBoxGridResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.TickBoxGridResDto;
+import com.sougata.form_data_service.dto.question.request.TickBoxGridResponsePutReqDto;
+import com.sougata.form_data_service.dto.question.response.TickBoxGridDetailsDto;
 import com.sougata.form_data_service.dto.response.individual.TickBoxGridResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.TickBoxGridResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.TickBoxGridResponseSummaryDto;
@@ -26,9 +26,9 @@ import java.util.stream.Collectors;
 
 @Service("TICK_BOX_GRID_RESPONSE_MANAGER")
 public class TickBoxGridManager extends ResponseManager<
-        TickBoxGridResponseAddReqDto,
+        TickBoxGridResponsePutReqDto,
         TickBoxGridResponseSummaryDto,
-        TickBoxGridResDto,
+        TickBoxGridDetailsDto,
         TickBoxGridResponseQuestionDto,
         TickBoxGridResponseQuestionDto.Response,
         TickBoxGridResponseQuestionDto.Summary,
@@ -45,7 +45,7 @@ public class TickBoxGridManager extends ResponseManager<
 
     @Override
     @Transactional
-    public void create(TickBoxGridResponseAddReqDto response, FormResponse formResponse) {
+    public void create(TickBoxGridResponsePutReqDto response, FormResponse formResponse) {
         TickBoxGrid tickBoxGrid = new TickBoxGrid();
 
         var qr = createQuestionResponse(response.getQuestionId(), formResponse);
@@ -53,7 +53,7 @@ public class TickBoxGridManager extends ResponseManager<
         var responses = response.getRows().stream().map(r -> {
             var row = new TickBoxGridRow();
 
-            var columns = r.responseColumnIds().stream().map(c -> {
+            var columns = r.getResponseColumnIds().stream().map(c -> {
                 var column = new TickBoxGridColumn();
 
                 column.setResponseOptionId(c);
@@ -62,7 +62,7 @@ public class TickBoxGridManager extends ResponseManager<
                 return column;
             }).collect(Collectors.toCollection(ArrayList::new));
 
-            row.setRowId(r.rowId());
+            row.setRowId(r.getRowId());
             row.setResponses(columns);
             row.setTickBoxGrid(tickBoxGrid);
 
@@ -78,7 +78,8 @@ public class TickBoxGridManager extends ResponseManager<
     @Override
     public List<TickBoxGridResponseSummaryDto> getResponseSummaries(
             UUID formId,
-            List<TickBoxGridResDto> questionResponses) {
+            List<TickBoxGridDetailsDto> questionResponses
+    ) {
 
         var responseSummaries = tickBoxGridRepository.getResponseSummaries(formId);
 
@@ -151,7 +152,7 @@ public class TickBoxGridManager extends ResponseManager<
     }
 
     @Override
-    public TickBoxGridResponseSummaryDto getResponseSummary(UUID formId, Long questionId, TickBoxGridResDto questionRes, Pageable pageable) {
+    public TickBoxGridResponseSummaryDto getResponseSummary(UUID formId, Long questionId, TickBoxGridDetailsDto questionRes, Pageable pageable) {
         var responseSummary = tickBoxGridRepository.getResponseSummary(formId, questionId);
         var res = new TickBoxGridResponseSummaryDto();
 
@@ -166,7 +167,7 @@ public class TickBoxGridManager extends ResponseManager<
     }
 
     @Override
-    public TickBoxGridResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, TickBoxGridResDto questionResponse) {
+    public TickBoxGridResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, TickBoxGridDetailsDto questionResponse) {
         var sum = new TickBoxGridResponseQuestionDto.Summary();
 
         sum.setRows(questionResponse.getRows());
@@ -187,7 +188,6 @@ public class TickBoxGridManager extends ResponseManager<
         var rowId = Long.parseLong(rowIdString);
 
         var grouped = tickBoxGridRepository.groupedByResponseRowColumn(
-                formId,
                 questionId,
                 rowId,
                 pageable
@@ -226,7 +226,7 @@ public class TickBoxGridManager extends ResponseManager<
 
     @Override
     public List<TickBoxGridResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
-        var responses = tickBoxGridRepository.getRowColumnIdsByFormResponse(formId, formResponseId);
+        var responses = tickBoxGridRepository.getRowColumnIdsByFormResponse(formResponseId);
 
         var questionIdMap = responses.stream().collect(
                 Collectors.groupingBy(tuple -> tuple.get("questionId", Long.class))
@@ -242,13 +242,13 @@ public class TickBoxGridManager extends ResponseManager<
             res.setQuestionId(qId);
             res.setQuestionType(getQuestionType());
 
-            var rows = new ArrayList<TickBoxGridResponseIndividualDto.TickBoxGridResponseIndividualDtoRow>();
+            var rows = new ArrayList<TickBoxGridResponseIndividualDto.Row>();
 
             for (int i = 0; i < rowIds.size(); i++) {
                 var rowId = rowIds.get(i);
                 var colIds = columnIds.get(i);
                 rows.add(
-                        new TickBoxGridResponseIndividualDto.TickBoxGridResponseIndividualDtoRow(
+                        new TickBoxGridResponseIndividualDto.Row(
                                 rowId, Arrays.stream(colIds).map(Object::toString).toList()
                         )
                 );
@@ -276,7 +276,7 @@ public class TickBoxGridManager extends ResponseManager<
 
         var columnIdsResponse = firstColumnId == null ? new Long[]{null} : columnIds.stream().map(Long::parseLong).toArray(Long[]::new);
 
-        return tickBoxGridRepository.getResponseIdsByGroupedResponse(formId, questionId, rowIdResponse, columnIdsResponse, pageable);
+        return tickBoxGridRepository.getResponseIdsByGroupedResponse(questionId, rowIdResponse, columnIdsResponse, pageable);
     }
 
     @Override

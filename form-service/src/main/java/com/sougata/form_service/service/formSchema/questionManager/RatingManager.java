@@ -1,8 +1,8 @@
 package com.sougata.form_service.service.formSchema.questionManager;
 
 import com.sougata.form_service.constant.QuestionType;
-import com.sougata.form_service.dto.question.request.RatingAddUpdateReqDto;
-import com.sougata.form_service.dto.question.response.RatingResDto;
+import com.sougata.form_service.dto.question.request.RatingPutReqDto;
+import com.sougata.form_service.dto.question.response.RatingDetailsDto;
 import com.sougata.form_service.dto.template.questionTemplate.RatingTemplateDetails;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.formSchema.Form;
@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service("RATING_QUESTION_MANAGER")
-public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto, RatingResDto, RatingTemplateDetails> {
+public class RatingManager extends QuestionManager<Rating, RatingPutReqDto, RatingDetailsDto, RatingTemplateDetails> {
 
     private final RatingRepository ratingRepository;
 
@@ -28,13 +28,13 @@ public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto
     }
 
     @Override
-    public RatingResDto get(UUID formId, Long questionId) {
+    public RatingDetailsDto get(UUID formId, Long questionId) {
         return toQuestionResDto(ratingRepository.findByQuestionId(questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
     @Transactional
-    public RatingResDto create(UUID formId, RatingAddUpdateReqDto crudDto) {
+    public RatingDetailsDto create(UUID formId, RatingPutReqDto crudDto) {
         var newR = new Rating();
 
         var question = createQuestion(crudDto, formId);
@@ -48,7 +48,7 @@ public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto
 
     @Override
     @Transactional
-    public RatingResDto create(UUID formId, Long questionId, RatingAddUpdateReqDto questionAddUpdateReq) {
+    public RatingDetailsDto create(UUID formId, Long questionId, RatingPutReqDto questionAddUpdateReq) {
         var newR = new Rating();
 
         var question = updateQuestion(questionId, questionAddUpdateReq);
@@ -62,7 +62,7 @@ public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto
 
     @Override
     @Transactional
-    public RatingResDto update(UUID formId, Long questionId, RatingAddUpdateReqDto questionAddUpdateReq) {
+    public RatingDetailsDto update(UUID formId, Long questionId, RatingPutReqDto questionAddUpdateReq) {
         Rating r = ratingRepository.findByQuestionId(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(getQuestionType(), questionId));
 
@@ -77,13 +77,13 @@ public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto
     }
 
     @Override
-    public RatingResDto toQuestionResDto(Rating childQuestion) {
+    public RatingDetailsDto toQuestionResDto(Rating childQuestion) {
         return toQuestionResDto(childQuestion, childQuestion.getQuestion());
     }
 
     @Override
-    public RatingResDto toQuestionResDto(Rating childQuestion, Question parentQuestion) {
-        var r = new RatingResDto();
+    public RatingDetailsDto toQuestionResDto(Rating childQuestion, Question parentQuestion) {
+        var r = new RatingDetailsDto();
 
         populateCommonFields(parentQuestion, r);
 
@@ -94,8 +94,8 @@ public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto
     }
 
     @Override
-    public RatingAddUpdateReqDto toQuestionAddUpdateReq(RatingResDto questionRes) {
-        var r = new RatingAddUpdateReqDto();
+    public RatingPutReqDto toQuestionAddUpdateReq(RatingDetailsDto questionRes) {
+        var r = new RatingPutReqDto();
 
         populateCommonFields(questionRes, r);
 
@@ -127,7 +127,7 @@ public class RatingManager extends QuestionManager<Rating, RatingAddUpdateReqDto
         ratingRepository.deleteQuestion(questionId);
     }
 
-    private void setPropertiesForNew(RatingAddUpdateReqDto source, Rating target, Question question) {
+    private void setPropertiesForNew(RatingPutReqDto source, Rating target, Question question) {
         target.setQuestion(question);
         target.setMaxRatingNumber(source.getMaxRatingNumber());
         target.setRatingIcon(source.getRatingIcon());

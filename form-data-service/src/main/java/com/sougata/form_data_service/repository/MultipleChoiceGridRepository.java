@@ -38,11 +38,10 @@ public interface MultipleChoiceGridRepository extends AnyTypeQuestionResponseRep
             left join multiple_choice_grid_rows mcgr
             on mcg.question_response_id = mcgr.multiple_choice_grid_id
             and mcgr.row_id = :rowId
-            where fr.form_id = :formId
             group by mcgr.response_column_id
             order by responseCount desc, mcgr.response_column_id asc
             """, nativeQuery = true)
-    List<Tuple> groupedByResponseRowColumn(UUID formId, long questionId, long rowId, Pageable pageable);
+    List<Tuple> groupedByResponseRowColumn(long questionId, long rowId, Pageable pageable);
 
     @Query(value = """
             select
@@ -59,7 +58,7 @@ public interface MultipleChoiceGridRepository extends AnyTypeQuestionResponseRep
             where fr.id = :formResponseId
             group by qr.question_id
             """, nativeQuery = true)
-    List<Tuple> getRowColumnIdsByFormResponse(UUID formId, long formResponseId);
+    List<Tuple> getRowColumnIdsByFormResponse(long formResponseId);
 
     @Query(value = """
             select
@@ -72,9 +71,8 @@ public interface MultipleChoiceGridRepository extends AnyTypeQuestionResponseRep
               left join multiple_choice_grids mcg on mcg.question_response_id = qr.id
               left join multiple_choice_grid_rows mcgr on mcg.question_response_id = mcgr.multiple_choice_grid_id
               and mcgr.row_id = :rowId
-            where fr.form_id = :formId
-            and (:response is null and mcgr.response_column_id is null) or mcgr.response_column_id = :response
+            where (:response is null and mcgr.response_column_id is null) or mcgr.response_column_id = :response
             order by fr.created_at, fr.id
             """, nativeQuery = true)
-    List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, Long rowId, Long response, Pageable pageable);
+    List<Tuple> getResponseIdsByGroupedResponse(long questionId, Long rowId, Long response, Pageable pageable);
 }

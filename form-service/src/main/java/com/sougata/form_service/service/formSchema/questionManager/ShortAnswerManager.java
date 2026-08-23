@@ -2,8 +2,8 @@ package com.sougata.form_service.service.formSchema.questionManager;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sougata.form_service.constant.QuestionType;
-import com.sougata.form_service.dto.question.request.ShortAnswerAddUpdateReqDto;
-import com.sougata.form_service.dto.question.response.ShortAnswerResDto;
+import com.sougata.form_service.dto.question.request.ShortAnswerPutReqDto;
+import com.sougata.form_service.dto.question.response.ShortAnswerDetailsDto;
 import com.sougata.form_service.dto.template.questionTemplate.ShortAnswerTemplateDetails;
 import com.sougata.form_service.exception.JsonParsingException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service("SHORT_ANSWER_QUESTION_MANAGER")
-public class ShortAnswerManager extends QuestionManager<ShortAnswer, ShortAnswerAddUpdateReqDto, ShortAnswerResDto, ShortAnswerTemplateDetails> {
+public class ShortAnswerManager extends QuestionManager<ShortAnswer, ShortAnswerPutReqDto, ShortAnswerDetailsDto, ShortAnswerTemplateDetails> {
 
     private final ShortAnswerRepository shortAnswerRepository;
 
@@ -32,13 +32,13 @@ public class ShortAnswerManager extends QuestionManager<ShortAnswer, ShortAnswer
     }
 
     @Override
-    public ShortAnswerResDto get(UUID formId, Long questionId) {
+    public ShortAnswerDetailsDto get(UUID formId, Long questionId) {
         return toQuestionResDto(shortAnswerRepository.findByQuestionId(questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
     @Transactional
-    public ShortAnswerResDto create(UUID formId, ShortAnswerAddUpdateReqDto crudDto) {
+    public ShortAnswerDetailsDto create(UUID formId, ShortAnswerPutReqDto crudDto) {
         var newS = new ShortAnswer();
 
         var question = createQuestion(crudDto, formId);
@@ -52,7 +52,7 @@ public class ShortAnswerManager extends QuestionManager<ShortAnswer, ShortAnswer
 
     @Override
     @Transactional
-    public ShortAnswerResDto create(UUID formId, Long questionId, ShortAnswerAddUpdateReqDto questionAddUpdateReq) {
+    public ShortAnswerDetailsDto create(UUID formId, Long questionId, ShortAnswerPutReqDto questionAddUpdateReq) {
         var newS = new ShortAnswer();
 
         var question = updateQuestion(questionId, questionAddUpdateReq);
@@ -66,7 +66,7 @@ public class ShortAnswerManager extends QuestionManager<ShortAnswer, ShortAnswer
 
     @Override
     @Transactional
-    public ShortAnswerResDto update(UUID formId, Long questionId, ShortAnswerAddUpdateReqDto questionAddUpdateReq) {
+    public ShortAnswerDetailsDto update(UUID formId, Long questionId, ShortAnswerPutReqDto questionAddUpdateReq) {
         ShortAnswer sa = shortAnswerRepository.findByQuestionId(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.SHORT_ANSWER, questionId));
 
@@ -79,13 +79,13 @@ public class ShortAnswerManager extends QuestionManager<ShortAnswer, ShortAnswer
     }
 
     @Override
-    public ShortAnswerResDto toQuestionResDto(ShortAnswer childQuestion) {
+    public ShortAnswerDetailsDto toQuestionResDto(ShortAnswer childQuestion) {
         return toQuestionResDto(childQuestion, childQuestion.getQuestion());
     }
 
     @Override
-    public ShortAnswerResDto toQuestionResDto(ShortAnswer childQuestion, Question parentQuestion) {
-        var s = new ShortAnswerResDto();
+    public ShortAnswerDetailsDto toQuestionResDto(ShortAnswer childQuestion, Question parentQuestion) {
+        var s = new ShortAnswerDetailsDto();
 
         populateCommonFields(parentQuestion, s);
 
@@ -99,8 +99,8 @@ public class ShortAnswerManager extends QuestionManager<ShortAnswer, ShortAnswer
     }
 
     @Override
-    public ShortAnswerAddUpdateReqDto toQuestionAddUpdateReq(ShortAnswerResDto questionRes) {
-        var sa = new ShortAnswerAddUpdateReqDto();
+    public ShortAnswerPutReqDto toQuestionAddUpdateReq(ShortAnswerDetailsDto questionRes) {
+        var sa = new ShortAnswerPutReqDto();
 
         populateCommonFields(questionRes, sa);
 
@@ -130,7 +130,7 @@ public class ShortAnswerManager extends QuestionManager<ShortAnswer, ShortAnswer
         shortAnswerRepository.deleteQuestion(questionId);
     }
 
-    private void setPropertiesForNew(ShortAnswerAddUpdateReqDto source, ShortAnswer target, Question question) {
+    private void setPropertiesForNew(ShortAnswerPutReqDto source, ShortAnswer target, Question question) {
         target.setQuestion(question);
         target.setValidationConfig(JsonUtil.objectToOldJsonNode(source.getValidationConfig()));
     }

@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 @Repository("DATE_RESPONSE_REPOSITORY")
 public interface DateRepository extends AnyTypeQuestionResponseRepository<Date, Long> {
@@ -30,14 +29,13 @@ public interface DateRepository extends AnyTypeQuestionResponseRepository<Date, 
                 on d.question_response_id = qr.id
                 join form_responses fr
                 on fr.id = qr.form_response_id
-                where fr.form_id = :formId
-                and qr.question_id = :questionId
+                where qr.question_id = :questionId
                 group by year, month, d.date
             ) x
             group by x.year, x.month
             order by x.year, x.month
             """, nativeQuery = true)
-    List<Tuple> getResponseDates(UUID formId, long questionId, Pageable pageable);
+    List<Tuple> getResponseDates(long questionId, Pageable pageable);
 
     @Query(value = """
             select
@@ -49,11 +47,10 @@ public interface DateRepository extends AnyTypeQuestionResponseRepository<Date, 
             and qr.question_id = :questionId
             left join dates d
             on qr.id = d.question_response_id
-            where fr.form_id = :formId
             group by d.date
             order by responseCount desc, d.date asc
             """, nativeQuery = true)
-    List<Tuple> groupedByDate(UUID formId, long questionId, Pageable pageable);
+    List<Tuple> groupedByDate(long questionId, Pageable pageable);
 
     @Query("""
             select
@@ -62,7 +59,7 @@ public interface DateRepository extends AnyTypeQuestionResponseRepository<Date, 
             from Date d
             where d.questionResponse.formResponse.id = :formResponseId
             """)
-    List<Tuple> getDatesByFormResponse(UUID formId, long formResponseId);
+    List<Tuple> getDatesByFormResponse(long formResponseId);
 
     @Query(value = """
             select
@@ -74,11 +71,11 @@ public interface DateRepository extends AnyTypeQuestionResponseRepository<Date, 
             and qr.question_id = :questionId
             left join dates d
             on qr.id = d.question_response_id
-            where fr.form_id = :formId and (
+            where (
                 (cast(:response as timestamp with time zone) is null and d.date is null)
                 or d.date = :response
             )
             order by fr.created_at, fr.id
             """, nativeQuery = true)
-    List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, Instant response, Pageable pageable);
+    List<Tuple> getResponseIdsByGroupedResponse(long questionId, Instant response, Pageable pageable);
 }

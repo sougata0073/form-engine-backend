@@ -8,23 +8,23 @@ import com.sougata.form_service.model.formSchema.Form;
 import java.util.UUID;
 
 public interface FormService {
-    FormInfoResDto createForm(FormAddUpdateReqDto dto, UUID userId);
+    FormInfoDto createForm(FormPutReqDto dto, UUID userId);
 
-    FormInfoResDto copyForm(UUID formId, CopyFormReqDto req, UUID userId);
+    FormInfoDto copyForm(UUID formId, CopyFormReqDto req, UUID userId);
 
-    FormInfoResDto updateForm(UUID formId, FormAddUpdateReqDto dto, UUID userId);
+    FormInfoDto updateForm(UUID formId, FormPutReqDto dto, UUID userId);
 
-    FormResponseDto getForm(UUID formId, UUID userId);
+    FormDetailsDto getForm(UUID formId, UUID userId);
 
-    FormResponseDto viewForm(UUID id, UUID userId);
+    FormDetailsDto viewForm(UUID id, UUID userId);
 
-    FormSummariesRes getFormsSummaries(UUID userId);
+    FormSummariesDto getFormsSummaries(UUID userId);
 
     Form getFormById(UUID id);
 
     SuccessMessageDto renameForm(UUID formId, FormRenameReqDto dto, UUID userId);
 
-    FormInfoResDto getFormInfo(UUID formId);
+    FormInfoDto getFormInfo(UUID formId);
 
     SuccessMessageDto deleteForm(UUID formId, UUID userId);
 

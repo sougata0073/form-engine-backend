@@ -1,13 +1,13 @@
 package com.sougata.form_service.service.template.impl;
 
 import com.sougata.form_service.dto.template.TemplateSummariesDto;
-import com.sougata.form_service.dto.template.TemplateSummaryResDto;
+import com.sougata.form_service.dto.template.TemplateSummaryDto;
 import com.sougata.form_service.dto.template.TemplateToFormBuildResDto;
 import com.sougata.form_service.exception.TemplateNotFoundException;
-import com.sougata.form_service.service.formSchema.FormService;
 import com.sougata.form_service.model.template.RecentlyUsedTemplate;
 import com.sougata.form_service.repository.template.RecentlyUsedTemplateRepository;
 import com.sougata.form_service.repository.template.TemplateRepository;
+import com.sougata.form_service.service.formSchema.FormService;
 import com.sougata.form_service.service.template.TemplateService;
 import com.sougata.form_service.service.template.TemplateServiceCached;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,7 +38,7 @@ public class TemplateServiceImpl implements TemplateService {
         var recentTemplates = templateServiceCached.getRecentlyUsedTemplates(userId);
         var allTemplates = templateRepository.getAllTemplateSummaries();
 
-        var merged = new ArrayList<TemplateSummaryResDto>();
+        var merged = new ArrayList<TemplateSummaryDto>();
 
         merged.addAll(recentTemplates);
         merged.addAll(allTemplates);
@@ -49,15 +49,17 @@ public class TemplateServiceImpl implements TemplateService {
     @Override
     @Transactional
     public TemplateToFormBuildResDto buildFormFromTemplate(Long templateId, UUID userId) {
-        var template = templateRepository.findById(templateId)
-                .orElseThrow(() -> new TemplateNotFoundException(templateId));
-
-        var savedForm = formService.createFromTemplate(templateServiceCached.getTemplateDetails(template), userId);
+        var savedForm = formService.createFromTemplate(
+                templateServiceCached.getTemplateDetails(templateId), userId
+        );
 
         RecentlyUsedTemplate rt = new RecentlyUsedTemplate();
 
         rt.setUserId(userId);
-        rt.setTemplate(template);
+        rt.setTemplate(
+                templateRepository.findById(templateId)
+                        .orElseThrow(() -> new TemplateNotFoundException(templateId))
+        );
 
         if (recentlyUsedTemplateRepository.existsByUserIdAndTemplateId(userId, templateId)) {
             recentlyUsedTemplateRepository.deleteByUserAndTemplate(userId, templateId);

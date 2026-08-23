@@ -1,7 +1,7 @@
 package com.sougata.form_data_service.formValidation.responseValidator;
 
 import com.sougata.form_data_service.constant.ValidationMessages;
-import com.sougata.form_data_service.dto.question.request.ShortAnswerResponseAddReqDto;
+import com.sougata.form_data_service.dto.question.request.ShortAnswerResponsePutReqDto;
 import com.sougata.form_data_service.dto.validationConfig.NoneValidationConfig;
 import com.sougata.form_data_service.dto.validationConfig.ShortAnswerValidationConfig;
 import com.sougata.form_data_service.formValidation.exception.ResponseValidationException;
@@ -18,10 +18,10 @@ public class ShortAnswerValidator {
     }
 
     public static class LengthMaxCharacterCount implements
-            ResponseValidator<ShortAnswerResponseAddReqDto, ShortAnswerValidationConfig.MaxCharacterCount> {
+            ResponseValidator<ShortAnswerResponsePutReqDto, ShortAnswerValidationConfig.MaxCharacterCount> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, ShortAnswerValidationConfig.MaxCharacterCount validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, ShortAnswerValidationConfig.MaxCharacterCount validationConfig) {
             if (validationRequestDto.getText().length() > validationConfig.getNumber()) {
                 throw new ResponseValidationException(
                         String.format(
@@ -34,8 +34,8 @@ public class ShortAnswerValidator {
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override
@@ -45,10 +45,10 @@ public class ShortAnswerValidator {
     }
 
     public static class LengthMinCharacterCount implements
-            ResponseValidator<ShortAnswerResponseAddReqDto, ShortAnswerValidationConfig.MinCharacterCount> {
+            ResponseValidator<ShortAnswerResponsePutReqDto, ShortAnswerValidationConfig.MinCharacterCount> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, ShortAnswerValidationConfig.MinCharacterCount validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, ShortAnswerValidationConfig.MinCharacterCount validationConfig) {
             if (validationRequestDto.getText().length() < validationConfig.getNumber()) {
                 throw new ResponseValidationException(
                         String.format(
@@ -61,8 +61,8 @@ public class ShortAnswerValidator {
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override
@@ -72,10 +72,10 @@ public class ShortAnswerValidator {
     }
 
     public static class NumberIsNumber implements
-            ResponseValidator<ShortAnswerResponseAddReqDto, ShortAnswerValidationConfig.IsNumber> {
+            ResponseValidator<ShortAnswerResponsePutReqDto, ShortAnswerValidationConfig.IsNumber> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, ShortAnswerValidationConfig.IsNumber validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, ShortAnswerValidationConfig.IsNumber validationConfig) {
             if (parseNumber(validationRequestDto.getText()) == null) {
                 throw new ResponseValidationException(ValidationMessages.INVALID_NUMBER);
             }
@@ -83,8 +83,8 @@ public class ShortAnswerValidator {
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override
@@ -94,10 +94,10 @@ public class ShortAnswerValidator {
     }
 
     public static class NumberGreaterThan implements
-            ResponseValidator<ShortAnswerResponseAddReqDto, ShortAnswerValidationConfig.GreaterThan> {
+            ResponseValidator<ShortAnswerResponsePutReqDto, ShortAnswerValidationConfig.GreaterThan> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, ShortAnswerValidationConfig.GreaterThan validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, ShortAnswerValidationConfig.GreaterThan validationConfig) {
             Double parsed = parseNumber(validationRequestDto.getText());
             if (parsed == null || !(parsed > validationConfig.getNumber())) {
                 throw new ResponseValidationException(
@@ -108,8 +108,8 @@ public class ShortAnswerValidator {
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override
@@ -119,10 +119,10 @@ public class ShortAnswerValidator {
     }
 
     public static class NumberGreaterThanOrEqualTo implements
-            ResponseValidator<ShortAnswerResponseAddReqDto, ShortAnswerValidationConfig.GreaterThanOrEqualTo> {
+            ResponseValidator<ShortAnswerResponsePutReqDto, ShortAnswerValidationConfig.GreaterThanOrEqualTo> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, ShortAnswerValidationConfig.GreaterThanOrEqualTo validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, ShortAnswerValidationConfig.GreaterThanOrEqualTo validationConfig) {
             Double parsed = parseNumber(validationRequestDto.getText());
             if (parsed == null || !(parsed >= validationConfig.getNumber())) {
                 throw new ResponseValidationException(
@@ -133,8 +133,8 @@ public class ShortAnswerValidator {
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override
@@ -144,10 +144,10 @@ public class ShortAnswerValidator {
     }
 
     public static class NumberLessThan implements
-            ResponseValidator<ShortAnswerResponseAddReqDto, ShortAnswerValidationConfig.LessThan> {
+            ResponseValidator<ShortAnswerResponsePutReqDto, ShortAnswerValidationConfig.LessThan> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, ShortAnswerValidationConfig.LessThan validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, ShortAnswerValidationConfig.LessThan validationConfig) {
             Double parsed = parseNumber(validationRequestDto.getText());
             if (parsed == null || !(parsed < validationConfig.getNumber())) {
                 throw new ResponseValidationException(
@@ -158,8 +158,8 @@ public class ShortAnswerValidator {
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override
@@ -169,10 +169,10 @@ public class ShortAnswerValidator {
     }
 
     public static class NumberLessThanOrEqualTo implements
-            ResponseValidator<ShortAnswerResponseAddReqDto, ShortAnswerValidationConfig.LessThanOrEqualTo> {
+            ResponseValidator<ShortAnswerResponsePutReqDto, ShortAnswerValidationConfig.LessThanOrEqualTo> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, ShortAnswerValidationConfig.LessThanOrEqualTo validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, ShortAnswerValidationConfig.LessThanOrEqualTo validationConfig) {
             Double parsed = parseNumber(validationRequestDto.getText());
             if (parsed == null || !(parsed <= validationConfig.getNumber())) {
                 throw new ResponseValidationException(
@@ -183,8 +183,8 @@ public class ShortAnswerValidator {
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override
@@ -194,10 +194,10 @@ public class ShortAnswerValidator {
     }
 
     public static class NumberEqualTo implements
-            ResponseValidator<ShortAnswerResponseAddReqDto, ShortAnswerValidationConfig.EqualTo> {
+            ResponseValidator<ShortAnswerResponsePutReqDto, ShortAnswerValidationConfig.EqualTo> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, ShortAnswerValidationConfig.EqualTo validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, ShortAnswerValidationConfig.EqualTo validationConfig) {
             Double parsed = parseNumber(validationRequestDto.getText());
             if (parsed == null || !parsed.equals(validationConfig.getNumber())) {
                 throw new ResponseValidationException(
@@ -208,8 +208,8 @@ public class ShortAnswerValidator {
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override
@@ -219,10 +219,10 @@ public class ShortAnswerValidator {
     }
 
     public static class NumberNotEqualTo implements
-            ResponseValidator<ShortAnswerResponseAddReqDto, ShortAnswerValidationConfig.NotEqualTo> {
+            ResponseValidator<ShortAnswerResponsePutReqDto, ShortAnswerValidationConfig.NotEqualTo> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, ShortAnswerValidationConfig.NotEqualTo validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, ShortAnswerValidationConfig.NotEqualTo validationConfig) {
             Double parsed = parseNumber(validationRequestDto.getText());
             if (parsed == null || parsed.equals(validationConfig.getNumber())) {
                 throw new ResponseValidationException(
@@ -233,8 +233,8 @@ public class ShortAnswerValidator {
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override
@@ -244,10 +244,10 @@ public class ShortAnswerValidator {
     }
 
     public static class NumberBetween implements
-            ResponseValidator<ShortAnswerResponseAddReqDto, ShortAnswerValidationConfig.Between> {
+            ResponseValidator<ShortAnswerResponsePutReqDto, ShortAnswerValidationConfig.Between> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, ShortAnswerValidationConfig.Between validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, ShortAnswerValidationConfig.Between validationConfig) {
             Double parsed = parseNumber(validationRequestDto.getText());
             if (parsed == null || !(parsed >= validationConfig.getFromNumber() && parsed <= validationConfig.getToNumber())) {
                 throw new ResponseValidationException(
@@ -258,8 +258,8 @@ public class ShortAnswerValidator {
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override
@@ -269,10 +269,10 @@ public class ShortAnswerValidator {
     }
 
     public static class NumberNotBetween implements
-            ResponseValidator<ShortAnswerResponseAddReqDto, ShortAnswerValidationConfig.NotBetween> {
+            ResponseValidator<ShortAnswerResponsePutReqDto, ShortAnswerValidationConfig.NotBetween> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, ShortAnswerValidationConfig.NotBetween validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, ShortAnswerValidationConfig.NotBetween validationConfig) {
             Double parsed = parseNumber(validationRequestDto.getText());
             if (parsed == null || (parsed >= validationConfig.getFromNumber() && parsed <= validationConfig.getToNumber())) {
                 throw new ResponseValidationException(
@@ -283,8 +283,8 @@ public class ShortAnswerValidator {
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override
@@ -294,10 +294,10 @@ public class ShortAnswerValidator {
     }
 
     public static class NumberWholeNumber implements
-            ResponseValidator<ShortAnswerResponseAddReqDto, ShortAnswerValidationConfig.WholeNumber> {
+            ResponseValidator<ShortAnswerResponsePutReqDto, ShortAnswerValidationConfig.WholeNumber> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, ShortAnswerValidationConfig.WholeNumber validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, ShortAnswerValidationConfig.WholeNumber validationConfig) {
             try {
                 int parsed = Integer.parseInt(validationRequestDto.getText());
                 if (parsed < 0) {
@@ -310,8 +310,8 @@ public class ShortAnswerValidator {
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override
@@ -321,10 +321,10 @@ public class ShortAnswerValidator {
     }
 
     public static class RegexMatches implements
-            ResponseValidator<ShortAnswerResponseAddReqDto, ShortAnswerValidationConfig.Matches> {
+            ResponseValidator<ShortAnswerResponsePutReqDto, ShortAnswerValidationConfig.Matches> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, ShortAnswerValidationConfig.Matches validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, ShortAnswerValidationConfig.Matches validationConfig) {
             String pattern = validationConfig.getText();
             if (pattern == null) {
                 pattern = "";
@@ -338,8 +338,8 @@ public class ShortAnswerValidator {
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override
@@ -349,10 +349,10 @@ public class ShortAnswerValidator {
     }
 
     public static class RegexDoesNotMatch implements
-            ResponseValidator<ShortAnswerResponseAddReqDto, ShortAnswerValidationConfig.DoesNotMatch> {
+            ResponseValidator<ShortAnswerResponsePutReqDto, ShortAnswerValidationConfig.DoesNotMatch> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, ShortAnswerValidationConfig.DoesNotMatch validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, ShortAnswerValidationConfig.DoesNotMatch validationConfig) {
             String pattern = validationConfig.getText();
             if (pattern == null) {
                 pattern = "";
@@ -366,8 +366,8 @@ public class ShortAnswerValidator {
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override
@@ -377,10 +377,10 @@ public class ShortAnswerValidator {
     }
 
     public static class TextContains implements
-            ResponseValidator<ShortAnswerResponseAddReqDto, ShortAnswerValidationConfig.Contains> {
+            ResponseValidator<ShortAnswerResponsePutReqDto, ShortAnswerValidationConfig.Contains> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, ShortAnswerValidationConfig.Contains validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, ShortAnswerValidationConfig.Contains validationConfig) {
             if (validationRequestDto.getText() == null || validationConfig.getText() == null) {
                 throw new ResponseValidationException(
                         String.format(ValidationMessages.INVALID_CONTAINS, validationConfig.getText())
@@ -395,8 +395,8 @@ public class ShortAnswerValidator {
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override
@@ -406,10 +406,10 @@ public class ShortAnswerValidator {
     }
 
     public static class TextDoesNotContains implements
-            ResponseValidator<ShortAnswerResponseAddReqDto, ShortAnswerValidationConfig.DoesNotContains> {
+            ResponseValidator<ShortAnswerResponsePutReqDto, ShortAnswerValidationConfig.DoesNotContains> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, ShortAnswerValidationConfig.DoesNotContains validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, ShortAnswerValidationConfig.DoesNotContains validationConfig) {
             if (validationRequestDto.getText() == null || validationConfig.getText() == null) {
                 return true;
             }
@@ -422,8 +422,8 @@ public class ShortAnswerValidator {
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override
@@ -433,10 +433,10 @@ public class ShortAnswerValidator {
     }
 
     public static class TextEmail implements
-            ResponseValidator<ShortAnswerResponseAddReqDto, ShortAnswerValidationConfig.Email> {
+            ResponseValidator<ShortAnswerResponsePutReqDto, ShortAnswerValidationConfig.Email> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, ShortAnswerValidationConfig.Email validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, ShortAnswerValidationConfig.Email validationConfig) {
             if (validationRequestDto.getText() == null || !StringUtil.isEmail(validationRequestDto.getText())) {
                 throw new ResponseValidationException(ValidationMessages.INVALID_EMAIL);
             }
@@ -444,8 +444,8 @@ public class ShortAnswerValidator {
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override
@@ -455,10 +455,10 @@ public class ShortAnswerValidator {
     }
 
     public static class TextUrl implements
-            ResponseValidator<ShortAnswerResponseAddReqDto, ShortAnswerValidationConfig.Url> {
+            ResponseValidator<ShortAnswerResponsePutReqDto, ShortAnswerValidationConfig.Url> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, ShortAnswerValidationConfig.Url validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, ShortAnswerValidationConfig.Url validationConfig) {
             if (validationRequestDto.getText() == null || !StringUtil.isUrl(validationRequestDto.getText())) {
                 throw new ResponseValidationException(ValidationMessages.INVALID_URL);
             }
@@ -466,8 +466,8 @@ public class ShortAnswerValidator {
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override
@@ -476,16 +476,16 @@ public class ShortAnswerValidator {
         }
     }
 
-    public static class None implements ResponseValidator<ShortAnswerResponseAddReqDto, NoneValidationConfig> {
+    public static class None implements ResponseValidator<ShortAnswerResponsePutReqDto, NoneValidationConfig> {
 
         @Override
-        public boolean isValid(ShortAnswerResponseAddReqDto validationRequestDto, NoneValidationConfig validationConfig) {
+        public boolean isValid(ShortAnswerResponsePutReqDto validationRequestDto, NoneValidationConfig validationConfig) {
             return true;
         }
 
         @Override
-        public Class<ShortAnswerResponseAddReqDto> getValidationRequestClass() {
-            return ShortAnswerResponseAddReqDto.class;
+        public Class<ShortAnswerResponsePutReqDto> getValidationRequestClass() {
+            return ShortAnswerResponsePutReqDto.class;
         }
 
         @Override

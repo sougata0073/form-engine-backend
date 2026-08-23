@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
-import com.sougata.form_data_service.dto.question.request.TimeResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.TimeResDto;
+import com.sougata.form_data_service.dto.question.request.TimeResponsePutReqDto;
+import com.sougata.form_data_service.dto.question.response.TimeDetailsDto;
 import com.sougata.form_data_service.dto.response.individual.TimeResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.TimeResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.TimeResponseSummaryDto;
@@ -24,9 +24,9 @@ import java.util.*;
 
 @Service("TIME_RESPONSE_MANAGER")
 public class TimeManager extends ResponseManager<
-        TimeResponseAddReqDto,
+        TimeResponsePutReqDto,
         TimeResponseSummaryDto,
-        TimeResDto,
+        TimeDetailsDto,
         TimeResponseQuestionDto,
         TimeResponseQuestionDto.Response,
         TimeResponseQuestionDto.Summary,
@@ -43,7 +43,7 @@ public class TimeManager extends ResponseManager<
 
     @Override
     @Transactional
-    public void create(TimeResponseAddReqDto response, FormResponse formResponse) {
+    public void create(TimeResponsePutReqDto response, FormResponse formResponse) {
         Time time = new Time();
 
         var qr = createQuestionResponse(response.getQuestionId(), formResponse);
@@ -55,7 +55,7 @@ public class TimeManager extends ResponseManager<
     }
 
     @Override
-    public List<TimeResponseSummaryDto> getResponseSummaries(UUID formId, List<TimeResDto> questionResponses) {
+    public List<TimeResponseSummaryDto> getResponseSummaries(UUID formId, List<TimeDetailsDto> questionResponses) {
         var responseSummaries = timeRepository.getResponseSummaries(formId);
         var result = new ArrayList<TimeResponseSummaryDto>();
 
@@ -120,9 +120,9 @@ public class TimeManager extends ResponseManager<
     }
 
     @Override
-    public TimeResponseSummaryDto getResponseSummary(UUID formId, Long questionId, TimeResDto questionRes, Pageable pageable) {
+    public TimeResponseSummaryDto getResponseSummary(UUID formId, Long questionId, TimeDetailsDto questionRes, Pageable pageable) {
         var responseSummary = timeRepository.getResponseSummary(formId, questionId);
-        var timeResponses = timeRepository.getResponseTimes(formId, questionId, pageable);
+        var timeResponses = timeRepository.getResponseTimes(questionId, pageable);
 
         var t = new TimeResponseSummaryDto();
 
@@ -160,13 +160,13 @@ public class TimeManager extends ResponseManager<
     }
 
     @Override
-    public TimeResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, TimeResDto questionResponse) {
+    public TimeResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, TimeDetailsDto questionResponse) {
         return new TimeResponseQuestionDto.Summary();
     }
 
     @Override
     public TimeResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
-        var grouped = timeRepository.groupedByTime(formId, questionId, pageable);
+        var grouped = timeRepository.groupedByTime(questionId, pageable);
 
         var t = new TimeResponseQuestionDto();
 
@@ -197,7 +197,7 @@ public class TimeManager extends ResponseManager<
 
     @Override
     public List<TimeResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
-        var responses = timeRepository.getTimesByFormResponse(formId, formResponseId);
+        var responses = timeRepository.getTimesByFormResponse(formResponseId);
 
         return responses.stream().map(tuple -> {
             var qId = tuple.get("questionId", Long.class);
@@ -225,7 +225,7 @@ public class TimeManager extends ResponseManager<
 
         var groupedResponse = time.getFirst() == null ? null : Instant.parse(time.getFirst());
 
-        return timeRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
+        return timeRepository.getResponseIdsByGroupedResponse(questionId, groupedResponse, pageable);
     }
 
     @Override

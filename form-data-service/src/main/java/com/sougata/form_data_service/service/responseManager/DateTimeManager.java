@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
-import com.sougata.form_data_service.dto.question.request.DateTimeResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.DateTimeResDto;
+import com.sougata.form_data_service.dto.question.request.DateTimeResponsePutReqDto;
+import com.sougata.form_data_service.dto.question.response.DateTimeDetailsDto;
 import com.sougata.form_data_service.dto.response.individual.DateTimeResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.DateTimeResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.DateTimeResponseSummaryDto;
@@ -23,9 +23,9 @@ import java.util.*;
 
 @Service("DATE_TIME_RESPONSE_MANAGER")
 public class DateTimeManager extends ResponseManager<
-        DateTimeResponseAddReqDto,
+        DateTimeResponsePutReqDto,
         DateTimeResponseSummaryDto,
-        DateTimeResDto,
+        DateTimeDetailsDto,
         DateTimeResponseQuestionDto,
         DateTimeResponseQuestionDto.Response,
         DateTimeResponseQuestionDto.Summary,
@@ -42,7 +42,7 @@ public class DateTimeManager extends ResponseManager<
 
     @Override
     @Transactional
-    public void create(DateTimeResponseAddReqDto response, FormResponse formResponse) {
+    public void create(DateTimeResponsePutReqDto response, FormResponse formResponse) {
         DateTime dateTime = new DateTime();
 
         var qr = createQuestionResponse(response.getQuestionId(), formResponse);
@@ -54,7 +54,7 @@ public class DateTimeManager extends ResponseManager<
     }
 
     @Override
-    public List<DateTimeResponseSummaryDto> getResponseSummaries(UUID formId, List<DateTimeResDto> questionResponses) {
+    public List<DateTimeResponseSummaryDto> getResponseSummaries(UUID formId, List<DateTimeDetailsDto> questionResponses) {
         var responseSummaries = dateTimeRepository.getResponseSummaries(formId);
         var result = new ArrayList<DateTimeResponseSummaryDto>();
 
@@ -107,9 +107,9 @@ public class DateTimeManager extends ResponseManager<
     }
 
     @Override
-    public DateTimeResponseSummaryDto getResponseSummary(UUID formId, Long questionId, DateTimeResDto questionRes, Pageable pageable) {
+    public DateTimeResponseSummaryDto getResponseSummary(UUID formId, Long questionId, DateTimeDetailsDto questionRes, Pageable pageable) {
         var responseSummary = dateTimeRepository.getResponseSummary(formId, questionId);
-        var dateTimes = dateTimeRepository.getResponseDateTimes(formId, questionId, pageable);
+        var dateTimes = dateTimeRepository.getResponseDateTimes(questionId, pageable);
 
         var dt = new DateTimeResponseSummaryDto();
 
@@ -135,13 +135,13 @@ public class DateTimeManager extends ResponseManager<
     }
 
     @Override
-    public DateTimeResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, DateTimeResDto questionResponse) {
+    public DateTimeResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, DateTimeDetailsDto questionResponse) {
         return new DateTimeResponseQuestionDto.Summary();
     }
 
     @Override
     public DateTimeResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
-        var grouped = dateTimeRepository.groupedByDateTimes(formId, questionId, pageable);
+        var grouped = dateTimeRepository.groupedByDateTimes(questionId, pageable);
 
         var dt = new DateTimeResponseQuestionDto();
 
@@ -172,7 +172,7 @@ public class DateTimeManager extends ResponseManager<
 
     @Override
     public List<DateTimeResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
-        var responses = dateTimeRepository.getDateTimesByFormResponse(formId, formResponseId);
+        var responses = dateTimeRepository.getDateTimesByFormResponse(formResponseId);
 
         return responses.stream().map(tuple -> {
             var qId = tuple.get("questionId", Long.class);
@@ -200,7 +200,7 @@ public class DateTimeManager extends ResponseManager<
 
         var groupedResponse = dateTime.getFirst() == null ? null :  Instant.parse(dateTime.getFirst());
 
-        return dateTimeRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
+        return dateTimeRepository.getResponseIdsByGroupedResponse(questionId, groupedResponse, pageable);
     }
 
     @Override

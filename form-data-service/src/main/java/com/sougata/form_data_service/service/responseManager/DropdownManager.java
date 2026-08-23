@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
-import com.sougata.form_data_service.dto.question.request.DropdownResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.DropdownResDto;
+import com.sougata.form_data_service.dto.question.request.DropdownResponsePutReqDto;
+import com.sougata.form_data_service.dto.question.response.DropdownDetailsDto;
 import com.sougata.form_data_service.dto.response.individual.DropdownResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.DropdownResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.DropdownResponseSummaryDto;
@@ -24,9 +24,9 @@ import java.util.stream.Collectors;
 
 @Service("DROPDOWN_RESPONSE_MANAGER")
 public class DropdownManager extends ResponseManager<
-        DropdownResponseAddReqDto,
+        DropdownResponsePutReqDto,
         DropdownResponseSummaryDto,
-        DropdownResDto,
+        DropdownDetailsDto,
         DropdownResponseQuestionDto,
         DropdownResponseQuestionDto.Response,
         DropdownResponseQuestionDto.Summary,
@@ -43,7 +43,7 @@ public class DropdownManager extends ResponseManager<
 
     @Override
     @Transactional
-    public void create(DropdownResponseAddReqDto response, FormResponse formResponse) {
+    public void create(DropdownResponsePutReqDto response, FormResponse formResponse) {
         Dropdown dropdown = new Dropdown();
 
         var qr = createQuestionResponse(response.getQuestionId(), formResponse);
@@ -55,7 +55,7 @@ public class DropdownManager extends ResponseManager<
     }
 
     @Override
-    public List<DropdownResponseSummaryDto> getResponseSummaries(UUID formId, List<DropdownResDto> questionResponses) {
+    public List<DropdownResponseSummaryDto> getResponseSummaries(UUID formId, List<DropdownDetailsDto> questionResponses) {
         var responseSummaries = dropdownRepository.getResponseSummaries(formId);
         var result = new ArrayList<DropdownResponseSummaryDto>();
 
@@ -113,7 +113,7 @@ public class DropdownManager extends ResponseManager<
     }
 
     @Override
-    public DropdownResponseSummaryDto getResponseSummary(UUID formId, Long questionId, DropdownResDto questionRes, Pageable pageable) {
+    public DropdownResponseSummaryDto getResponseSummary(UUID formId, Long questionId, DropdownDetailsDto questionRes, Pageable pageable) {
         var responseSummary = dropdownRepository.getResponseSummary(formId, questionId);
         var res = new DropdownResponseSummaryDto();
 
@@ -128,7 +128,7 @@ public class DropdownManager extends ResponseManager<
     }
 
     @Override
-    public DropdownResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, DropdownResDto questionResponse) {
+    public DropdownResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, DropdownDetailsDto questionResponse) {
         var sum = new DropdownResponseQuestionDto.Summary();
 
         sum.setOptions(questionResponse.getOptions());
@@ -138,7 +138,7 @@ public class DropdownManager extends ResponseManager<
 
     @Override
     public DropdownResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
-        var grouped = dropdownRepository.groupedByResponseOption(formId, questionId, pageable);
+        var grouped = dropdownRepository.groupedByResponseOption(questionId, pageable);
 
         var d = new DropdownResponseQuestionDto();
 
@@ -168,7 +168,7 @@ public class DropdownManager extends ResponseManager<
 
     @Override
     public List<DropdownResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
-        var responses = dropdownRepository.getOptionIdsByFormResponse(formId, formResponseId);
+        var responses = dropdownRepository.getOptionIdsByFormResponse(formResponseId);
 
         return responses.stream().map(tuple -> {
             var qId = tuple.get("questionId", Long.class);
@@ -196,7 +196,7 @@ public class DropdownManager extends ResponseManager<
 
         var groupedResponse = optionId.getFirst() == null ? null : Long.parseLong(optionId.getFirst());
 
-        return dropdownRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
+        return dropdownRepository.getResponseIdsByGroupedResponse(questionId, groupedResponse, pageable);
     }
 
     @Override

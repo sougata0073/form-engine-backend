@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
-import com.sougata.form_data_service.dto.question.request.ShortAnswerResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.ShortAnswerResDto;
+import com.sougata.form_data_service.dto.question.request.ShortAnswerResponsePutReqDto;
+import com.sougata.form_data_service.dto.question.response.ShortAnswerDetailsDto;
 import com.sougata.form_data_service.dto.response.individual.ShortAnswerResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.ShortAnswerResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.ShortAnswerResponseSummaryDto;
@@ -24,9 +24,9 @@ import java.util.*;
 
 @Service("SHORT_ANSWER_RESPONSE_MANAGER")
 public class ShortAnswerManager extends ResponseManager<
-        ShortAnswerResponseAddReqDto,
+        ShortAnswerResponsePutReqDto,
         ShortAnswerResponseSummaryDto,
-        ShortAnswerResDto,
+        ShortAnswerDetailsDto,
         ShortAnswerResponseQuestionDto,
         ShortAnswerResponseQuestionDto.Response,
         ShortAnswerResponseQuestionDto.Summary,
@@ -47,7 +47,7 @@ public class ShortAnswerManager extends ResponseManager<
 
     @Override
     @Transactional
-    public void create(ShortAnswerResponseAddReqDto response, FormResponse formResponse) {
+    public void create(ShortAnswerResponsePutReqDto response, FormResponse formResponse) {
         ShortAnswer shortAnswer = new ShortAnswer();
 
         var qr = createQuestionResponse(response.getQuestionId(), formResponse);
@@ -59,7 +59,7 @@ public class ShortAnswerManager extends ResponseManager<
     }
 
     @Override
-    public List<ShortAnswerResponseSummaryDto> getResponseSummaries(UUID formId, List<ShortAnswerResDto> questionResponses) {
+    public List<ShortAnswerResponseSummaryDto> getResponseSummaries(UUID formId, List<ShortAnswerDetailsDto> questionResponses) {
         var responseSummaries = shortAnswerRepository.getResponseSummaries(formId);
         var result = new ArrayList<ShortAnswerResponseSummaryDto>();
 
@@ -102,9 +102,9 @@ public class ShortAnswerManager extends ResponseManager<
     }
 
     @Override
-    public ShortAnswerResponseSummaryDto getResponseSummary(UUID formId, Long questionId, ShortAnswerResDto questionRes, Pageable pageable) {
+    public ShortAnswerResponseSummaryDto getResponseSummary(UUID formId, Long questionId, ShortAnswerDetailsDto questionRes, Pageable pageable) {
         var responseSummary = shortAnswerRepository.getResponseSummary(formId, questionId);
-        var texts = shortAnswerRepository.getResponseTexts(formId, questionId, pageable);
+        var texts = shortAnswerRepository.getResponseTexts(questionId, pageable);
 
         var sa = new ShortAnswerResponseSummaryDto();
 
@@ -119,14 +119,14 @@ public class ShortAnswerManager extends ResponseManager<
     }
 
     @Override
-    public ShortAnswerResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, ShortAnswerResDto questionResponse) {
+    public ShortAnswerResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, ShortAnswerDetailsDto questionResponse) {
         return new ShortAnswerResponseQuestionDto.Summary();
     }
 
     @Override
     public ShortAnswerResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
 
-        var grouped = shortAnswerRepository.groupedByText(formId, questionId, pageable);
+        var grouped = shortAnswerRepository.groupedByText(questionId, pageable);
 
         var sa = new ShortAnswerResponseQuestionDto();
 
@@ -156,7 +156,7 @@ public class ShortAnswerManager extends ResponseManager<
 
     @Override
     public List<ShortAnswerResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
-        var responses = shortAnswerRepository.getTextsByFormResponse(formId, formResponseId);
+        var responses = shortAnswerRepository.getTextsByFormResponse(formResponseId);
 
         return responses.stream().map(tuple -> {
             var qId = tuple.get("questionId", Long.class);
@@ -184,7 +184,7 @@ public class ShortAnswerManager extends ResponseManager<
 
         var groupedResponse = text.getFirst();
 
-        return shortAnswerRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
+        return shortAnswerRepository.getResponseIdsByGroupedResponse(questionId, groupedResponse, pageable);
     }
 
     @Override

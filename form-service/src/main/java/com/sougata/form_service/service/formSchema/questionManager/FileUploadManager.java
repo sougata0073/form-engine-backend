@@ -1,9 +1,9 @@
 package com.sougata.form_service.service.formSchema.questionManager;
 
 import com.sougata.form_service.constant.QuestionType;
-import com.sougata.form_service.dto.question.request.FileUploadAddUpdateReqDto;
-import com.sougata.form_service.dto.question.response.FileTypeRes;
-import com.sougata.form_service.dto.question.response.FileUploadResDto;
+import com.sougata.form_service.dto.question.request.FileUploadPutReqDto;
+import com.sougata.form_service.dto.question.response.FileTypeDetails;
+import com.sougata.form_service.dto.question.response.FileUploadDetailsDto;
 import com.sougata.form_service.dto.template.questionTemplate.FileUploadTemplateDetails;
 import com.sougata.form_service.exception.FileTypeNotFoundException;
 import com.sougata.form_service.exception.QuestionNotFoundException;
@@ -25,7 +25,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service("FILE_UPLOAD_QUESTION_MANAGER")
-public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAddUpdateReqDto, FileUploadResDto, FileUploadTemplateDetails> {
+public class FileUploadManager extends QuestionManager<FileUpload, FileUploadPutReqDto, FileUploadDetailsDto, FileUploadTemplateDetails> {
 
     private final FileUploadRepository fileUploadRepository;
     private final FileTypeRepository fileTypeRepository;
@@ -37,13 +37,13 @@ public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAdd
     }
 
     @Override
-    public FileUploadResDto get(UUID formId, Long questionId) {
+    public FileUploadDetailsDto get(UUID formId, Long questionId) {
         return toQuestionResDto(fileUploadRepository.findByQuestionId(questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
     @Transactional
-    public FileUploadResDto create(UUID formId, FileUploadAddUpdateReqDto crudDto) {
+    public FileUploadDetailsDto create(UUID formId, FileUploadPutReqDto crudDto) {
         var newFu = new FileUpload();
 
         var question = createQuestion(crudDto, formId);
@@ -57,7 +57,7 @@ public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAdd
 
     @Override
     @Transactional
-    public FileUploadResDto create(UUID formId, Long questionId, FileUploadAddUpdateReqDto questionAddUpdateReq) {
+    public FileUploadDetailsDto create(UUID formId, Long questionId, FileUploadPutReqDto questionAddUpdateReq) {
         var newFu = new FileUpload();
 
         var question = updateQuestion(questionId, questionAddUpdateReq);
@@ -71,7 +71,7 @@ public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAdd
 
     @Override
     @Transactional
-    public FileUploadResDto update(UUID formId, Long questionId, FileUploadAddUpdateReqDto questionAddUpdateReq) {
+    public FileUploadDetailsDto update(UUID formId, Long questionId, FileUploadPutReqDto questionAddUpdateReq) {
         FileUpload fu = fileUploadRepository.findByQuestionId(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.FILE_UPLOAD, questionId));
 
@@ -95,18 +95,18 @@ public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAdd
     }
 
     @Override
-    public FileUploadResDto toQuestionResDto(FileUpload childQuestion) {
+    public FileUploadDetailsDto toQuestionResDto(FileUpload childQuestion) {
         return toQuestionResDto(childQuestion, childQuestion.getQuestion());
     }
 
     @Override
-    public FileUploadResDto toQuestionResDto(FileUpload childQuestion, Question parentQuestion) {
-        var f = new FileUploadResDto();
+    public FileUploadDetailsDto toQuestionResDto(FileUpload childQuestion, Question parentQuestion) {
+        var f = new FileUploadDetailsDto();
 
         populateCommonFields(parentQuestion, f);
 
         f.setAllowedFileTypes(childQuestion.getAllowedFileTypes().stream()
-                .map(ft -> new FileTypeRes(ft.getCategory(), Arrays.asList(ft.getMimeTypes())))
+                .map(ft -> new FileTypeDetails(ft.getCategory(), Arrays.asList(ft.getMimeTypes())))
                 .toList()
         );
         f.setMaxFileSize(childQuestion.getMaxFileSize());
@@ -115,14 +115,14 @@ public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAdd
     }
 
     @Override
-    public FileUploadAddUpdateReqDto toQuestionAddUpdateReq(FileUploadResDto questionRes) {
-        var f = new FileUploadAddUpdateReqDto();
+    public FileUploadPutReqDto toQuestionAddUpdateReq(FileUploadDetailsDto questionRes) {
+        var f = new FileUploadPutReqDto();
 
         populateCommonFields(questionRes, f);
 
         f.setAllowedFileCategories(
                 questionRes.getAllowedFileTypes().stream()
-                        .map(FileTypeRes::getCategory)
+                        .map(FileTypeDetails::getCategory)
                         .toList()
         );
         f.setMaxFileSize(questionRes.getMaxFileSize());
@@ -156,7 +156,7 @@ public class FileUploadManager extends QuestionManager<FileUpload, FileUploadAdd
         fileUploadRepository.deleteQuestion(questionId);
     }
 
-    private void setPropertiesForNew(FileUploadAddUpdateReqDto source, FileUpload target, Question question) {
+    private void setPropertiesForNew(FileUploadPutReqDto source, FileUpload target, Question question) {
         List<String> categories = source.getAllowedFileCategories();
         List<FileType> fileTypes = categories.stream()
                 .map(category ->

@@ -1,7 +1,6 @@
 package com.sougata.form_data_service.dto.response.question;
 
-import com.sougata.form_data_service.dto.question.response.TickBoxGridResDto;
-import lombok.AllArgsConstructor;
+import com.sougata.form_data_service.dto.question.response.TickBoxGridDetailsDto;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -31,17 +30,8 @@ public class TickBoxGridResponseQuestionDto extends ResponseQuestionDto<TickBoxG
     @Setter
     @NoArgsConstructor
     public static class Summary extends ResponseByQuestionSummary {
-        private List<TickBoxGridResDto.TickBoxGridRowResDto> rows;
-        private List<TickBoxGridResDto.TickBoxGridColumnResDto> columns;
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class FormResponsesReqDto {
-        private String rowId;
-        private List<String> columnIds;
+        private List<TickBoxGridDetailsDto.TickBoxGridRowResDto> rows;
+        private List<TickBoxGridDetailsDto.TickBoxGridColumnResDto> columns;
     }
 
 }

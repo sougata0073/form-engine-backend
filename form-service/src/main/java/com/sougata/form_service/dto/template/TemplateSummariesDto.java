@@ -12,5 +12,5 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TemplateSummariesDto {
-    private List<TemplateSummaryResDto> templates;
+    private List<TemplateSummaryDto> templates;
 }

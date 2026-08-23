@@ -1,6 +1,7 @@
 package com.sougata.form_service.repository.formSchema;
 
 import com.sougata.form_service.model.formSchema.Question;
+import com.sougata.form_service.projection.QuestionIdAndOrderIndexProjection;
 import com.sougata.form_service.projection.QuestionSummaryProjection;
 import com.sougata.form_service.projection.QuestionTypeProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,6 +25,7 @@ public interface QuestionRepository extends JpaRepository<Question, Long> {
 
     Optional<QuestionTypeProjection> findQuestionTypeById(Long id);
 
+    List<QuestionIdAndOrderIndexProjection> findAllIdAndOrderIndexByFormId(UUID formId);
 
     @Modifying
     @Transactional

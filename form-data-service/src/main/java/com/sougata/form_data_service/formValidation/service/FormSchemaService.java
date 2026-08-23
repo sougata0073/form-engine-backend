@@ -2,8 +2,8 @@ package com.sougata.form_data_service.formValidation.service;
 
 import com.sougata.form_data_service.constant.ValidationMessages;
 import com.sougata.form_data_service.dto.common.SuccessMessageDto;
-import com.sougata.form_data_service.dto.form.FormResponseDto;
-import com.sougata.form_data_service.dto.question.response.QuestionRes;
+import com.sougata.form_data_service.dto.form.FormDetailsDto;
+import com.sougata.form_data_service.dto.question.response.QuestionDetailsDto;
 import com.sougata.form_data_service.dto.validation.ResponseValidationRequestDto;
 import com.sougata.form_data_service.formValidation.exception.QuestionSchemaNotFoundException;
 import com.sougata.form_data_service.formValidation.exception.RequiredQuestionResponseNotFoundException;
@@ -25,12 +25,12 @@ public class FormSchemaService {
         this.questionSchemaManagerFactory = questionSchemaManagerFactory;
     }
 
-    public SuccessMessageDto validateResponse(UUID formId, FormResponseDto formDetails, ResponseValidationRequestDto dto) {
+    public SuccessMessageDto validateResponse(UUID formId, FormDetailsDto formDetails, ResponseValidationRequestDto dto) {
 
         var questionResList = formDetails.getQuestions();
 
         // Getting IDs of questions which are marked as required
-        List<Long> requiredQuestionIds = questionResList.stream().filter(QuestionRes::getRequired).map(QuestionRes::getId).toList();
+        List<Long> requiredQuestionIds = questionResList.stream().filter(QuestionDetailsDto::getRequired).map(QuestionDetailsDto::getId).toList();
 
         Set<Long> responseQuestionIds = new HashSet<>();
 
@@ -51,7 +51,7 @@ public class FormSchemaService {
             throw new RequiredQuestionResponseNotFoundException(missingQuestionIds);
         }
 
-        var questionResMap = questionResList.stream().collect(Collectors.groupingBy(QuestionRes::getId));
+        var questionResMap = questionResList.stream().collect(Collectors.groupingBy(QuestionDetailsDto::getId));
 
         // Now passing each response into validators
         dto.getResponses().forEach(vReq -> {

@@ -1,6 +1,5 @@
 package com.sougata.form_data_service.dto.response.question;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -25,14 +24,6 @@ public class LinearScaleResponseQuestionDto extends ResponseQuestionDto<LinearSc
     public static class Summary extends ResponseByQuestionSummary {
         private Integer fromNumber;
         private Integer toNumber;
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class FormResponsesReqDto {
-        private String scale;
     }
 
 }

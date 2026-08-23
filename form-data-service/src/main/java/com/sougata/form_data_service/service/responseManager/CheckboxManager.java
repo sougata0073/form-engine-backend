@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
-import com.sougata.form_data_service.dto.question.request.CheckboxResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.CheckboxResDto;
+import com.sougata.form_data_service.dto.question.request.CheckboxResponsePutReqDto;
+import com.sougata.form_data_service.dto.question.response.CheckboxDetailsDto;
 import com.sougata.form_data_service.dto.response.individual.CheckboxResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.CheckboxResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.CheckboxResponseSummaryDto;
@@ -23,9 +23,9 @@ import java.util.stream.Collectors;
 
 @Service("CHECKBOX_RESPONSE_MANAGER")
 public class CheckboxManager extends ResponseManager<
-        CheckboxResponseAddReqDto,
+        CheckboxResponsePutReqDto,
         CheckboxResponseSummaryDto,
-        CheckboxResDto,
+        CheckboxDetailsDto,
         CheckboxResponseQuestionDto,
         CheckboxResponseQuestionDto.Response,
         CheckboxResponseQuestionDto.Summary,
@@ -42,7 +42,7 @@ public class CheckboxManager extends ResponseManager<
 
     @Override
     @Transactional
-    public void create(CheckboxResponseAddReqDto response, FormResponse formResponse) {
+    public void create(CheckboxResponsePutReqDto response, FormResponse formResponse) {
         Checkbox cb = new Checkbox();
 
         var qr = createQuestionResponse(response.getQuestionId(), formResponse);
@@ -63,7 +63,7 @@ public class CheckboxManager extends ResponseManager<
     }
 
     @Override
-    public List<CheckboxResponseSummaryDto> getResponseSummaries(UUID formId, List<CheckboxResDto> questionResponses) {
+    public List<CheckboxResponseSummaryDto> getResponseSummaries(UUID formId, List<CheckboxDetailsDto> questionResponses) {
 
         var responseSummaries = checkboxRepository.getResponseSummaries(formId);
         var result = new ArrayList<CheckboxResponseSummaryDto>();
@@ -122,7 +122,7 @@ public class CheckboxManager extends ResponseManager<
     }
 
     @Override
-    public CheckboxResponseSummaryDto getResponseSummary(UUID formId, Long questionId, CheckboxResDto questionRes, Pageable pageable) {
+    public CheckboxResponseSummaryDto getResponseSummary(UUID formId, Long questionId, CheckboxDetailsDto questionRes, Pageable pageable) {
         var responseSummary = checkboxRepository.getResponseSummary(formId, questionId);
         var res = new CheckboxResponseSummaryDto();
 
@@ -137,7 +137,7 @@ public class CheckboxManager extends ResponseManager<
     }
 
     @Override
-    public CheckboxResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, CheckboxResDto questionResponse) {
+    public CheckboxResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, CheckboxDetailsDto questionResponse) {
         var sum = new CheckboxResponseQuestionDto.Summary();
 
         sum.setOptions(questionResponse.getOptions());
@@ -180,7 +180,7 @@ public class CheckboxManager extends ResponseManager<
 
     @Override
     public List<CheckboxResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
-        var responses = checkboxRepository.getOptionIdsByFormResponse(formId, formResponseId);
+        var responses = checkboxRepository.getOptionIdsByFormResponse(formResponseId);
 
         return responses.stream().map(tuple -> {
             var qId = tuple.get("questionId", Long.class);
@@ -210,7 +210,7 @@ public class CheckboxManager extends ResponseManager<
 
         var groupedResponse = firstOptionId == null ? new Long[]{null} : optionIds.stream().map(Long::parseLong).toArray(Long[]::new);
 
-        return checkboxRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
+        return checkboxRepository.getResponseIdsByGroupedResponse(questionId, groupedResponse, pageable);
     }
 
     @Override

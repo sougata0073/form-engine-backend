@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.formValidation.service.questionSchemaManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
-import com.sougata.form_data_service.dto.question.request.TickBoxGridResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.TickBoxGridResDto;
+import com.sougata.form_data_service.dto.question.request.TickBoxGridResponsePutReqDto;
+import com.sougata.form_data_service.dto.question.response.TickBoxGridDetailsDto;
 import com.sougata.form_data_service.formValidation.exception.ResponseValidationException;
 import com.sougata.form_data_service.formValidation.service.QuestionSchemaManager;
 import org.springframework.stereotype.Service;
@@ -12,10 +12,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 @Service("TICK_BOX_GRID_QUESTION_SCHEMA_MANAGER")
-public class TickBoxGridSchemaManager extends QuestionSchemaManager<TickBoxGridResDto, TickBoxGridResponseAddReqDto> {
+public class TickBoxGridSchemaManager extends QuestionSchemaManager<TickBoxGridDetailsDto, TickBoxGridResponsePutReqDto> {
 
     @Override
-    public boolean validateResponse(TickBoxGridResponseAddReqDto validationDto, TickBoxGridResDto tbg) {
+    public boolean validateResponse(TickBoxGridResponsePutReqDto validationDto, TickBoxGridDetailsDto tbg) {
         if (validationDto.getRows().size() > tbg.getRows().size()) {
             throw new ResponseValidationException(
                     "The number of response rows cannot exceed the number of available rows. Available rows: "
@@ -26,26 +26,26 @@ public class TickBoxGridSchemaManager extends QuestionSchemaManager<TickBoxGridR
         }
 
         var validRowIds = new HashSet<>(tbg.getRows().stream()
-                .map(TickBoxGridResDto.TickBoxGridRowResDto::id)
+                .map(TickBoxGridDetailsDto.TickBoxGridRowResDto::id)
                 .toList());
 
         var validColumnIds = new HashSet<>(tbg.getColumns().stream()
-                .map(TickBoxGridResDto.TickBoxGridColumnResDto::id)
+                .map(TickBoxGridDetailsDto.TickBoxGridColumnResDto::id)
                 .toList());
 
         var invalidRowIds = new ArrayList<Long>();
         var invalidColumnIds = new HashMap<Long, ArrayList<Long>>();
 
         validationDto.getRows().forEach(r -> {
-            if (!validRowIds.contains(r.rowId())) {
-                invalidRowIds.add(r.rowId());
+            if (!validRowIds.contains(r.getRowId())) {
+                invalidRowIds.add(r.getRowId());
                 return;
             }
 
-            r.responseColumnIds().forEach(columnId -> {
+            r.getResponseColumnIds().forEach(columnId -> {
                 if (columnId == null || !validColumnIds.contains(columnId)) {
                     invalidColumnIds
-                            .computeIfAbsent(r.rowId(), k -> new ArrayList<>())
+                            .computeIfAbsent(r.getRowId(), k -> new ArrayList<>())
                             .add(columnId);
                 }
             });
@@ -75,8 +75,8 @@ public class TickBoxGridSchemaManager extends QuestionSchemaManager<TickBoxGridR
             }
 
             var rowsWithoutSelection = validationDto.getRows().stream()
-                    .filter(r -> r.responseColumnIds().isEmpty())
-                    .map(TickBoxGridResponseAddReqDto.Row::rowId)
+                    .filter(r -> r.getResponseColumnIds().isEmpty())
+                    .map(TickBoxGridResponsePutReqDto.Row::getRowId)
                     .toList();
 
             if (!rowsWithoutSelection.isEmpty()) {

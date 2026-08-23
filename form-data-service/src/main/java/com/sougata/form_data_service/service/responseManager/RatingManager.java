@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
-import com.sougata.form_data_service.dto.question.request.RatingResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.RatingResDto;
+import com.sougata.form_data_service.dto.question.request.RatingResponsePutReqDto;
+import com.sougata.form_data_service.dto.question.response.RatingDetailsDto;
 import com.sougata.form_data_service.dto.response.individual.RatingResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.RatingResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.RatingResponseSummaryDto;
@@ -25,9 +25,9 @@ import java.util.stream.IntStream;
 
 @Service("RATING_RESPONSE_MANAGER")
 public class RatingManager extends ResponseManager<
-        RatingResponseAddReqDto,
+        RatingResponsePutReqDto,
         RatingResponseSummaryDto,
-        RatingResDto,
+        RatingDetailsDto,
         RatingResponseQuestionDto,
         RatingResponseQuestionDto.Response,
         RatingResponseQuestionDto.Summary,
@@ -44,7 +44,7 @@ public class RatingManager extends ResponseManager<
 
     @Override
     @Transactional
-    public void create(RatingResponseAddReqDto response, FormResponse formResponse) {
+    public void create(RatingResponsePutReqDto response, FormResponse formResponse) {
         Rating rating = new Rating();
 
         var qr = createQuestionResponse(response.getQuestionId(), formResponse);
@@ -56,7 +56,7 @@ public class RatingManager extends ResponseManager<
     }
 
     @Override
-    public List<RatingResponseSummaryDto> getResponseSummaries(UUID formId, List<RatingResDto> questionResponses) {
+    public List<RatingResponseSummaryDto> getResponseSummaries(UUID formId, List<RatingDetailsDto> questionResponses) {
         var responseSummaries = ratingRepository.getResponseSummaries(formId);
         var result = new ArrayList<RatingResponseSummaryDto>();
 
@@ -124,7 +124,7 @@ public class RatingManager extends ResponseManager<
     }
 
     @Override
-    public RatingResponseSummaryDto getResponseSummary(UUID formId, Long questionId, RatingResDto questionRes, Pageable pageable) {
+    public RatingResponseSummaryDto getResponseSummary(UUID formId, Long questionId, RatingDetailsDto questionRes, Pageable pageable) {
         var responseSummary = ratingRepository.getResponseSummary(formId, questionId);
         var res = new RatingResponseSummaryDto();
 
@@ -139,7 +139,7 @@ public class RatingManager extends ResponseManager<
     }
 
     @Override
-    public RatingResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, RatingResDto questionResponse) {
+    public RatingResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, RatingDetailsDto questionResponse) {
         var sum = new RatingResponseQuestionDto.Summary();
 
         sum.setRatingIcon(questionResponse.getRatingIcon());
@@ -150,7 +150,7 @@ public class RatingManager extends ResponseManager<
 
     @Override
     public RatingResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
-        var grouped = ratingRepository.groupedByRating(formId, questionId, pageable);
+        var grouped = ratingRepository.groupedByRating(questionId, pageable);
 
         var r = new RatingResponseQuestionDto();
 
@@ -180,7 +180,7 @@ public class RatingManager extends ResponseManager<
 
     @Override
     public List<RatingResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
-        var responses = ratingRepository.getRatingsByFormResponse(formId, formResponseId);
+        var responses = ratingRepository.getRatingsByFormResponse(formResponseId);
 
         return responses.stream().map(tuple -> {
             var qId = tuple.get("questionId", Long.class);
@@ -208,7 +208,7 @@ public class RatingManager extends ResponseManager<
 
         var groupedResponse = rating.getFirst() == null ? null : Integer.parseInt(rating.getFirst());
 
-        return ratingRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
+        return ratingRepository.getResponseIdsByGroupedResponse(questionId, groupedResponse, pageable);
     }
 
 

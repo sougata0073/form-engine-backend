@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
-import com.sougata.form_data_service.dto.question.request.LinearScaleResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.LinearScaleResDto;
+import com.sougata.form_data_service.dto.question.request.LinearScaleResponsePutReqDto;
+import com.sougata.form_data_service.dto.question.response.LinearScaleDetailsDto;
 import com.sougata.form_data_service.dto.response.individual.LinearScaleResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.LinearScaleResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.LinearScaleResponseSummaryDto;
@@ -25,9 +25,9 @@ import java.util.stream.IntStream;
 
 @Service("LINEAR_SCALE_RESPONSE_MANAGER")
 public class LinearScaleManager extends ResponseManager<
-        LinearScaleResponseAddReqDto,
+        LinearScaleResponsePutReqDto,
         LinearScaleResponseSummaryDto,
-        LinearScaleResDto,
+        LinearScaleDetailsDto,
         LinearScaleResponseQuestionDto,
         LinearScaleResponseQuestionDto.Response,
         LinearScaleResponseQuestionDto.Summary,
@@ -44,7 +44,7 @@ public class LinearScaleManager extends ResponseManager<
 
     @Override
     @Transactional
-    public void create(LinearScaleResponseAddReqDto response, FormResponse formResponse) {
+    public void create(LinearScaleResponsePutReqDto response, FormResponse formResponse) {
         LinearScale linearScale = new LinearScale();
 
         var qr = createQuestionResponse(response.getQuestionId(), formResponse);
@@ -56,7 +56,7 @@ public class LinearScaleManager extends ResponseManager<
     }
 
     @Override
-    public List<LinearScaleResponseSummaryDto> getResponseSummaries(UUID formId, List<LinearScaleResDto> questionResponses) {
+    public List<LinearScaleResponseSummaryDto> getResponseSummaries(UUID formId, List<LinearScaleDetailsDto> questionResponses) {
         var responseSummaries = linearScaleRepository.getResponseSummaries(formId);
         var result = new ArrayList<LinearScaleResponseSummaryDto>();
 
@@ -115,7 +115,7 @@ public class LinearScaleManager extends ResponseManager<
     }
 
     @Override
-    public LinearScaleResponseSummaryDto getResponseSummary(UUID formId, Long questionId, LinearScaleResDto questionRes, Pageable pageable) {
+    public LinearScaleResponseSummaryDto getResponseSummary(UUID formId, Long questionId, LinearScaleDetailsDto questionRes, Pageable pageable) {
         var responseSummary = linearScaleRepository.getResponseSummary(formId, questionId);
         var res = new LinearScaleResponseSummaryDto();
 
@@ -130,7 +130,7 @@ public class LinearScaleManager extends ResponseManager<
     }
 
     @Override
-    public LinearScaleResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, LinearScaleResDto questionResponse) {
+    public LinearScaleResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, LinearScaleDetailsDto questionResponse) {
         var sum = new LinearScaleResponseQuestionDto.Summary();
 
         sum.setFromNumber(questionResponse.getFromNumber());
@@ -141,7 +141,7 @@ public class LinearScaleManager extends ResponseManager<
 
     @Override
     public LinearScaleResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
-        var grouped = linearScaleRepository.groupedByResponseScale(formId, questionId, pageable);
+        var grouped = linearScaleRepository.groupedByResponseScale(questionId, pageable);
 
         var ls = new LinearScaleResponseQuestionDto();
 
@@ -172,7 +172,7 @@ public class LinearScaleManager extends ResponseManager<
 
     @Override
     public List<LinearScaleResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
-        var responses = linearScaleRepository.getScalesByFormResponse(formId, formResponseId);
+        var responses = linearScaleRepository.getScalesByFormResponse(formResponseId);
 
         return responses.stream().map(tuple -> {
             var qId = tuple.get("questionId", Long.class);
@@ -200,7 +200,7 @@ public class LinearScaleManager extends ResponseManager<
 
         var groupedResponse = scale.getFirst() == null ? null : Integer.parseInt(scale.getFirst());
 
-        return linearScaleRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
+        return linearScaleRepository.getResponseIdsByGroupedResponse(questionId, groupedResponse, pageable);
     }
 
     @Override

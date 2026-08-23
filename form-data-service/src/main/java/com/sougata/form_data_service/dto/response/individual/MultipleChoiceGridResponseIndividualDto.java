@@ -15,13 +15,13 @@ import java.util.List;
 @AllArgsConstructor
 public class MultipleChoiceGridResponseIndividualDto extends ResponseIndividualDto {
 
-    private List<MultipleChoiceGridResponseIndividualDtoRow> rows;
+    private List<Row> rows;
 
     @Getter
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class MultipleChoiceGridResponseIndividualDtoRow {
+    public static class Row {
 
         @JsonSerialize(using = ToStringSerializer.class)
         private Long rowId;

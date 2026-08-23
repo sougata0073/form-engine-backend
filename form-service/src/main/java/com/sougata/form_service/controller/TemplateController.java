@@ -1,5 +1,6 @@
 package com.sougata.form_service.controller;
 
+import com.sougata.form_service.constant.cacheNames.TemplateCacheNames;
 import com.sougata.form_service.dto.template.TemplateSummariesDto;
 import com.sougata.form_service.dto.template.TemplateToFormBuildResDto;
 import com.sougata.form_service.service.template.TemplateService;
@@ -29,7 +30,7 @@ public class TemplateController {
     }
 
     @PostMapping(path = "{templateId}/build-form")
-    @CacheEvict(cacheNames = {"recentlyUsedTemplates"}, key = "#userId")
+    @CacheEvict(cacheNames = {TemplateCacheNames.RECENTLY_USED_TEMPLATES}, key = "#userId")
     public ResponseEntity<TemplateToFormBuildResDto> buildFormFromTemplate(
             @PathVariable Long templateId,
             @RequestHeader("auth-jwt") UUID userId

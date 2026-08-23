@@ -1,8 +1,8 @@
 package com.sougata.form_service.service.formSchema.questionManager;
 
 import com.sougata.form_service.constant.QuestionType;
-import com.sougata.form_service.dto.question.request.DateAddUpdateReqDto;
-import com.sougata.form_service.dto.question.response.DateResDto;
+import com.sougata.form_service.dto.question.request.DatePutReqDto;
+import com.sougata.form_service.dto.question.response.DateDetailsDto;
 import com.sougata.form_service.dto.template.questionTemplate.DateTemplateDetails;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.formSchema.Date;
@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service("DATE_QUESTION_MANAGER")
-public class DateManager extends QuestionManager<Date, DateAddUpdateReqDto, DateResDto, DateTemplateDetails> {
+public class DateManager extends QuestionManager<Date, DatePutReqDto, DateDetailsDto, DateTemplateDetails> {
 
     private final DateRepository dateRepository;
 
@@ -28,14 +28,14 @@ public class DateManager extends QuestionManager<Date, DateAddUpdateReqDto, Date
     }
 
     @Override
-    public DateResDto get(UUID formId, Long questionId) {
+    public DateDetailsDto get(UUID formId, Long questionId) {
         return toQuestionResDto(dateRepository.findByQuestionId(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
     @Transactional
-    public DateResDto create(UUID formId, DateAddUpdateReqDto crudDto) {
+    public DateDetailsDto create(UUID formId, DatePutReqDto crudDto) {
         var newDate = new Date();
 
         var question = createQuestion(crudDto, formId);
@@ -49,7 +49,7 @@ public class DateManager extends QuestionManager<Date, DateAddUpdateReqDto, Date
 
     @Override
     @Transactional
-    public DateResDto create(UUID formId, Long questionId, DateAddUpdateReqDto questionAddUpdateReq) {
+    public DateDetailsDto create(UUID formId, Long questionId, DatePutReqDto questionAddUpdateReq) {
         var newDate = new Date();
 
         var question = updateQuestion(questionId, questionAddUpdateReq);
@@ -63,7 +63,7 @@ public class DateManager extends QuestionManager<Date, DateAddUpdateReqDto, Date
 
     @Override
     @Transactional
-    public DateResDto update(UUID formId, Long questionId, DateAddUpdateReqDto questionAddUpdateReq) {
+    public DateDetailsDto update(UUID formId, Long questionId, DatePutReqDto questionAddUpdateReq) {
         Date date = dateRepository.findByQuestionId(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.DATE, questionId));
 
@@ -85,13 +85,13 @@ public class DateManager extends QuestionManager<Date, DateAddUpdateReqDto, Date
     }
 
     @Override
-    public DateResDto toQuestionResDto(Date childQuestion) {
+    public DateDetailsDto toQuestionResDto(Date childQuestion) {
         return toQuestionResDto(childQuestion, childQuestion.getQuestion());
     }
 
     @Override
-    public DateResDto toQuestionResDto(Date childQuestion, Question parentQuestion) {
-        var d = new DateResDto();
+    public DateDetailsDto toQuestionResDto(Date childQuestion, Question parentQuestion) {
+        var d = new DateDetailsDto();
 
         populateCommonFields(parentQuestion, d);
 
@@ -99,8 +99,8 @@ public class DateManager extends QuestionManager<Date, DateAddUpdateReqDto, Date
     }
 
     @Override
-    public DateAddUpdateReqDto toQuestionAddUpdateReq(DateResDto questionRes) {
-        var d = new DateAddUpdateReqDto();
+    public DatePutReqDto toQuestionAddUpdateReq(DateDetailsDto questionRes) {
+        var d = new DatePutReqDto();
 
         populateCommonFields(questionRes, d);
 

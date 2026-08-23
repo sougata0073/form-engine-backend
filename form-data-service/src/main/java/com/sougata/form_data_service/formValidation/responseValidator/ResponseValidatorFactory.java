@@ -1,7 +1,7 @@
 package com.sougata.form_data_service.formValidation.responseValidator;
 
 import com.sougata.form_data_service.constant.ValidationId;
-import com.sougata.form_data_service.dto.question.request.QuestionResponseAddReq;
+import com.sougata.form_data_service.dto.question.request.QuestionResponsePutReqDto;
 import com.sougata.form_data_service.dto.validationConfig.ValidationConfig;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
@@ -17,7 +17,7 @@ public class ResponseValidatorFactory {
     }
 
     @SuppressWarnings("unchecked")
-    public <V extends QuestionResponseAddReq, C extends ValidationConfig> ResponseValidator<V, C> getValidator(
+    public <V extends QuestionResponsePutReqDto, C extends ValidationConfig> ResponseValidator<V, C> getValidator(
             ValidationId validationId
     ) {
         String validatorBeanName = String.format("%s_RESPONSE_VALIDATOR", validationId.name());

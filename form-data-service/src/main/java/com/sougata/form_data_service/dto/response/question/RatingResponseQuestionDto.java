@@ -1,7 +1,6 @@
 package com.sougata.form_data_service.dto.response.question;
 
 import com.sougata.form_data_service.constant.RatingIcon;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -26,14 +25,6 @@ public class RatingResponseQuestionDto extends ResponseQuestionDto<RatingRespons
     public static class Summary extends ResponseByQuestionSummary {
         private RatingIcon ratingIcon;
         private Integer maxRatingNumber;
-    }
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class FormResponsesReqDto {
-        private Integer rating;
     }
 
 }

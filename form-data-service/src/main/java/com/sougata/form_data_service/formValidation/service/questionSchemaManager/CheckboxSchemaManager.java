@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.formValidation.service.questionSchemaManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
-import com.sougata.form_data_service.dto.question.request.CheckboxResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.CheckboxResDto;
+import com.sougata.form_data_service.dto.question.request.CheckboxResponsePutReqDto;
+import com.sougata.form_data_service.dto.question.response.CheckboxDetailsDto;
 import com.sougata.form_data_service.formValidation.exception.ResponseValidationException;
 import com.sougata.form_data_service.formValidation.responseValidator.ResponseValidatorFactory;
 import com.sougata.form_data_service.formValidation.service.QuestionSchemaManager;
@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 @Service("CHECKBOX_QUESTION_SCHEMA_MANAGER")
-public class CheckboxSchemaManager extends QuestionSchemaManager<CheckboxResDto, CheckboxResponseAddReqDto> {
+public class CheckboxSchemaManager extends QuestionSchemaManager<CheckboxDetailsDto, CheckboxResponsePutReqDto> {
 
     private final ResponseValidatorFactory responseValidatorFactory;
 
@@ -23,8 +23,8 @@ public class CheckboxSchemaManager extends QuestionSchemaManager<CheckboxResDto,
     }
 
     @Override
-    public boolean validateResponse(CheckboxResponseAddReqDto validationDto, CheckboxResDto cb) {
-        var optionIdSet = new HashSet<>(cb.getOptions().stream().map(CheckboxResDto.CheckboxOptionResDto::id).toList());
+    public boolean validateResponse(CheckboxResponsePutReqDto validationDto, CheckboxDetailsDto cb) {
+        var optionIdSet = new HashSet<>(cb.getOptions().stream().map(CheckboxDetailsDto.CheckboxOptionResDto::id).toList());
         var invalidResponseOptionIds = new ArrayList<Long>();
 
         validationDto.getResponseOptionIds().forEach(id -> {

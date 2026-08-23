@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 @Repository("DATE_TIME_RESPONSE_REPOSITORY")
 public interface DateTimeRepository extends AnyTypeQuestionResponseRepository<DateTime, Long> {
@@ -23,12 +22,11 @@ public interface DateTimeRepository extends AnyTypeQuestionResponseRepository<Da
             on dt.question_response_id = qr.id
             join form_responses fr
             on fr.id = qr.form_response_id
-            where fr.form_id = :formId
-            and qr.question_id = :questionId
+            where qr.question_id = :questionId
             group by date, dt.date_time
             order by count(qr.id) desc, date asc, dt.date_time asc
             """, nativeQuery = true)
-    List<Tuple> getResponseDateTimes(UUID formId, long questionId, Pageable pageable);
+    List<Tuple> getResponseDateTimes(long questionId, Pageable pageable);
 
     @Query(value = """
             select
@@ -40,11 +38,10 @@ public interface DateTimeRepository extends AnyTypeQuestionResponseRepository<Da
             and qr.question_id = :questionId
             left join date_times dt
             on qr.id = dt.question_response_id
-            where fr.form_id = :formId
             group by dt.date_time
             order by responseCount desc, dt.date_time asc
             """, nativeQuery = true)
-    List<Tuple> groupedByDateTimes(UUID formId, long questionId, Pageable pageable);
+    List<Tuple> groupedByDateTimes(long questionId, Pageable pageable);
 
     @Query("""
             select
@@ -53,7 +50,7 @@ public interface DateTimeRepository extends AnyTypeQuestionResponseRepository<Da
             from DateTime d
             where d.questionResponse.formResponse.id = :formResponseId
             """)
-    List<Tuple> getDateTimesByFormResponse(UUID formId, long formResponseId);
+    List<Tuple> getDateTimesByFormResponse(long formResponseId);
 
     @Query(value = """
             select
@@ -65,11 +62,11 @@ public interface DateTimeRepository extends AnyTypeQuestionResponseRepository<Da
             and qr.question_id = :questionId
             left join date_times dt
             on qr.id = dt.question_response_id
-            where fr.form_id = :formId and (
+            where (
                 (cast(:response as timestamp with time zone) is null and dt.date_time is null)
                 or dt.date_time = :response
             )
             order by fr.created_at, fr.id
             """, nativeQuery = true)
-    List<Tuple> getResponseIdsByGroupedResponse(UUID formId, long questionId, Instant response, Pageable pageable);
+    List<Tuple> getResponseIdsByGroupedResponse(long questionId, Instant response, Pageable pageable);
 }

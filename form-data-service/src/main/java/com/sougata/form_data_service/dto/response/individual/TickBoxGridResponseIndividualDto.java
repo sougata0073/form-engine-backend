@@ -15,13 +15,13 @@ import java.util.List;
 @AllArgsConstructor
 public class TickBoxGridResponseIndividualDto extends ResponseIndividualDto {
 
-    private List<TickBoxGridResponseIndividualDtoRow> rows;
+    private List<Row> rows;
 
     @Getter
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class TickBoxGridResponseIndividualDtoRow {
+    public static class Row {
         @JsonSerialize(using = ToStringSerializer.class)
         private Long rowId;
         private List<String> columnIds;

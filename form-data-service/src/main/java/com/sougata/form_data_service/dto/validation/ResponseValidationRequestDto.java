@@ -1,6 +1,6 @@
 package com.sougata.form_data_service.dto.validation;
 
-import com.sougata.form_data_service.dto.question.request.QuestionResponseAddReq;
+import com.sougata.form_data_service.dto.question.request.QuestionResponsePutReqDto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,5 +13,5 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ResponseValidationRequestDto {
-    private List<QuestionResponseAddReq> responses;
+    private List<QuestionResponsePutReqDto> responses;
 }

@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.service.responseManager;
 
 import com.sougata.form_data_service.constant.QuestionType;
-import com.sougata.form_data_service.dto.question.request.MultipleChoiceResponseAddReqDto;
-import com.sougata.form_data_service.dto.question.response.MultipleChoiceResDto;
+import com.sougata.form_data_service.dto.question.request.MultipleChoiceResponsePutReqDto;
+import com.sougata.form_data_service.dto.question.response.MultipleChoiceDetailsDto;
 import com.sougata.form_data_service.dto.response.individual.MultipleChoiceResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.question.MultipleChoiceResponseQuestionDto;
 import com.sougata.form_data_service.dto.response.summary.MultipleChoiceResponseSummaryDto;
@@ -24,9 +24,9 @@ import java.util.stream.Collectors;
 
 @Service("MULTIPLE_CHOICE_RESPONSE_MANAGER")
 public class MultipleChoiceManager extends ResponseManager<
-        MultipleChoiceResponseAddReqDto,
+        MultipleChoiceResponsePutReqDto,
         MultipleChoiceResponseSummaryDto,
-        MultipleChoiceResDto,
+        MultipleChoiceDetailsDto,
         MultipleChoiceResponseQuestionDto,
         MultipleChoiceResponseQuestionDto.Response,
         MultipleChoiceResponseQuestionDto.Summary,
@@ -43,7 +43,7 @@ public class MultipleChoiceManager extends ResponseManager<
 
     @Override
     @Transactional
-    public void create(MultipleChoiceResponseAddReqDto response, FormResponse formResponse) {
+    public void create(MultipleChoiceResponsePutReqDto response, FormResponse formResponse) {
         MultipleChoice multipleChoice = new MultipleChoice();
 
         var qr = createQuestionResponse(response.getQuestionId(), formResponse);
@@ -55,7 +55,7 @@ public class MultipleChoiceManager extends ResponseManager<
     }
 
     @Override
-    public List<MultipleChoiceResponseSummaryDto> getResponseSummaries(UUID formId, List<MultipleChoiceResDto> questionResponses) {
+    public List<MultipleChoiceResponseSummaryDto> getResponseSummaries(UUID formId, List<MultipleChoiceDetailsDto> questionResponses) {
         var responseSummaries = multipleChoiceRepository.getResponseSummaries(formId);
         var result = new ArrayList<MultipleChoiceResponseSummaryDto>();
 
@@ -113,7 +113,7 @@ public class MultipleChoiceManager extends ResponseManager<
     }
 
     @Override
-    public MultipleChoiceResponseSummaryDto getResponseSummary(UUID formId, Long questionId, MultipleChoiceResDto questionRes, Pageable pageable) {
+    public MultipleChoiceResponseSummaryDto getResponseSummary(UUID formId, Long questionId, MultipleChoiceDetailsDto questionRes, Pageable pageable) {
         var responseSummary = multipleChoiceRepository.getResponseSummary(formId, questionId);
         var res = new MultipleChoiceResponseSummaryDto();
 
@@ -128,7 +128,7 @@ public class MultipleChoiceManager extends ResponseManager<
     }
 
     @Override
-    public MultipleChoiceResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, MultipleChoiceResDto questionResponse) {
+    public MultipleChoiceResponseQuestionDto.Summary getResponseByQuestionSummary(UUID formId, MultipleChoiceDetailsDto questionResponse) {
         var sum = new MultipleChoiceResponseQuestionDto.Summary();
 
         sum.setOptions(questionResponse.getOptions());
@@ -138,7 +138,7 @@ public class MultipleChoiceManager extends ResponseManager<
 
     @Override
     public MultipleChoiceResponseQuestionDto getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable) {
-        var grouped = multipleChoiceRepository.groupedByResponseOption(formId, questionId, pageable);
+        var grouped = multipleChoiceRepository.groupedByResponseOption(questionId, pageable);
 
         var mc = new MultipleChoiceResponseQuestionDto();
 
@@ -169,7 +169,7 @@ public class MultipleChoiceManager extends ResponseManager<
 
     @Override
     public List<MultipleChoiceResponseIndividualDto> getIndividualResponses(UUID formId, Long formResponseId) {
-        var responses = multipleChoiceRepository.getOptionIdsByFormResponse(formId, formResponseId);
+        var responses = multipleChoiceRepository.getOptionIdsByFormResponse(formResponseId);
 
         return responses.stream().map(tuple -> {
             var qId = tuple.get("questionId", Long.class);
@@ -197,7 +197,7 @@ public class MultipleChoiceManager extends ResponseManager<
 
         var groupedResponse = optionId.getFirst() == null ? null : Long.parseLong(optionId.getFirst());
 
-        return multipleChoiceRepository.getResponseIdsByGroupedResponse(formId, questionId, groupedResponse, pageable);
+        return multipleChoiceRepository.getResponseIdsByGroupedResponse(questionId, groupedResponse, pageable);
     }
 
     @Override

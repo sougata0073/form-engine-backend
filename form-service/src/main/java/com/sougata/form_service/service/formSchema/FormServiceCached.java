@@ -1,13 +1,13 @@
 package com.sougata.form_service.service.formSchema;
 
-import com.sougata.form_service.dto.form.FormResponseDto;
+import com.sougata.form_service.dto.form.FormDetailsDto;
 
 import java.util.UUID;
 
 public interface FormServiceCached {
 
-    FormResponseDto getFormDetails(UUID formId);
+    FormDetailsDto getFormDetails(UUID formId);
 
-    FormResponseDto loadFormDetailsFromDb(UUID formId);
+    FormDetailsDto loadFormDetailsFromDb(UUID formId);
 
 }

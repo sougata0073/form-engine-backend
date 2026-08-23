@@ -2,7 +2,7 @@ package com.sougata.form_data_service.service.impl;
 
 import com.sougata.form_data_service.dto.common.SuccessMessageDto;
 import com.sougata.form_data_service.dto.form.*;
-import com.sougata.form_data_service.dto.question.response.QuestionRes;
+import com.sougata.form_data_service.dto.question.response.QuestionDetailsDto;
 import com.sougata.form_data_service.dto.response.individual.ResponseIndividualDto;
 import com.sougata.form_data_service.dto.response.individual.ResponseIndividualResDto;
 import com.sougata.form_data_service.dto.response.question.ResponseByQuestionResponse;
@@ -60,7 +60,7 @@ public class FormResponseServiceImpl implements FormResponseService {
 
     @Override
     @Transactional
-    public FormResponseAddResDto saveResponse(UUID formId, FormResponseAddReqDto req, UUID userId) {
+    public FormResponsePutResDto saveResponse(UUID formId, FormResponsePutReqDto req, UUID userId) {
 
         var formDetails = formServiceFeignClient.getFormDetails(formId);
 
@@ -97,7 +97,7 @@ public class FormResponseServiceImpl implements FormResponseService {
             responseManager.create(response, savedFormResponse);
         });
 
-        return new FormResponseAddResDto(savedFormResponse.getId());
+        return new FormResponsePutResDto(savedFormResponse.getId());
     }
 
     @Override
@@ -110,7 +110,7 @@ public class FormResponseServiceImpl implements FormResponseService {
 
         var questions = formServiceFeignClient.getFormDetails(formId).getQuestions();
 
-        var questionTypeMap = questions.stream().collect(Collectors.groupingBy(QuestionRes::getQuestionType));
+        var questionTypeMap = questions.stream().collect(Collectors.groupingBy(QuestionDetailsDto::getQuestionType));
 
         var result = new ArrayList<ResponseSummaryDto<?>>();
 
@@ -185,34 +185,15 @@ public class FormResponseServiceImpl implements FormResponseService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public ResponseIndividualResDto getIndividualFormResponse(UUID formId, Long formResponseId) {
-        var formResponse = formResponseRepository.findByFormIdAndId(formId, formResponseId)
-                .orElseThrow(() -> new IllegalArgumentException("Form response not found with ID: " + formResponseId));
-
-        var questionTypeMap = formResponse.getQuestionResponses().stream().collect(Collectors.groupingBy(QuestionResponse::getQuestionType));
-
-        var result = new ArrayList<ResponseIndividualDto>();
-
-        questionTypeMap.keySet().forEach(qType -> {
-            var manager = responseManagerFactory.get(qType);
-
-            var indiResponses = manager.getIndividualResponses(formId, formResponseId);
-
-            result.addAll(indiResponses);
-        });
-
-        var formResponsePage = formResponseRepository.getPageNumberOfFormResponse(formId, formResponseId)
-                .orElseThrow(() -> new IllegalArgumentException("Form response not found with ID: " + formResponseId));
-
-        return new ResponseIndividualResDto(formResponseId, formResponsePage, formResponse.getUserId(), result);
+        return getIndividualFormResponseHelper(formId, formResponseId, null);
     }
 
     @Override
-    public ResponseIndividualResDto getIndividualFormResponseByOPage(UUID formId, Long page) {
-        var formResponseId = formResponseRepository.getFormResponseIdFromPage(formId, page)
-                .orElseThrow(() -> new IllegalArgumentException("Form response not found for page: " + page));
-
-        return getIndividualFormResponse(formId, formResponseId);
+    @Transactional(readOnly = true)
+    public ResponseIndividualResDto getIndividualFormResponseByPage(UUID formId, Long page) {
+        return getIndividualFormResponseHelper(formId, null, page);
     }
 
     @Override
@@ -238,5 +219,35 @@ public class FormResponseServiceImpl implements FormResponseService {
     @Override
     public void deleteQuestionResponses(UUID formId, Long questionId) {
         questionResponseRepository.deleteAllByQuestionId(questionId);
+    }
+
+    private ResponseIndividualResDto getIndividualFormResponseHelper(UUID formId, Long formResponseId, Long formResponsePage) {
+
+        if (formResponseId == null && formResponsePage == null) {
+            throw new IllegalArgumentException("Form response ID and Form response page both can not be null");
+        }
+
+        var finalFormResponseId = formResponseId == null ? formResponseRepository.getFormResponseIdFromPage(formId, formResponsePage)
+                .orElseThrow(() -> new IllegalArgumentException("Form response not found for page: " + formResponsePage)) : formResponseId;
+
+        var formResponse = formResponseRepository.findByFormIdAndId(formId, finalFormResponseId)
+                .orElseThrow(() -> new IllegalArgumentException("Form response not found with ID: " + finalFormResponseId));
+
+        var questionTypeMap = formResponse.getQuestionResponses().stream().collect(Collectors.groupingBy(QuestionResponse::getQuestionType));
+
+        var result = new ArrayList<ResponseIndividualDto>();
+
+        questionTypeMap.keySet().forEach(qType -> {
+            var manager = responseManagerFactory.get(qType);
+
+            var indiResponses = manager.getIndividualResponses(formId, finalFormResponseId);
+
+            result.addAll(indiResponses);
+        });
+
+        var finalFormResponsePage = formResponsePage == null ? formResponseRepository.getPageNumberOfFormResponse(formId, finalFormResponseId)
+                .orElseThrow(() -> new IllegalArgumentException("Form response not found with ID: " + finalFormResponseId)) : formResponsePage;
+
+        return new ResponseIndividualResDto(finalFormResponseId, finalFormResponsePage, formResponse.getUserId(), result);
     }
 }

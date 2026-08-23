@@ -1,8 +1,8 @@
 package com.sougata.form_data_service.service;
 
 import com.sougata.form_data_service.dto.common.SuccessMessageDto;
-import com.sougata.form_data_service.dto.form.FormResponseAddReqDto;
-import com.sougata.form_data_service.dto.form.FormResponseAddResDto;
+import com.sougata.form_data_service.dto.form.FormResponsePutReqDto;
+import com.sougata.form_data_service.dto.form.FormResponsePutResDto;
 import com.sougata.form_data_service.dto.form.FormResponseSummariesDto;
 import com.sougata.form_data_service.dto.form.FormResponseSummaryShortDto;
 import com.sougata.form_data_service.dto.response.individual.ResponseIndividualResDto;
@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public interface FormResponseService {
-    FormResponseAddResDto saveResponse(UUID formId, FormResponseAddReqDto req, UUID userId);
+    FormResponsePutResDto saveResponse(UUID formId, FormResponsePutReqDto req, UUID userId);
 
     FormResponseSummaryShortDto getFormResponseSummaryShort(UUID formId);
 
@@ -31,7 +31,7 @@ public interface FormResponseService {
 
     ResponseIndividualResDto getIndividualFormResponse(UUID formId, Long formResponseId);
 
-    ResponseIndividualResDto getIndividualFormResponseByOPage(UUID formId, Long page);
+    ResponseIndividualResDto getIndividualFormResponseByPage(UUID formId, Long page);
 
     ResponseQuestionDto<? extends ResponseByQuestionResponse> getResponseByQuestion(UUID formId, Long questionId, Map<String, String> extraParams, Pageable pageable);
 

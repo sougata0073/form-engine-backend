@@ -1,18 +1,22 @@
 package com.sougata.form_service.service.template.impl;
 
+import com.sougata.form_service.constant.cacheNames.TemplateCacheNames;
 import com.sougata.form_service.dto.template.TemplateCategoryDetails;
 import com.sougata.form_service.dto.template.TemplateDetails;
-import com.sougata.form_service.dto.template.TemplateSummaryResDto;
+import com.sougata.form_service.dto.template.TemplateSummaryDto;
 import com.sougata.form_service.dto.template.questionTemplate.QuestionTemplateDetails;
 import com.sougata.form_service.dto.template.questionTemplate.QuestionTemplateSummary;
-import com.sougata.form_service.model.template.Template;
+import com.sougata.form_service.exception.TemplateNotFoundException;
 import com.sougata.form_service.repository.template.AnyQuestionTemplateRepositoryFactory;
 import com.sougata.form_service.repository.template.QuestionTemplateRepository;
 import com.sougata.form_service.repository.template.RecentlyUsedTemplateRepository;
 import com.sougata.form_service.repository.template.TemplateRepository;
 import com.sougata.form_service.service.template.TemplateServiceCached;
 import com.sougata.form_service.service.template.questionTemplateManager.QuestionTemplateManagerFactory;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +27,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class TemplateServiceCachedImpl implements TemplateServiceCached {
 
     private final RecentlyUsedTemplateRepository recentlyUsedTemplateRepository;
@@ -31,25 +36,29 @@ public class TemplateServiceCachedImpl implements TemplateServiceCached {
     private final AnyQuestionTemplateRepositoryFactory anyTypeQuestionTemplateRepositoryFactory;
     private final QuestionTemplateManagerFactory questionTemplateManagerFactory;
 
-    public TemplateServiceCachedImpl(RecentlyUsedTemplateRepository recentlyUsedTemplateRepository, TemplateRepository templateRepository, QuestionTemplateRepository questionTemplateRepository, AnyQuestionTemplateRepositoryFactory anyTypeQuestionTemplateRepositoryFactory, QuestionTemplateManagerFactory questionTemplateManagerFactory) {
-        this.recentlyUsedTemplateRepository = recentlyUsedTemplateRepository;
-        this.templateRepository = templateRepository;
-        this.questionTemplateRepository = questionTemplateRepository;
-        this.anyTypeQuestionTemplateRepositoryFactory = anyTypeQuestionTemplateRepositoryFactory;
-        this.questionTemplateManagerFactory = questionTemplateManagerFactory;
-    }
+    @Autowired
+    @Lazy
+    private TemplateServiceCached self;
 
-    @Cacheable(cacheNames = {"recentlyUsedTemplates"}, key = "#userId")
+    @Cacheable(cacheNames = {TemplateCacheNames.RECENTLY_USED_TEMPLATES}, key = "#userId")
     @Override
-    public List<TemplateSummaryResDto> getRecentlyUsedTemplates(UUID userId) {
+    public List<TemplateSummaryDto> getRecentlyUsedTemplates(UUID userId) {
         return recentlyUsedTemplateRepository.getByUserId(userId);
     }
 
-    @Cacheable(cacheNames = {"templateDetails"}, key = "#template.id")
+    @Cacheable(cacheNames = {TemplateCacheNames.TEMPLATE_DETAILS}, key = "#templateId")
     @Override
+    public TemplateDetails getTemplateDetails(Long templateId) {
+        return self.loadTemplateDetailsFromDb(templateId);
+    }
+
     @SuppressWarnings("unchecked")
     @Transactional(readOnly = true)
-    public TemplateDetails getTemplateDetails(Template template) {
+    @Override
+    public TemplateDetails loadTemplateDetailsFromDb(Long templateId) {
+        var template = templateRepository.findById(templateId)
+                .orElseThrow(() -> new TemplateNotFoundException(templateId));
+
         var templateDetails = new TemplateDetails();
 
         templateDetails.setId(template.getId());

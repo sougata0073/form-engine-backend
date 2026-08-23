@@ -1,8 +1,8 @@
 package com.sougata.form_service.service.formSchema.questionManager;
 
 import com.sougata.form_service.constant.QuestionType;
-import com.sougata.form_service.dto.question.request.DurationAddUpdateReqDto;
-import com.sougata.form_service.dto.question.response.DurationResDto;
+import com.sougata.form_service.dto.question.request.DurationPutReqDto;
+import com.sougata.form_service.dto.question.response.DurationDetailsDto;
 import com.sougata.form_service.dto.template.questionTemplate.DurationTemplateDetails;
 import com.sougata.form_service.exception.QuestionNotFoundException;
 import com.sougata.form_service.model.formSchema.Duration;
@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.UUID;
 
 @Service("DURATION_QUESTION_MANAGER")
-public class DurationManager extends QuestionManager<Duration, DurationAddUpdateReqDto, DurationResDto, DurationTemplateDetails> {
+public class DurationManager extends QuestionManager<Duration, DurationPutReqDto, DurationDetailsDto, DurationTemplateDetails> {
 
     private final DurationRepository durationRepository;
 
@@ -28,13 +28,13 @@ public class DurationManager extends QuestionManager<Duration, DurationAddUpdate
     }
 
     @Override
-    public DurationResDto get(UUID formId, Long questionId) {
+    public DurationDetailsDto get(UUID formId, Long questionId) {
         return toQuestionResDto(durationRepository.findByQuestionId(questionId).orElseThrow(() -> new QuestionNotFoundException(questionId)));
     }
 
     @Override
     @Transactional
-    public DurationResDto create(UUID formId, DurationAddUpdateReqDto crudDto) {
+    public DurationDetailsDto create(UUID formId, DurationPutReqDto crudDto) {
         var newD = new Duration();
 
         var question = createQuestion(crudDto, formId);
@@ -48,7 +48,7 @@ public class DurationManager extends QuestionManager<Duration, DurationAddUpdate
 
     @Override
     @Transactional
-    public DurationResDto create(UUID formId, Long questionId, DurationAddUpdateReqDto questionAddUpdateReq) {
+    public DurationDetailsDto create(UUID formId, Long questionId, DurationPutReqDto questionAddUpdateReq) {
         var newD = new Duration();
 
         var question = updateQuestion(questionId, questionAddUpdateReq);
@@ -62,7 +62,7 @@ public class DurationManager extends QuestionManager<Duration, DurationAddUpdate
 
     @Override
     @Transactional
-    public DurationResDto update(UUID formId, Long questionId, DurationAddUpdateReqDto questionAddUpdateReq) {
+    public DurationDetailsDto update(UUID formId, Long questionId, DurationPutReqDto questionAddUpdateReq) {
         Duration dur = durationRepository.findByQuestionId(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(QuestionType.DURATION, questionId));
 
@@ -84,13 +84,13 @@ public class DurationManager extends QuestionManager<Duration, DurationAddUpdate
     }
 
     @Override
-    public DurationResDto toQuestionResDto(Duration childQuestion) {
+    public DurationDetailsDto toQuestionResDto(Duration childQuestion) {
         return toQuestionResDto(childQuestion, childQuestion.getQuestion());
     }
 
     @Override
-    public DurationResDto toQuestionResDto(Duration childQuestion, Question parentQuestion) {
-        var d = new DurationResDto();
+    public DurationDetailsDto toQuestionResDto(Duration childQuestion, Question parentQuestion) {
+        var d = new DurationDetailsDto();
 
         populateCommonFields(parentQuestion, d);
 
@@ -98,8 +98,8 @@ public class DurationManager extends QuestionManager<Duration, DurationAddUpdate
     }
 
     @Override
-    public DurationAddUpdateReqDto toQuestionAddUpdateReq(DurationResDto questionRes) {
-        var d = new DurationAddUpdateReqDto();
+    public DurationPutReqDto toQuestionAddUpdateReq(DurationDetailsDto questionRes) {
+        var d = new DurationPutReqDto();
 
         populateCommonFields(questionRes, d);
 
