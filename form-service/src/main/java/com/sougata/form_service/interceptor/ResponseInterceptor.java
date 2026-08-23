@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseBodyAdvice;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-import tools.jackson.databind.node.ObjectNode;
 
 @RestControllerAdvice
 public class ResponseInterceptor implements ResponseBodyAdvice<Object> {
@@ -36,18 +35,4 @@ public class ResponseInterceptor implements ResponseBodyAdvice<Object> {
         return node;
     }
 
-    private void removeField(JsonNode node, String field) {
-        if (node.isObject()) {
-            ObjectNode objectNode = (ObjectNode) node;
-            objectNode.remove(field);
-
-            for (JsonNode child : objectNode) {
-                removeField(child, field);
-            }
-        } else if (node.isArray()) {
-            for (JsonNode child : node) {
-                removeField(child, field);
-            }
-        }
-    }
 }

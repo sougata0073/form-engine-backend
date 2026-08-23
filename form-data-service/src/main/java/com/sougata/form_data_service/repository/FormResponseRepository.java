@@ -1,6 +1,5 @@
 package com.sougata.form_data_service.repository;
 
-import com.sougata.form_data_service.dto.form.FormResponseSummaryShortDto;
 import com.sougata.form_data_service.model.FormResponse;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -18,43 +17,11 @@ public interface FormResponseRepository extends JpaRepository<FormResponse, Long
 
     @Query("""
             select
-            new com.sougata.form_data_service.dto.form.FormResponseSummaryShortDto(
-                count(fr.id)
-            )
+            count(fr.id)
             from FormResponse fr
             where fr.formId = :formId
             """)
-    FormResponseSummaryShortDto getFormResponseSummary(UUID formId);
-
-    boolean existsByFormIdAndUserId(UUID formId, UUID userId);
-
-    @Query("""
-            select
-            x.rn - 1
-            from (
-                select
-                fr.id formResponseId,
-                row_number() over (order by fr.createdAt) rn
-                from FormResponse fr
-                where fr.formId = :formId
-            ) x
-            where x.formResponseId = :formResponseId
-            """)
-    Optional<Long> getPageNumberOfFormResponse(UUID formId, long formResponseId);
-
-    @Query("""
-            select
-            x.formResponseId
-            from (
-                select
-                fr.id formResponseId,
-                row_number() over (order by fr.createdAt) rn
-                from FormResponse fr
-                where fr.formId = :formId
-            ) x
-            where (x.rn - 1) = :page
-            """)
-    Optional<Long> getFormResponseIdFromPage(UUID formId, long page);
+    Long getFormResponseCount(UUID formId);
 
     @Modifying
     @Transactional

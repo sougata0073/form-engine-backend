@@ -1,7 +1,7 @@
 package com.sougata.form_service.service.template.questionTemplateManager;
 
 import com.sougata.form_service.constant.QuestionType;
-import com.sougata.form_service.dto.template.questionTemplate.FileTypeTemplateDetails;
+import com.sougata.form_service.dto.question.response.FileTypeDetails;
 import com.sougata.form_service.dto.template.questionTemplate.FileUploadTemplateDetails;
 import com.sougata.form_service.model.template.FileUploadTemplate;
 import com.sougata.form_service.service.template.QuestionTemplateManager;
@@ -21,7 +21,7 @@ public class FileUploadTemplateManager extends QuestionTemplateManager<FileUploa
         fu.setMaxFileSize(template.getMaxFileSize());
         fu.setAllowedFileTypes(
                 template.getAllowedFileTypeTemplates().stream()
-                        .map(ft -> new FileTypeTemplateDetails(ft.getCategory(), List.of(ft.getMimeTypes())))
+                        .map(ft -> new FileTypeDetails(ft.getCategory(), List.of(ft.getMimeTypes())))
                         .toList()
         );
 

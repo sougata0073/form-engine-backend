@@ -1,8 +1,8 @@
 package com.sougata.form_service.service.formSchema.impl;
 
 import com.sougata.form_service.configuration.AppConfiguration;
-import com.sougata.form_service.constant.cacheNames.CommonCacheNames;
 import com.sougata.form_service.constant.ViewFormErrorReason;
+import com.sougata.form_service.constant.cacheNames.CommonCacheNames;
 import com.sougata.form_service.constant.cacheNames.FormCacheNames;
 import com.sougata.form_service.dto.common.SuccessMessageDto;
 import com.sougata.form_service.dto.form.*;
@@ -11,6 +11,7 @@ import com.sougata.form_service.exception.FormNotAcceptingResponseException;
 import com.sougata.form_service.exception.FormNotFoundException;
 import com.sougata.form_service.exception.FormResponseAlreadySubmittedException;
 import com.sougata.form_service.feignClient.FormDataServiceFeignClient;
+import com.sougata.form_service.feignClient.FormResponseServiceFeignClient;
 import com.sougata.form_service.model.formSchema.Form;
 import com.sougata.form_service.repository.formSchema.FormRepository;
 import com.sougata.form_service.service.formSchema.FormService;
@@ -33,6 +34,7 @@ public class FormServiceImpl implements FormService {
 
     private final FormRepository formRepo;
     private final FormDataServiceFeignClient formDataServiceFeignClient;
+    private final FormResponseServiceFeignClient formResponseServiceFeignClient;
     private final FormServiceCached formServiceCached;
     private final QuestionManagerFactory questionManagerFactory;
     private final RedisTemplate<String, Object> redisTemplate;
@@ -175,7 +177,7 @@ public class FormServiceImpl implements FormService {
                         Instant.now().isAfter(f.getStopAcceptingResponseOn());
 
         boolean isNumberOfResponseExceeded = f.getStopAcceptingResponseAfterResponse() != null &&
-                formDataServiceFeignClient.getFormResponseSummary(f.getId()).getResponseCount() >= f.getStopAcceptingResponseAfterResponse();
+                formResponseServiceFeignClient.getFormResponseCount(f.getId()).getCount() >= f.getStopAcceptingResponseAfterResponse();
 
         if (!f.getAcceptingResponse() || isAcceptingDateExceeded || isNumberOfResponseExceeded) {
             throw new FormNotAcceptingResponseException(
@@ -187,7 +189,7 @@ public class FormServiceImpl implements FormService {
             );
         }
 
-        if (formDataServiceFeignClient.getIsResponseAlreadySubmitted(id, userId)) {
+        if (formResponseServiceFeignClient.getIsResponseAlreadySubmitted(id, userId)) {
             throw new FormResponseAlreadySubmittedException(
                     new ViewFormErrorResDto(
                             f.getTitle(),

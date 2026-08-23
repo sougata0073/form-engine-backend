@@ -1,7 +1,6 @@
 package com.sougata.form_service.dto.question.request;
 
 import com.sougata.form_service.constant.RatingIcon;
-import com.sougata.form_service.constant.ValidationMessages;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

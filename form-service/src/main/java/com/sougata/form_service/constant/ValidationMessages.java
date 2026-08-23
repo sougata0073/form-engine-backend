@@ -21,7 +21,6 @@ public class ValidationMessages {
     public static final String INVALID_MULTIPLE_CHOICE_GRID_COLUMN_RANGE = "Selected column count must be between 0 and %d";
     public static final String INVALID_TICK_BOX_GRID_COLUMN_RANGE = "Selected column count must be between 0 and %d";
     public static final String INVALID_MULTIPLE_CHOICE_INDEX = "Selected index must be between 0 and %d";
-    public static final String INVALID_RATING_NUMBER = "Rating must be between 1 and %d";
     public static final String INVALID_MAX_CHARACTER_LENGTH = "Response can only have a maximum of %d characters";
     public static final String INVALID_MIN_CHARACTER_LENGTH = "Response must have a minimum of %d characters";
     public static final String INVALID_NUMBER = "Response must be a valid number";

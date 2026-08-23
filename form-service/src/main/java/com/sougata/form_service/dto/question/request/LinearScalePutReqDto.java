@@ -1,6 +1,5 @@
 package com.sougata.form_service.dto.question.request;
 
-import com.sougata.form_service.constant.ValidationMessages;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

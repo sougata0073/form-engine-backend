@@ -12,7 +12,7 @@ const RESPONSE_URL = "http://localhost:9093/api/v1/forms";
 
 
 // TOTAL number of response requests across ALL forms
-const NUMBER_OF_REQUESTS = 500;
+const NUMBER_OF_REQUESTS = 10000;
 
 // Maximum requests PER FORM in each batch
 //
@@ -24,8 +24,7 @@ const NUMBER_OF_REQUESTS = 500;
 //
 // Total simultaneous requests = 20
 //
-const CONCURRENCY = 200;
-
+const CONCURRENCY = 1000;
 
 const HEADERS = {
     "Content-Type": "application/json"

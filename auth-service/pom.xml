@@ -144,6 +144,11 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security-oauth2-client</artifactId>
         </dependency>
+		<dependency>
+			<groupId>com.sougata.form_engine</groupId>
+			<artifactId>common</artifactId>
+			<version>1.0.0</version>
+		</dependency>
     </dependencies>
 	<dependencyManagement>
 		<dependencies>

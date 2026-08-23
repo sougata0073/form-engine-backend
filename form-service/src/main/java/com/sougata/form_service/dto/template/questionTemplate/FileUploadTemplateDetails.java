@@ -1,5 +1,6 @@
 package com.sougata.form_service.dto.template.questionTemplate;
 
+import com.sougata.form_service.dto.question.response.FileTypeDetails;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,5 +14,5 @@ import java.util.List;
 @AllArgsConstructor
 public class FileUploadTemplateDetails extends QuestionTemplateDetails {
     public Integer maxFileSize;
-    public List<FileTypeTemplateDetails> allowedFileTypes;
+    public List<FileTypeDetails> allowedFileTypes;
 }

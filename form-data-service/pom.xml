@@ -149,6 +149,11 @@
             <groupId>de.codecentric</groupId>
             <artifactId>spring-boot-admin-starter-client</artifactId>
         </dependency>
+		<dependency>
+			<groupId>com.sougata.form_engine</groupId>
+			<artifactId>common</artifactId>
+			<version>1.0.0</version>
+		</dependency>
     </dependencies>
 	<dependencyManagement>
 		<dependencies>
