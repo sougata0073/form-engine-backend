@@ -29,7 +29,7 @@ public interface FormResponseRepository extends JpaRepository<FormResponse, Long
             from (
                 select
                 fr.id formResponseId,
-                row_number() over (order by fr.createdAt) rn
+                row_number() over (order by fr.createdAt, fr.id) rn
                 from FormResponse fr
                 where fr.formId = :formId
             ) x
@@ -43,7 +43,7 @@ public interface FormResponseRepository extends JpaRepository<FormResponse, Long
             from (
                 select
                 fr.id formResponseId,
-                row_number() over (order by fr.createdAt) rn
+                row_number() over (order by fr.createdAt, fr.id) rn
                 from FormResponse fr
                 where fr.formId = :formId
             ) x

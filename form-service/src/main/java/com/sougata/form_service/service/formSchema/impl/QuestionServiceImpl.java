@@ -1,5 +1,7 @@
 package com.sougata.form_service.service.formSchema.impl;
 
+import com.sougata.form_engine.constant.MessagingChannelNames;
+import com.sougata.form_engine.dto.messaging.QuestionDeleteMessage;
 import com.sougata.form_service.configuration.AppConfiguration;
 import com.sougata.form_service.constant.QuestionType;
 import com.sougata.form_service.constant.cacheNames.CommonCacheNames;
@@ -40,6 +42,7 @@ public class QuestionServiceImpl implements QuestionService {
     private final FormDataServiceFeignClient formDataServiceFeignClient;
     private final QuestionRepository questionRepository;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, String> redisTemplateString;
     private final AppConfiguration appConfiguration;
 
     @Override
@@ -93,8 +96,9 @@ public class QuestionServiceImpl implements QuestionService {
         var question = questionRepository.findQuestionSummaryById(questionId)
                 .orElseThrow(() -> new QuestionNotFoundException(questionId));
 
-        // TODO: Message broker will handle this
-        formDataServiceFeignClient.deleteResponses(formId, questionId);
+        redisTemplate.convertAndSend(
+                MessagingChannelNames.QUESTION_DELETED, new QuestionDeleteMessage(formId, questionId)
+        );
 
         questionRepository.deleteQuestion(questionId);
 

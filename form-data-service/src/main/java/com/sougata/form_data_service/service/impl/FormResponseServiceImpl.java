@@ -13,6 +13,8 @@ import com.sougata.form_data_service.repository.QuestionResponseRepository;
 import com.sougata.form_data_service.service.FormResponseService;
 import com.sougata.form_data_service.service.responseManager.ResponseManagerFactory;
 import com.sougata.form_engine.constant.MessagingChannelNames;
+import com.sougata.form_engine.dto.messaging.FormResponseDeleteMessage;
+import com.sougata.form_engine.dto.messaging.FormResponseSavedMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -29,9 +31,8 @@ public class FormResponseServiceImpl implements FormResponseService {
     private final FormResponseRepository formResponseRepository;
     private final ResponseManagerFactory responseManagerFactory;
     private final FormServiceFeignClient formServiceFeignClient;
-    private final QuestionResponseRepository questionResponseRepository;
     private final FormSchemaService formSchemaService;
-    private final RedisTemplate<String, String> redisTemplateString;
+    private final RedisTemplate<String, Object> redisTemplate;
 
     @Override
     @Transactional
@@ -72,7 +73,7 @@ public class FormResponseServiceImpl implements FormResponseService {
             responseManager.create(response, savedFormResponse);
         });
 
-        redisTemplateString.convertAndSend(MessagingChannelNames.FORM_RESPONSE_SAVED, String.valueOf(savedFormResponse.getId()));
+        redisTemplate.convertAndSend(MessagingChannelNames.FORM_RESPONSE_SAVED, new FormResponseSavedMessage(formId));
 
         return new FormResponsePutResDto(savedFormResponse.getId());
     }
@@ -81,11 +82,11 @@ public class FormResponseServiceImpl implements FormResponseService {
     public SuccessMessageDto deleteFormResponse(UUID formId, UUID userId, Long formResponseId) {
         formResponseRepository.deleteByFormResponseId(formResponseId);
 
-        return SuccessMessageDto.create("Response deleted successfully. Form id: " + formId + " Form response ID: " + formResponseId);
-    }
+        redisTemplate.convertAndSend(
+                MessagingChannelNames.FORM_RESPONSE_DELETED,
+                new FormResponseDeleteMessage(formId, formResponseId, userId)
+        );
 
-    @Override
-    public void deleteQuestionResponses(UUID formId, Long questionId) {
-        questionResponseRepository.deleteAllByQuestionId(questionId);
+        return SuccessMessageDto.create("Response deleted successfully. Form id: " + formId + " Form response ID: " + formResponseId);
     }
 }

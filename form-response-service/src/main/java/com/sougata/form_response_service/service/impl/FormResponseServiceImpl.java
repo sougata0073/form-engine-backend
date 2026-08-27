@@ -1,5 +1,6 @@
 package com.sougata.form_response_service.service.impl;
 
+import com.sougata.form_engine.constant.cache.FormResponseCacheNames;
 import com.sougata.form_engine.dto.form.FormResponseCountDto;
 import com.sougata.form_engine.dto.form.FormResponseSummariesDto;
 import com.sougata.form_engine.dto.form.FormResponseSummaryDto;
@@ -11,17 +12,21 @@ import com.sougata.form_engine.dto.formResponse.summary.ResponseSummaryDto;
 import com.sougata.form_engine.dto.formResponse.summary.ResponseSummaryResDto;
 import com.sougata.form_engine.dto.question.details.QuestionDetailsDto;
 import com.sougata.form_engine.dto.user.UserSummaryShortDto;
+import com.sougata.form_response_service.configuration.AppConfiguration;
 import com.sougata.form_response_service.feignClient.AuthServiceFeignClient;
 import com.sougata.form_response_service.feignClient.FormServiceFeignClient;
 import com.sougata.form_response_service.model.QuestionResponse;
 import com.sougata.form_response_service.repository.FormResponseRepository;
 import com.sougata.form_response_service.service.FormResponseService;
 import com.sougata.form_response_service.service.responseManager.ResponseManagerFactory;
+import com.sougata.form_response_service.util.CacheUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -33,6 +38,8 @@ public class FormResponseServiceImpl implements FormResponseService {
     private final FormServiceFeignClient formServiceFeignClient;
     private final AuthServiceFeignClient authServiceFeignClient;
     private final ResponseManagerFactory responseManagerFactory;
+    private final RedisTemplate<String, Object> redisTemplate;
+    private final AppConfiguration appConfiguration;
 
     @Override
     public boolean getIsResponseAlreadySubmitted(UUID formId, UUID userId) {
@@ -112,7 +119,23 @@ public class FormResponseServiceImpl implements FormResponseService {
     @Override
     @Transactional(readOnly = true)
     public ResponseIndividualResDto getIndividualFormResponseByPage(UUID formId, Long page) {
-        return getIndividualFormResponseHelper(formId, null, page);
+
+        var formResponseId = formResponseRepository.getFormResponseIdFromPage(formId, page)
+                .orElseThrow(() -> new IllegalArgumentException("Form response not found for page: " + page));
+
+        var indiFormResponseCacheKey = CacheUtil.buildKey(FormResponseCacheNames.INDIVIDUAL_FORM_RESPONSE, "formId=" + formId, "formResponseId=" + formResponseId);
+
+        var indiFormResponseCached = (ResponseIndividualResDto) redisTemplate.opsForValue().get(indiFormResponseCacheKey);
+
+        if (indiFormResponseCached != null) {
+            return indiFormResponseCached;
+        }
+
+        var indiFormResponse = getIndividualFormResponseHelper(formId, formResponseId, page);
+
+        redisTemplate.opsForValue().set(indiFormResponseCacheKey, indiFormResponse, Duration.ofMinutes(appConfiguration.getCacheDefaultTtlMinutes()));
+
+        return indiFormResponse;
     }
 
     @Override
@@ -130,15 +153,8 @@ public class FormResponseServiceImpl implements FormResponseService {
 
     private ResponseIndividualResDto getIndividualFormResponseHelper(UUID formId, Long formResponseId, Long formResponsePage) {
 
-        if (formResponseId == null && formResponsePage == null) {
-            throw new IllegalArgumentException("Form response ID and Form response page both can not be null");
-        }
-
-        var finalFormResponseId = formResponseId == null ? formResponseRepository.getFormResponseIdFromPage(formId, formResponsePage)
-                .orElseThrow(() -> new IllegalArgumentException("Form response not found for page: " + formResponsePage)) : formResponseId;
-
-        var formResponse = formResponseRepository.findById(finalFormResponseId)
-                .orElseThrow(() -> new IllegalArgumentException("Form response not found with ID: " + finalFormResponseId));
+        var formResponse = formResponseRepository.findById(formResponseId)
+                .orElseThrow(() -> new IllegalArgumentException("Form response not found with ID: " + formResponseId));
 
         var questionTypeMap = formResponse.getQuestionResponses().stream().collect(Collectors.groupingBy(QuestionResponse::getQuestionType));
 
@@ -147,14 +163,14 @@ public class FormResponseServiceImpl implements FormResponseService {
         questionTypeMap.keySet().forEach(qType -> {
             var manager = responseManagerFactory.get(qType);
 
-            var indiResponses = manager.getIndividualResponses(formId, finalFormResponseId);
+            var indiResponses = manager.getIndividualResponses(formId, formResponseId);
 
             result.addAll(indiResponses);
         });
 
-        var finalFormResponsePage = formResponsePage == null ? formResponseRepository.getPageNumberOfFormResponse(formId, finalFormResponseId)
-                .orElseThrow(() -> new IllegalArgumentException("Form response not found with ID: " + finalFormResponseId)) : formResponsePage;
+        var finalFormResponsePage = formResponsePage == null ? formResponseRepository.getPageNumberOfFormResponse(formId, formResponseId)
+                .orElseThrow(() -> new IllegalArgumentException("Form response not found with ID: " + formResponseId)) : formResponsePage;
 
-        return new ResponseIndividualResDto(finalFormResponseId, finalFormResponsePage, formResponse.getUserId(), result);
+        return new ResponseIndividualResDto(formResponseId, finalFormResponsePage, formResponse.getUserId(), result);
     }
 }

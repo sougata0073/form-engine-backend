@@ -12,7 +12,7 @@ const RESPONSE_URL = "http://localhost:9093/api/v1/forms";
 
 
 // TOTAL number of response requests across ALL forms
-const NUMBER_OF_REQUESTS = 10000;
+const NUMBER_OF_REQUESTS = 5000;
 
 // Maximum requests PER FORM in each batch
 //

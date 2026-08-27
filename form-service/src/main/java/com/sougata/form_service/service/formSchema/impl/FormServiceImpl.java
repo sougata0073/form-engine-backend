@@ -132,7 +132,7 @@ public class FormServiceImpl implements FormService {
                     f.setLastOpenedOn(currTime);
                 }
             });
-            formSummaries.getForms().sort(Comparator.comparing(FormSummaryDto::getLastOpenedOn));
+            formSummaries.getForms().sort(Comparator.comparing(FormSummaryDto::getLastOpenedOn, Comparator.reverseOrder()));
 
             redisTemplate.opsForValue().set(recentFormsCacheKey, formSummaries, Duration.ofMinutes(appConfiguration.getCacheDefaultTtlMinutes()));
         }

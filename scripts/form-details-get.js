@@ -1,7 +1,7 @@
 const url = "http://localhost:9092/api/v1/forms/b91cb39f-a944-4c89-b47d-43da924cef6f/details";
 
-const TOTAL_REQUESTS = 1000;
-const CONCURRENCY = 1000;
+const TOTAL_REQUESTS = 10000;
+const CONCURRENCY = 10000;
 
 async function sendRequest(index) {
     const authJwt = crypto.randomUUID();

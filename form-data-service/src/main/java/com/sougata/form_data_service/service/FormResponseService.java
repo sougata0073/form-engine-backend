@@ -11,6 +11,4 @@ public interface FormResponseService {
     FormResponsePutResDto saveResponse(UUID formId, FormResponsePutReqDto req, UUID userId);
 
     SuccessMessageDto deleteFormResponse(UUID formId, UUID userId, Long formResponseId);
-
-    void deleteQuestionResponses(UUID formId, Long questionId);
 }

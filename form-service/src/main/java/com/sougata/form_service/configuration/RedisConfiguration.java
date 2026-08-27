@@ -156,4 +156,23 @@ public class RedisConfiguration implements CachingConfigurer {
         template.afterPropertiesSet();
         return template;
     }
+
+    @Bean
+    public RedisTemplate<String, String> redisTemplateString(
+            RedisConnectionFactory connectionFactory
+    ) {
+        RedisTemplate<String, String> template = new RedisTemplate<>();
+        var stringSerializer = new StringRedisSerializer();
+
+        template.setConnectionFactory(connectionFactory);
+
+        template.setKeySerializer(stringSerializer);
+        template.setValueSerializer(stringSerializer);
+        template.setHashKeySerializer(stringSerializer);
+        template.setHashValueSerializer(stringSerializer);
+
+        template.afterPropertiesSet();
+
+        return template;
+    }
 }

@@ -9,7 +9,4 @@ import java.util.UUID;
 @FeignClient("form-data-service")
 public interface FormDataServiceFeignClient {
 
-    @DeleteMapping(path = "api/v1/forms/{formId}/questions/{questionId}/responses")
-    void deleteResponses(@PathVariable("formId") UUID formId, @PathVariable("questionId") Long questionId);
-
 }

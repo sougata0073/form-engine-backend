@@ -56,9 +56,6 @@ public class RedisConfiguration implements CachingConfigurer {
     @Value("${spring.data.redis.timeout}")
     private long commandTimeoutMs;
 
-    @Value("${app.cache.default-ttl-minutes}")
-    private long defaultTtlMinutes;
-
     @Bean
     public LettuceConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration standaloneConfig = new RedisStandaloneConfiguration();
@@ -117,35 +114,6 @@ public class RedisConfiguration implements CachingConfigurer {
 
         return new GenericJacksonJsonRedisSerializer(mapper);
     }
-
-    @Bean
-    public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory, GenericJacksonJsonRedisSerializer redisSerializer) {
-        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
-                .disableCachingNullValues()
-                .entryTtl(Duration.ofMinutes(defaultTtlMinutes))
-                .disableCachingNullValues()
-                .prefixCacheNameWith("form-data::")
-                .serializeKeysWith(RedisSerializationContext.SerializationPair.fromSerializer(new StringRedisSerializer()))
-                .serializeValuesWith(RedisSerializationContext.SerializationPair.fromSerializer(redisSerializer));
-
-        Map<String, RedisCacheConfiguration> perCacheConfig = new HashMap<>();
-//        perCacheConfig.put(CacheNames.USERS, defaultConfig.entryTtl(Duration.ofMinutes(30)));
-//        perCacheConfig.put(CacheNames.PRODUCTS, defaultConfig.entryTtl(Duration.ofHours(2)));
-//        perCacheConfig.put(CacheNames.SEARCH_RESULTS, defaultConfig.entryTtl(Duration.ofMinutes(2)));
-//        perCacheConfig.put(CacheNames.STATIC_LOOKUPS, defaultConfig.entryTtl(Duration.ofHours(24)));
-
-        return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(defaultConfig)
-                .withInitialCacheConfigurations(perCacheConfig)
-                .transactionAware()
-                .build();
-    }
-
-//    @Bean
-//    @Override
-//    public CacheErrorHandler errorHandler() {
-//        return new CustomCacheErrorHandler();
-//    }
 
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory, GenericJacksonJsonRedisSerializer redisSerializer) {
